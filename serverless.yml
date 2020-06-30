@@ -1,0 +1,356 @@
+service:
+  name: marapp-services
+
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-plugin-typescript
+  - serverless-offline
+  - serverless-localstack
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  region: ${opt:region, self:custom.defaultRegion}
+  memorySize: 1024
+  timeout: 30
+  vpc:
+    securityGroupIds:
+      - '<SECURITY-GROUP-ID1>'
+      - '<SECURITY-GROUP-ID2>'
+      - '...'
+    subnetIds:
+      - '<SUBNET-ID1>'
+      - '<SUBNET-ID2>'
+      - '...'
+  environment:
+    MONGODB_URI: ${env:MONGODB_URI}
+    REDIS_URI: ${env:REDIS_URI}
+    ELASTICSEARCH_URI: ${env:ELASTICSEARCH_URI}
+    GOOGLE_SERVICE_ACCOUNT: ${env:GOOGLE_SERVICE_ACCOUNT}
+    AUTH0_CLIENT_ID: ${env:AUTH0_CLIENT_ID}
+    AUTH0_CLIENT_SECRET: ${env:AUTH0_CLIENT_SECRET}
+    AUTH0_DOMAIN: ${env:AUTH0_DOMAIN}
+    AUTH0_EXTENSION_URL: ${env:AUTH0_EXTENSION_URL}
+    S3_ASSETS_BUCKET: ${self:custom.stageEnvironment.assetsBucket}
+    S3_ASSETS_PATH_PREFIX: ${self:custom.s3AssetsPathPrefix}
+    SNS_TOPIC_MANAGER_ARN: ${env:SNS_TOPIC_MANAGER_ARN}
+    SNS_TOPIC_SUBSCRIPTION_ARN: ${self:custom.stageEnvironment.snsWorkerResultTopicArn}
+    SERVICE_API_KEY: ${env:SERVICE_API_KEY}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:*
+      Resource: "arn:aws:s3:::${self:custom.stageEnvironment.assetsBucket}/*"
+    - Effect: Allow
+      Action:
+        - SNS:Publish
+      Resource: ${env:SNS_TOPIC_MANAGER_ARN}
+
+custom:
+  stageEnv: ${opt:stage, self:provider.stage}
+  defaultRegion: us-east-1
+
+  s3AssetsPathPrefix: assets
+  snsHTTPSSubscriptionPath: services/api/v1/management/subscribe
+
+  # Environment-specific configuration
+  stageEnvironment:
+    assetsBucket: ${self:service.name}-assets-${self:custom.stageEnv}
+    snsWorkerResultTopic: ${self:service.name}-${self:custom.stageEnv}-sns-result
+    snsWorkerResultTopicArn: { "Fn::Join": [":", ["arn:aws:sns:${self:provider.region}", { "Ref": "AWS::AccountId" }, "${self:custom.stageEnvironment.snsWorkerResultTopic}" ] ]  }
+
+  # Plugins configuration
+  serverless-offline:
+    httpPort: 4000
+  localstack:
+    debug: true
+    stages:
+      - local
+
+package:
+  # individually: true
+  include:
+    - src/**/*.json
+
+functions:
+  locations:
+    handler: src/handlers/LocationHandler.openHandler
+    events:
+      - http:
+          path: services/api/v1/locations
+          method: any
+          cors: true
+      - http:
+          path: services/api/v1/locations/{any+}
+          method: any
+          cors: true
+  locations-management:
+    handler: src/handlers/LocationHandler.managementHandler
+    events:
+      - http:
+          path: services/api/v1/management/locations
+          method: any
+          cors: true
+      - http:
+          path: services/api/v1/management/locations/{any+}
+          method: any
+          cors: true
+  collections:
+    handler: src/handlers/CollectionHandler.openHandler
+    events:
+      - http:
+          path: services/api/v1/collections
+          method: any
+          cors: true
+      - http:
+          path: services/api/v1/collections/{any+}
+          method: any
+          cors: true
+  collections-management:
+    handler: src/handlers/CollectionHandler.managementHandler
+    events:
+      - http:
+          path: services/api/v1/management/collections
+          method: any
+          cors: true
+      - http:
+          path: services/api/v1/management/collections/{any+}
+          method: any
+          cors: true
+  metrics:
+    handler: src/handlers/MetricHandler.openHandler
+    events:
+      - http:
+          path: services/api/v1/metrics
+          method: any
+          cors: true
+      - http:
+          path: services/api/v1/metrics/{any+}
+          method: any
+          cors: true
+  metrics-management:
+    handler: src/handlers/MetricHandler.managementHandler
+    events:
+      - http:
+          path: services/api/v1/management/metrics
+          method: any
+          cors: true
+      - http:
+          path: services/api/v1/management/metrics/{any+}
+          method: any
+          cors: true
+  layers:
+    handler: src/handlers/LayerHandler.openHandler
+    events:
+      - http:
+          path: services/api/v1/layers
+          method: any
+          cors: true
+      - http:
+          path: services/api/v1/layers/{any+}
+          method: any
+          cors: true
+  layers-management:
+    handler: src/handlers/LayerHandler.managementHandler
+    events:
+      - http:
+          path: services/api/v1/management/layers
+          method: any
+          cors: true
+      - http:
+          path: services/api/v1/management/layers/{any+}
+          method: any
+          cors: true
+  widgets:
+    handler: src/handlers/WidgetHandler.openHandler
+    events:
+      - http:
+          path: services/api/v1/widgets
+          method: any
+          cors: true
+      - http:
+          path: services/api/v1/widgets/{any+}
+          method: any
+          cors: true
+  widgets-management:
+    handler: src/handlers/WidgetHandler.managementHandler
+    events:
+      - http:
+          path: services/api/v1/management/widgets
+          method: any
+          cors: true
+      - http:
+          path: services/api/v1/management/widgets/{any+}
+          method: any
+          cors: true
+  dashboards:
+    handler: src/handlers/DashboardHandler.openHandler
+    events:
+      - http:
+          path: services/api/v1/dashboards
+          method: any
+          cors: true
+      - http:
+          path: services/api/v1/dashboards/{any+}
+          method: any
+          cors: true
+  dashboards-management:
+    handler: src/handlers/DashboardHandler.managementHandler
+    events:
+      - http:
+          path: services/api/v1/management/dashboards
+          method: any
+          cors: true
+      - http:
+          path: services/api/v1/management/dashboards/{any+}
+          method: any
+          cors: true
+  users-management:
+    handler: src/handlers/UserHandler.managementHandler
+    events:
+      - http:
+          path: services/api/v1/management/users
+          method: any
+          cors: true
+      - http:
+          path: services/api/v1/management/users/{any+}
+          method: any
+          cors: true
+  subscriber:
+    handler: src/handlers/SubscriptionHandler.openHandler
+    events:
+      - http:
+          path: services/api/v1/management/subscribe
+          method: any
+          cors: true
+      - http:
+          path: services/api/v1/management/subscribe/{any+}
+          method: any
+          cors: true
+  tiles:
+    handler: src/handlers/TileHandler.openHandler
+    events:
+      - http:
+          path: services/api/v1/tiles
+          method: any
+          cors: true
+      - http:
+          path: services/api/v1/tiles/{any+}
+          method: any
+          cors: true
+  swagger:
+    handler: src/handlers/SwaggerHandler.openHandler
+    events:
+      - http:
+          path: services/api/v1/docs
+          method: any
+          cors: true
+      - http:
+          path: services/api/v1/docs/{any+}
+          method: any
+          cors: true
+  operations:
+    handler: src/handlers/OperationHandler.managementHandler
+    events:
+      - http:
+          path: services/api/v1/operations
+          method: any
+          cors: true
+      - http:
+          path: services/api/v1/operations/{any+}
+          method: any
+          cors: true
+
+resources:
+  Resources:
+    AssetsS3Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        AccessControl: PublicRead
+        BucketName: ${self:custom.stageEnvironment.assetsBucket}
+        CorsConfiguration:
+          CorsRules:
+            - AllowedOrigins:
+                - '*'
+              AllowedHeaders:
+                - '*'
+              AllowedMethods:
+                - GET
+                - PUT
+                - POST
+                - DELETE
+                - HEAD
+    AssetsS3BucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket:
+          Ref: AssetsS3Bucket
+        PolicyDocument:
+          Statement:
+            - Sid: PublicReadGetObject
+              Effect: Allow
+              Principal: "*"
+              Action:
+                - s3:GetObject
+              Resource: arn:aws:s3:::${self:custom.stageEnvironment.assetsBucket}/*
+    CloudFrontDistribution:
+      Type: AWS::CloudFront::Distribution
+      Properties:
+        DistributionConfig:
+          Origins:
+            - DomainName: { "Fn::Join": [".", [{ "Ref": "ApiGatewayRestApi" }, "execute-api.${self:provider.region}.amazonaws.com" ] ]  }
+              Id: ApiGw
+              OriginPath: /prod
+              CustomOriginConfig:
+                HTTPPort: 80
+                HTTPSPort: 443
+                OriginProtocolPolicy: https-only
+            - DomainName: ${self:custom.stageEnvironment.assetsBucket}.s3.amazonaws.com
+              Id: Assets
+              CustomOriginConfig:
+                HTTPPort: 80
+                HTTPSPort: 443
+                OriginProtocolPolicy: https-only
+          Enabled: true
+          ## Uncomment the following section in case you are using a custom domain
+          # Aliases:
+          # - site.example.com
+          DefaultCacheBehavior:
+            TargetOriginId: ApiGw
+            ViewerProtocolPolicy: redirect-to-https
+            DefaultTTL: 30
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - ApiKey
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - PATCH
+              - POST
+              - DELETE
+          CacheBehaviors:
+            - PathPattern: /${self:custom.s3AssetsPathPrefix}/*
+              TargetOriginId: Assets
+              AllowedMethods:
+                - GET
+                - HEAD
+                - OPTIONS
+              ForwardedValues:
+                QueryString: false
+                Cookies:
+                  Forward: none
+              ViewerProtocolPolicy: redirect-to-https
+          ## The certificate to use when viewers use HTTPS to request objects.
+          ViewerCertificate:
+            CloudFrontDefaultCertificate: true
+    SNSWorkerResultTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:custom.stageEnvironment.snsWorkerResultTopic}
+        Subscription:
+          - Protocol: HTTPS
+            Endpoint: { "Fn::Join": ["", [ "https://", { "Ref": "ApiGatewayRestApi" }, ".execute-api.${self:provider.region}.amazonaws.com/${self:custom.stageEnv}/${self:custom.snsHTTPSSubscriptionPath}" ] ]  }
