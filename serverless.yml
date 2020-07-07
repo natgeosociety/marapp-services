@@ -216,6 +216,17 @@ functions:
           path: services/api/v1/management/users/{any+}
           method: any
           cors: true
+  organizations-management:
+    handler: src/handlers/OrganizationHandler.managementHandler
+    events:
+      - http:
+          path: services/api/v1/management/organizations
+          method: any
+          cors: true
+      - http:
+          path: services/api/v1/management/organizations/{any+}
+          method: any
+          cors: true
   subscriber:
     handler: src/handlers/SubscriptionHandler.openHandler
     events:
