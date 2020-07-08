@@ -13,6 +13,7 @@
     "lint": "tslint --project tslint.tsconfig.json",
     "prettify": "prettier --write '{src,tests,dbtriggers,scripts}/**/*.{js,ts,json}'",
     "serverless:start": "serverless offline --verbose",
+    "serverless:start:local": "serverless offline --verbose --noPrependStageInUrl",
     "serverless:start:debug": "SLS_DEBUG=1 serverless offline --verbose",
     "serverless:deploy": "serverless deploy --verbose",
     "serverless:deploy:debug": "SLS_DEBUG=1 serverless deploy --verbose",
