@@ -37,7 +37,11 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
       const groups = (await authzService.getGroups()).groups
         .filter((group) => 'nested' in group)
-        .map((group) => (({ name, description, _id }) => ({ name, description, id: _id }))(group));
+        .map(({ name, description, _id: id }) => ({
+          name,
+          description,
+          id
+        }))
 
       const paginationOffset = (pageOptions.page - 1) * pageOptions.size;
 
