@@ -11,7 +11,7 @@ import { createSerializer as createOrganizationSerializer } from '../serializers
 import { AuthzService } from '../services/auth0-authz';
 import { ResponseMeta, SuccessResponse } from '../types/response';
 
-import { queryParamGroup } from './index';
+import { queryParamGroup } from '.';
 
 const logger = getLogger();
 
