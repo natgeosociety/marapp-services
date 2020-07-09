@@ -3339,6 +3339,57 @@
         ]
       }
     },
+    "/management/organizations/{id}": {
+      "get": {
+        "tags": ["organizations-management"],
+        "summary": "Find an organization by ID",
+        "description": "",
+        "operationId": "getOrganizationById",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Organization ID.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "group",
+            "description": "Primary group name. Required when multiple primary groups included in the token.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [],
+            "Bearer": []
+          }
+        ]
+      }
+    },
     "/tiles/{layer}/{z}/{x}/{y}": {
       "get": {
         "tags": ["tile-map"],

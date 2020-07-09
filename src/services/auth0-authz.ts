@@ -11,6 +11,7 @@ const logger = getLogger();
 
 export interface AuthzService {
   getGroups();
+  getGroup(id: string);
   createGroup(name: string, description: string, members?: string[]);
   addNestedGroups(groupId: string, nestedGroupIds: string[]);
   addGroupRoles(groupId: string, roleIds: string[]);
@@ -42,6 +43,10 @@ export class Auth0AuthzService implements AuthzService {
 
   async getGroups() {
     return this.client.getGroups();
+  }
+
+  async getGroup(id: string) {
+    return this.client.getGroup({ groupId: id });
   }
 
   async createGroup(name: string, description: string, members?: string[]) {

@@ -40,8 +40,8 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         .map(({ name, description, _id: id }) => ({
           name,
           description,
-          id
-        }))
+          id,
+        }));
 
       const paginationOffset = (pageOptions.page - 1) * pageOptions.size;
 
@@ -63,7 +63,27 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       };
 
       const code = 200;
-      const response = createOrganizationSerializer([], paginationLinks, meta).serialize(paginatedGroups);
+      const response = createOrganizationSerializer(include, paginationLinks, meta).serialize(paginatedGroups);
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
+
+  router.get(
+    `${path}/:id`,
+    guard.enforcePrimaryGroup(true),
+    AuthzGuards.readUsersGuard,
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const authzService: AuthzService = req.app.locals.authzService;
+
+      const id = req.params.id;
+      const include = queryParamGroup(<string>req.query.include);
+
+      const group = await authzService.getGroup(id);
+
+      const code = 200;
+      const response = createOrganizationSerializer(include).serialize(group);
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);
