@@ -83,7 +83,31 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const group = await authzService.getGroup(id);
 
       const code = 200;
-      const response = createOrganizationSerializer(include).serialize(group);
+      const response = createOrganizationSerializer(include).serialize({ id, ...group });
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
+
+  router.put(
+    `${path}/:id`,
+    guard.enforcePrimaryGroup(true),
+    AuthzGuards.writeUsersGuard,
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const authzService: AuthzService = req.app.locals.authzService;
+
+      const id = req.params.id;
+      const body = req.body;
+
+      const description = get(body, 'description', '');
+
+      const group = await authzService.getGroup(id);
+
+      const success = !!(await authzService.updateGroup(id, group.name, description));
+
+      const code = 200;
+      const response: SuccessResponse = { code, data: { success } };
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);

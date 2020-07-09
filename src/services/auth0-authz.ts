@@ -13,6 +13,7 @@ export interface AuthzService {
   getGroups();
   getGroup(id: string);
   createGroup(name: string, description: string, members?: string[]);
+  updateGroup(id: string, name: string, description: string);
   addNestedGroups(groupId: string, nestedGroupIds: string[]);
   addGroupRoles(groupId: string, roleIds: string[]);
   deleteGroup(groupId: string);
@@ -51,6 +52,10 @@ export class Auth0AuthzService implements AuthzService {
 
   async createGroup(name: string, description: string, members?: string[]) {
     return this.client.createGroup({ name, description, members });
+  }
+
+  async updateGroup(id: string, name: string, description: string, members?: string[]) {
+    return this.client.updateGroup({ _id: id, name, description, members });
   }
 
   async addNestedGroups(groupId: string, nestedGroupIds: string[]) {
