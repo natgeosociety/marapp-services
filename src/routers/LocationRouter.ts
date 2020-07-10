@@ -13,6 +13,7 @@ import { LocationModel } from '../models';
 import { getAll, getByGeometryIntersection, getById, getByIds, remove, save, update } from '../models/utils';
 import { createSerializer } from '../serializers/LocationSerializer';
 import { ResponseMeta, SuccessResponse } from '../types/response';
+import { searchTermHint } from '../helpers/util';
 
 import { queryParamGroup } from '.';
 
@@ -63,8 +64,10 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
         meta.pagination = merge(meta.pagination, { page: queryOptions.skip });
       }
 
+      const searchedDocs = docs.map((doc) => ({ ...doc.toObject(), $searchHint: searchTermHint(search, doc.name) }));
+
       const code = 200;
-      const response = createSerializer(include, paginationLinks, meta).serialize(docs);
+      const response = createSerializer(include, paginationLinks, meta).serialize(searchedDocs);
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);

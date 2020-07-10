@@ -25,6 +25,8 @@ export const LOCATION_ATTRIBUTES: string[] = [
   // relationships;
   'intersections',
   'metrics',
+  // extra;
+  '$searchHint',
 ];
 
 export const createSerializer = (
