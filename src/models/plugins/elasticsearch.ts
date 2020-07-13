@@ -118,7 +118,15 @@ export default (schema: Schema, options: ESIndexConfig) => {
         10000
       );
 
-      return data.body.hits.hits.reduce((result, { _id, highlight }) => (result[_id] = highlight) && result, {});
+      return data.body.hits.hits.reduce((result, { _id, highlight }) => {
+        result[_id] = Object.keys(highlight).reduce((a, c) => {
+          a[c] = highlight[c][0];
+
+          return a;
+        }, {});
+
+        return result;
+      }, {});
     } catch (err) {
       logger.error(err);
       return {};
