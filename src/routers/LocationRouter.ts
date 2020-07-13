@@ -37,7 +37,13 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
       const predefined = queryFilters.concat([{ key: 'organization', op: 'in', value: req.groups }]);
       const queryOptions = parser.parse(req.query, { predefined }, ['search']);
 
-      const searchResult = await LocationModel.esSearchOnlyIds(search, { organization: req.groups, published: true });
+      const searchFields = ['name'];
+
+      const searchResult = await LocationModel.esSearchOnlyIds(
+        search,
+        { organization: req.groups, published: true },
+        searchFields
+      );
       const searchIds = Object.keys(searchResult);
 
       const { docs, total, cursor, aggs } = await getAll(LocationModel, queryOptions, searchIds, ['type']);
@@ -68,7 +74,7 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
 
       const searchedDocs = docs.map((doc) => ({
         ...doc.toObject(),
-        $searchHint: get(searchResult[doc.id], 'name[0]', ''),
+        $searchHint: searchResult[doc.id] || {},
       }));
 
       const code = 200;
