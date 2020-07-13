@@ -20,6 +20,8 @@ export const DASHBOARD_ATTRIBUTES: string[] = [
   // relationships;
   'layers',
   'widgets',
+  // extra;
+  '$searchHint',
 ];
 
 export const createSerializer = (

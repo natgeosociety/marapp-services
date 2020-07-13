@@ -20,6 +20,8 @@ export const WIDGET_ATTRIBUTES: string[] = [
   'version',
   // relationships;
   'layers',
+  // extra;
+  '$searchHint',
 ];
 
 export const createSerializer = (

@@ -21,6 +21,8 @@ export const LAYER_ATTRIBUTES: string[] = [
   'version',
   // relationships;
   'references',
+  // extra;
+  '$searchHint',
 ];
 
 export const createSerializer = (

@@ -305,7 +305,7 @@ export const getAll = async <T extends Document, L extends keyof T>(
   let { queryCond, sortCond } = encodeCursorQuery(mongooseOptions);
   const paginationCursor = mongooseOptions.cursor.decoded;
 
-  if (!isNil(filterIds)) {
+  if (!isNil(filterIds) && filterIds.length > 0) {
     queryCond = { ...queryCond, _id: { $in: filterIds } }; // filter by ids;
   }
 

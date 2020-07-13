@@ -40,7 +40,9 @@ const getRouter = (basePath: string = '/', routePath: string = '/dashboards') =>
       const predefined = queryFilters.concat([{ key: 'organization', op: 'in', value: req.groups }]);
       const queryOptions = parser.parse(req.query, { predefined }, ['search']);
 
-      const searchIds = await DashboardModel.esSearchOnlyIds(search, { organization: req.groups, published: true });
+      const searchResult = await DashboardModel.esSearchOnlyIds(search, { organization: req.groups, published: true });
+      const searchIds = Object.keys(searchResult);
+
       const { docs, total, cursor, aggs } = await getAll(DashboardModel, queryOptions, searchIds);
 
       const paginator = new PaginationHelper({
@@ -67,8 +69,13 @@ const getRouter = (basePath: string = '/', routePath: string = '/dashboards') =>
         meta.pagination = merge(meta.pagination, { page: queryOptions.skip });
       }
 
+      const searchedDocs = docs.map((doc) => ({
+        ...doc.toObject(),
+        $searchHint: searchResult[doc.id] || {},
+      }));
+
       const code = 200;
-      const response = createSerializer(include, paginationLinks, meta).serialize(docs);
+      const response = createSerializer(include, paginationLinks, meta).serialize(searchedDocs);
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);
@@ -120,7 +127,9 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const predefined = queryFilters.concat([{ key: 'organization', op: 'in', value: req.groups }]);
       const queryOptions = parser.parse(req.query, { predefined }, ['search']);
 
-      const searchIds = await DashboardModel.esSearchOnlyIds(search, { organization: req.groups });
+      const searchResult = await DashboardModel.esSearchOnlyIds(search, { organization: req.groups });
+      const searchIds = Object.keys(searchResult);
+
       const { docs, total, cursor, aggs } = await getAll(DashboardModel, queryOptions, searchIds);
 
       const paginator = new PaginationHelper({
@@ -147,8 +156,13 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         meta.pagination = merge(meta.pagination, { page: queryOptions.skip });
       }
 
+      const searchedDocs = docs.map((doc) => ({
+        ...doc.toObject(),
+        $searchHint: searchResult[doc.id] || {},
+      }));
+
       const code = 200;
-      const response = createSerializer(include, paginationLinks, meta).serialize(docs);
+      const response = createSerializer(include, paginationLinks, meta).serialize(searchedDocs);
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);
