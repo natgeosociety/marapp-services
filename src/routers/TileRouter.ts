@@ -47,17 +47,17 @@ const getRouter = (basePath: string = '/', routePath: string = '/tiles') => {
         throw new RecordNotFound(`Could not retrieve layer.`, 404);
       }
 
-      const layerConfig = get(layer.config, 'layerConfig');
-      if (isEmpty(layerConfig)) {
-        throw new ParameterRequiredError('Required config property "layerConfig" missing', 400);
+      const source = get(layer.config, 'source');
+      if (isEmpty(source)) {
+        throw new ParameterRequiredError('Required config property "source" missing', 400);
       }
-      const assetId = get(layer.config, 'layerConfig.assetId');
+      const assetId = get(layer.config, 'source.assetId');
       if (!assetId) {
-        throw new ParameterRequiredError('Required config property "layerConfig.assetId" missing', 400);
+        throw new ParameterRequiredError('Required config property "source.assetId" missing', 400);
       }
 
-      const styleType = get(layerConfig, 'body.styleType');
-      const style = get(layerConfig, 'body.sldValue');
+      const styleType = get(source, 'styleType');
+      const style = get(source, 'sldValue');
 
       try {
         let eeImage = ee.Image(assetId);
