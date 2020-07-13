@@ -1,6 +1,7 @@
 import { Errback, NextFunction, Request, Response } from 'express';
 import jwt from 'express-jwt';
 import jwksRsa from 'jwks-rsa';
+import ms from 'ms';
 
 import { SERVICE_API_KEY } from '../config';
 import { AUTH0_DOMAIN } from '../config/auth0';
@@ -45,6 +46,7 @@ const isValidApiKey = (apiKey: string): boolean => {
 
 /**
  * RSA signing keys provider.
+ * Caches results in order to prevent excessive HTTP requests to the JWKS endpoint.
  * @param req
  * @param header
  * @param payload
@@ -57,10 +59,14 @@ const secretProvider = (req, header, payload, cb) => {
   }
   if (!jwksRsaClient) {
     jwksRsaClient = jwksRsa({
+      strictSsl: true,
       cache: true,
+      cacheMaxEntries: 5,
+      cacheMaxAge: ms('10m'),
       rateLimit: true,
       jwksRequestsPerMinute: 5,
       jwksUri: `https://${AUTH0_DOMAIN}/.well-known/jwks.json`,
+      timeout: ms('30s'),
     });
   }
   jwksRsaClient.getSigningKey(header.kid, (err, key) => {
