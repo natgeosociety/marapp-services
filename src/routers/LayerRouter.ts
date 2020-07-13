@@ -42,7 +42,9 @@ const getRouter = (basePath: string = '/', routePath: string = '/layers') => {
       const searchResult = await LayerModel.esSearchOnlyIds(search, { organization: req.groups, published: true });
       const searchIds = Object.keys(searchResult);
 
-      const { docs, total, cursor, aggs } = await getAll(LayerModel, queryOptions, searchIds, ['category']);
+      const { docs, total, cursor, aggs } = await getAll(LayerModel, queryOptions, search ? searchIds : null, [
+        'category',
+      ]);
 
       const paginator = new PaginationHelper({
         sizeTotal: total,
@@ -129,7 +131,9 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const searchResult = await LayerModel.esSearchOnlyIds(search, { organization: req.groups });
       const searchIds = Object.keys(searchResult);
 
-      const { docs, total, cursor, aggs } = await getAll(LayerModel, queryOptions, searchIds, ['category']);
+      const { docs, total, cursor, aggs } = await getAll(LayerModel, queryOptions, search ? searchIds : null, [
+        'category',
+      ]);
 
       const paginator = new PaginationHelper({
         sizeTotal: total,

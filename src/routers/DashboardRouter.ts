@@ -43,7 +43,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/dashboards') =>
       const searchResult = await DashboardModel.esSearchOnlyIds(search, { organization: req.groups, published: true });
       const searchIds = Object.keys(searchResult);
 
-      const { docs, total, cursor, aggs } = await getAll(DashboardModel, queryOptions, searchIds);
+      const { docs, total, cursor, aggs } = await getAll(DashboardModel, queryOptions, search ? searchIds : null);
 
       const paginator = new PaginationHelper({
         sizeTotal: total,
@@ -130,7 +130,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const searchResult = await DashboardModel.esSearchOnlyIds(search, { organization: req.groups });
       const searchIds = Object.keys(searchResult);
 
-      const { docs, total, cursor, aggs } = await getAll(DashboardModel, queryOptions, searchIds);
+      const { docs, total, cursor, aggs } = await getAll(DashboardModel, queryOptions, search ? searchIds : null);
 
       const paginator = new PaginationHelper({
         sizeTotal: total,

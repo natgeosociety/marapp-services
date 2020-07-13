@@ -46,7 +46,9 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
       );
       const searchIds = Object.keys(searchResult);
 
-      const { docs, total, cursor, aggs } = await getAll(LocationModel, queryOptions, searchIds, ['type']);
+      const { docs, total, cursor, aggs } = await getAll(LocationModel, queryOptions, search ? searchIds : null, [
+        'type',
+      ]);
 
       const paginator = new PaginationHelper({
         sizeTotal: total,
@@ -74,7 +76,7 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
 
       const searchedDocs = docs.map((doc) => ({
         ...doc.toObject(),
-        $searchHint: searchResult[doc.id] || {},
+        $searchHint: searchResult[doc.id] || searchFields.reduce((a, c) => (a[c] = doc[c]) && a, {}),
       }));
 
       const code = 200;
@@ -147,7 +149,9 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const searchResult = await LocationModel.esSearchOnlyIds(search, { organization: req.groups });
       const searchIds = Object.keys(searchResult);
 
-      const { docs, total, cursor, aggs } = await getAll(LocationModel, queryOptions, searchIds, ['type']);
+      const { docs, total, cursor, aggs } = await getAll(LocationModel, queryOptions, search ? searchIds : null, [
+        'type',
+      ]);
 
       const paginator = new PaginationHelper({
         sizeTotal: total,
