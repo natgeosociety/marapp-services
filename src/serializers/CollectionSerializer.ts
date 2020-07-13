@@ -25,6 +25,8 @@ export const COLLECTION_ATTRIBUTES: string[] = [
   // relationships;
   'locations',
   'metrics',
+  // extra;
+  '$searchHint',
 ];
 
 export const createSerializer = (
