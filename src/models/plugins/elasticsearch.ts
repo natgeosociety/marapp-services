@@ -80,7 +80,7 @@ export default (schema: Schema, options: ESIndexConfig) => {
     fields: string[] = ['name']
   ) {
     if (!query_string) {
-      return;
+      return {};
     }
     let query = {
       bool: {
@@ -121,7 +121,7 @@ export default (schema: Schema, options: ESIndexConfig) => {
       return data.body.hits.hits.reduce((result, { _id, highlight }) => (result[_id] = highlight) && result, {});
     } catch (err) {
       logger.error(err);
-      return [];
+      return {};
     }
   };
 

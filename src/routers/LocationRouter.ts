@@ -1,6 +1,6 @@
 import { Response, Router } from 'express';
 import asyncHandler from 'express-async-handler';
-import { merge } from 'lodash';
+import { get, merge } from 'lodash';
 import urljoin from 'url-join';
 
 import { API_BASE, DEFAULT_CONTENT_TYPE } from '../config';
@@ -66,7 +66,10 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
         meta.pagination = merge(meta.pagination, { page: queryOptions.skip });
       }
 
-      const searchedDocs = docs.map((doc) => ({ ...doc.toObject(), $searchHint: searchResult[doc.id].name[0] }));
+      const searchedDocs = docs.map((doc) => ({
+        ...doc.toObject(),
+        $searchHint: get(searchResult[doc.id], 'name[0]', ''),
+      }));
 
       const code = 200;
       const response = createSerializer(include, paginationLinks, meta).serialize(searchedDocs);
