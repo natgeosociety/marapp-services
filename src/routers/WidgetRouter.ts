@@ -39,7 +39,9 @@ const getRouter = (basePath: string = '/', routePath: string = '/widgets') => {
       const predefined = queryFilters.concat([{ key: 'organization', op: 'in', value: req.groups }]);
       const queryOptions = parser.parse(req.query, { predefined }, ['search']);
 
-      const searchIds = await WidgetModel.esSearchOnlyIds(search, { organization: req.groups, published: true });
+      const searchResult = await WidgetModel.esSearchOnlyIds(search, { organization: req.groups, published: true });
+      const searchIds = Object.keys(searchResult);
+
       const { docs, total, cursor, aggs } = await getAll(WidgetModel, queryOptions, searchIds);
 
       const paginator = new PaginationHelper({
@@ -119,7 +121,9 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const predefined = queryFilters.concat([{ key: 'organization', op: 'in', value: req.groups }]);
       const queryOptions = parser.parse(req.query, { predefined }, ['search']);
 
-      const searchIds = await WidgetModel.esSearchOnlyIds(search, { organization: req.groups });
+      const searchResult = await WidgetModel.esSearchOnlyIds(search, { organization: req.groups });
+      const searchIds = Object.keys(searchResult);
+
       const { docs, total, cursor, aggs } = await getAll(WidgetModel, queryOptions, searchIds);
 
       const paginator = new PaginationHelper({

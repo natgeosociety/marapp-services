@@ -37,7 +37,9 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
       const predefined = queryFilters.concat([{ key: 'organization', op: 'in', value: req.groups }]);
       const queryOptions = parser.parse(req.query, { predefined }, ['search']);
 
-      const searchIds = await LocationModel.esSearchOnlyIds(search, { organization: req.groups, published: true });
+      const searchResult = await LocationModel.esSearchOnlyIds(search, { organization: req.groups, published: true });
+      const searchIds = Object.keys(searchResult);
+
       const { docs, total, cursor, aggs } = await getAll(LocationModel, queryOptions, searchIds, ['type']);
 
       const paginator = new PaginationHelper({
@@ -64,7 +66,7 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
         meta.pagination = merge(meta.pagination, { page: queryOptions.skip });
       }
 
-      const searchedDocs = docs.map((doc) => ({ ...doc.toObject(), $searchHint: searchTermHint(search, doc.name) }));
+      const searchedDocs = docs.map((doc) => ({ ...doc.toObject(), $searchHint: searchResult[doc.id].name[0] }));
 
       const code = 200;
       const response = createSerializer(include, paginationLinks, meta).serialize(searchedDocs);
@@ -133,7 +135,9 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const predefined = queryFilters.concat([{ key: 'organization', op: 'in', value: req.groups }]);
       const queryOptions = parser.parse(req.query, { predefined }, ['search']);
 
-      const searchIds = await LocationModel.esSearchOnlyIds(search, { organization: req.groups });
+      const searchResult = await LocationModel.esSearchOnlyIds(search, { organization: req.groups });
+      const searchIds = Object.keys(searchResult);
+
       const { docs, total, cursor, aggs } = await getAll(LocationModel, queryOptions, searchIds, ['type']);
 
       const paginator = new PaginationHelper({

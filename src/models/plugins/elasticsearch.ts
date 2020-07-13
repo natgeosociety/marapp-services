@@ -8,7 +8,7 @@ import { ElasticSearchService, ESIndexConfig } from '../../services/search-servi
 export interface IESPlugin {
   esSync?(): Promise<any>;
   esSearch?(esQuery: object, from: number, size: number): Promise<any>;
-  esSearchOnlyIds?(query_string: string, filterBy?: { [key: string]: any }, fields?: string[]): Promise<string[]>;
+  esSearchOnlyIds?(query_string: string, filterBy?: { [key: string]: any }, fields?: string[]): Promise<object>;
   esSearchOnlyIdsAndAggs?(
     query_string: string,
     field: string,
@@ -104,8 +104,21 @@ export default (schema: Schema, options: ESIndexConfig) => {
       set(query, ['bool', 'filter'], filters);
     }
     try {
-      const data = await this.esSearch({ _source: false, query }, 0, 10000);
-      return data.body.hits.hits.map((hit) => hit._id);
+      const data = await this.esSearch(
+        {
+          _source: false,
+          query,
+          highlight: {
+            pre_tags: ['{{'],
+            post_tags: ['}}'],
+            fields: fields.reduce((a, c) => (a[c] = {}) && a, {}),
+          },
+        },
+        0,
+        10000
+      );
+
+      return data.body.hits.hits.reduce((result, { _id, highlight }) => (result[_id] = highlight) && result, {});
     } catch (err) {
       logger.error(err);
       return [];
