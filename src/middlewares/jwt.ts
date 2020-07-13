@@ -9,6 +9,8 @@ import { getLogger } from '../logging';
 
 const logger = getLogger();
 
+let jwksRsaClient;
+
 /**
  * Extract the JWT from the Authorization header.
  * @param req
@@ -42,6 +44,36 @@ const isValidApiKey = (apiKey: string): boolean => {
 };
 
 /**
+ * RSA signing keys provider.
+ * @param req
+ * @param header
+ * @param payload
+ * @param cb
+ */
+const secretProvider = (req, header, payload, cb) => {
+  // Only RS256 is supported.
+  if (!header || header.alg !== 'RS256') {
+    return cb(null, null);
+  }
+  if (!jwksRsaClient) {
+    jwksRsaClient = jwksRsa({
+      cache: true,
+      rateLimit: true,
+      jwksRequestsPerMinute: 5,
+      jwksUri: `https://${AUTH0_DOMAIN}/.well-known/jwks.json`,
+    });
+  }
+  jwksRsaClient.getSigningKey(header.kid, (err, key) => {
+    if (err) {
+      logger.error(err);
+      return cb(err, null);
+    }
+    // Provide the key.
+    return cb(null, key.publicKey || key.rsaPublicKey);
+  });
+};
+
+/**
  * Middleware that validates a JsonWebToken (JWT) and sets a property on the request
  * with the decoded attributes.
  *
@@ -55,19 +87,15 @@ export const jwtRSA = (req: Request, res: Response, next: NextFunction) => {
     res.locals.isServiceAccount = true; // forward response local variables scoped to the request;
     return next();
   }
-  return jwt({
+  const options = {
     userProperty: 'identity',
-    secret: jwksRsa.expressJwtSecret({
-      cache: true,
-      rateLimit: true,
-      jwksRequestsPerMinute: 5,
-      jwksUri: `https://${AUTH0_DOMAIN}/.well-known/jwks.json`,
-    }),
+    secret: secretProvider,
     algorithms: ['RS256'],
     issuer: `https://${AUTH0_DOMAIN}/`,
     credentialsRequired: true,
     getToken: getToken,
-  })(req, res, next);
+  };
+  return jwt(options)(req, res, next);
 };
 
 /**
