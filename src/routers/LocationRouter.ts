@@ -173,8 +173,13 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         meta.pagination = merge(meta.pagination, { page: queryOptions.skip });
       }
 
+      const searchedDocs = docs.map((doc) => ({
+        ...doc.toObject(),
+        $searchHint: searchResult[doc.id] || {},
+      }));
+
       const code = 200;
-      const response = createSerializer(include, paginationLinks, meta).serialize(docs);
+      const response = createSerializer(include, paginationLinks, meta).serialize(searchedDocs);
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);
