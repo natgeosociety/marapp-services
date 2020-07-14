@@ -23,9 +23,9 @@ import axios from 'axios';
 import * as chalk from 'chalk';
 import * as yargs from 'yargs';
 
+import { API_BASE } from '../src/config';
 import { forEachAsync } from '../src/helpers/util';
 import { OperationTypeEnum, publishSNSMessage, SNSMessage } from '../src/services/sns';
-import { API_BASE } from '../src/config';
 
 const API_HOST = '<API_HOST_NAME>';
 

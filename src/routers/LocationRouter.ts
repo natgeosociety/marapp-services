@@ -19,7 +19,7 @@
 
 import { Response, Router } from 'express';
 import asyncHandler from 'express-async-handler';
-import { get, merge } from 'lodash';
+import { merge } from 'lodash';
 import urljoin from 'url-join';
 
 import { API_BASE, DEFAULT_CONTENT_TYPE } from '../config';
@@ -32,7 +32,6 @@ import { LocationModel } from '../models';
 import { getAll, getByGeometryIntersection, getById, getByIds, remove, save, update } from '../models/utils';
 import { createSerializer } from '../serializers/LocationSerializer';
 import { ResponseMeta, SuccessResponse } from '../types/response';
-import { searchTermHint } from '../helpers/util';
 
 import { queryParamGroup } from '.';
 
@@ -56,13 +55,7 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
       const predefined = queryFilters.concat([{ key: 'organization', op: 'in', value: req.groups }]);
       const queryOptions = parser.parse(req.query, { predefined }, ['search']);
 
-      const searchFields = ['name'];
-
-      const searchResult = await LocationModel.esSearchOnlyIds(
-        search,
-        { organization: req.groups, published: true },
-        searchFields
-      );
+      const searchResult = await LocationModel.esSearchOnlyIds(search, { organization: req.groups, published: true });
       const searchIds = Object.keys(searchResult);
 
       const { docs, total, cursor, aggs } = await getAll(LocationModel, queryOptions, search ? searchIds : null, [
@@ -95,7 +88,7 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
 
       const searchedDocs = docs.map((doc) => ({
         ...doc.toObject(),
-        $searchHint: searchResult[doc.id] || searchFields.reduce((a, c) => (a[c] = doc[c]) && a, {}),
+        $searchHint: searchResult[doc.id] || {},
       }));
 
       const code = 200;

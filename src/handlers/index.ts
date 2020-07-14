@@ -31,7 +31,7 @@ import { createRedisConnection } from '../helpers/redis';
 import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
 import { expressFactory } from '../middlewares';
-import { jwtError, jwtRSA, apiKey } from '../middlewares/jwt';
+import { apiKey, jwtError, jwtRSA } from '../middlewares/jwt';
 import { Auth0AuthzService, initAuthzClient } from '../services/auth0-authz';
 import { Auth0ManagementService, initAuthMgmtClient } from '../services/auth0-management';
 import { RedisCacheService } from '../services/cache-service';

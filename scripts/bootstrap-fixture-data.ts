@@ -23,8 +23,8 @@ import axios from 'axios';
 import * as chalk from 'chalk';
 import * as readline from 'readline';
 import slug from 'slug';
-import * as yargs from 'yargs';
 import { v4 as uuidv4 } from 'uuid';
+import * as yargs from 'yargs';
 
 import { API_BASE } from '../src/config';
 import { Location, LocationTypeEnum } from '../src/models';
