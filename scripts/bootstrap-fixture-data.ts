@@ -29,9 +29,8 @@ import * as yargs from 'yargs';
 import { API_BASE } from '../src/config';
 import { Location, LocationTypeEnum } from '../src/models';
 
-const API_HOST = '<API_HOST_NAME>';
-
 const argv = yargs.options({
+  apiHost: { type: 'string', demandOption: true },
   organization: { type: 'string', demandOption: true },
   dryRun: { type: 'boolean', default: false },
   apiKey: { type: 'string', demandOption: true },
@@ -99,7 +98,7 @@ const createResource = async (body: Location): Promise<void> => {
     'Content-Type': 'application/json',
   };
 
-  const endpoint = `${API_HOST}/${API_BASE}/management/locations?group=${argv.organization}`;
+  const endpoint = `${argv.apiHost}/${API_BASE}/management/locations?group=${argv.organization}`;
   try {
     const response = await axios.post(endpoint, body, { headers });
     if (response.status === 200) {

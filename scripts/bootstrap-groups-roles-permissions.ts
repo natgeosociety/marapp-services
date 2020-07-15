@@ -19,9 +19,9 @@
   specific language governing permissions and limitations under the License.
 */
 
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { get } from 'lodash';
-import yargs from 'yargs';
+import * as yargs from 'yargs';
 
 import { forEachAsync } from '../src/helpers/util';
 import { Auth0AuthzService, initAuthzClient } from '../src/services/auth0-authz';
@@ -181,11 +181,16 @@ const main = async (): Promise<void> => {
   if (argv.userEmail && argv.userEmail.trim() && argv.groupId && argv.groupId.trim()) {
     const user = await authMgmtService.getUserByEmail(argv.userEmail);
     const userId = get(user, 'user_id');
-
     await authzService.addGroupMembers(argv.groupId, [userId]);
   }
 };
 
 main()
-  .then(() => console.debug('Success!'))
-  .catch((err) => console.error(err));
+  .then(() => {
+    console.debug('Success!');
+    process.exit(0);
+  })
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });

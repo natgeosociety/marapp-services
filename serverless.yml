@@ -311,7 +311,7 @@ resources:
           Origins:
             - DomainName: { "Fn::Join": [".", [{ "Ref": "ApiGatewayRestApi" }, "execute-api.${self:provider.region}.amazonaws.com" ] ]  }
               Id: ApiGw
-              OriginPath: /prod
+              OriginPath: /${self:custom.stageEnv}
               CustomOriginConfig:
                 HTTPPort: 80
                 HTTPSPort: 443
