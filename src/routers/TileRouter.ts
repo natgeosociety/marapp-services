@@ -47,17 +47,17 @@ const getRouter = (basePath: string = '/', routePath: string = '/tiles') => {
       const layerId = req.params.layer;
 
       const z = Number(req.params.z);
-      if (!inRange(z, 0, MAX_ZOOM_LEVEL)) {
+      if (!inRange(z, 0, MAX_ZOOM_LEVEL + 1)) {
         throw new InvalidParameterError(`Zoom level must be between 0-${MAX_ZOOM_LEVEL}`, 400);
       }
       const zoomGrid = Math.pow(2, MAX_ZOOM_LEVEL) - 1;
 
       const x = Number(req.params.x); // X goes from 0 to 2^zoom − 1
-      if (!inRange(x, 0, zoomGrid)) {
+      if (!inRange(x, 0, zoomGrid + 1)) {
         throw new InvalidParameterError(`X coordinate must be between 0-${zoomGrid} (2^zoom − 1)`, 400);
       }
       const y = Number(req.params.y); // Y goes from 0 to 2^zoom − 1
-      if (!inRange(x, 0, zoomGrid)) {
+      if (!inRange(x, 0, zoomGrid + 1)) {
         throw new InvalidParameterError(`X coordinate must be between 0-${zoomGrid} (2^zoom − 1)`, 400);
       }
 
