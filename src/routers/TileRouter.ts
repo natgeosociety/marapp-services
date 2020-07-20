@@ -1,3 +1,22 @@
+/*
+  Copyright 2018-2020 National Geographic Society
+
+  Use of this software does not constitute endorsement by National Geographic
+  Society (NGS). The NGS name and NGS logo may not be used for any purpose without
+  written permission from NGS.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+  this file except in compliance with the License. You may obtain a copy of the
+  License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software distributed
+  under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+  CONDITIONS OF ANY KIND, either express or implied. See the License for the
+  specific language governing permissions and limitations under the License.
+*/
+
 import ee from '@google/earthengine';
 import { Request, Response, Router } from 'express';
 import asyncHandler from 'express-async-handler';
@@ -28,17 +47,17 @@ const getRouter = (basePath: string = '/', routePath: string = '/tiles') => {
       const layerId = req.params.layer;
 
       const z = Number(req.params.z);
-      if (!inRange(z, 0, MAX_ZOOM_LEVEL)) {
+      if (!inRange(z, 0, MAX_ZOOM_LEVEL + 1)) {
         throw new InvalidParameterError(`Zoom level must be between 0-${MAX_ZOOM_LEVEL}`, 400);
       }
       const zoomGrid = Math.pow(2, MAX_ZOOM_LEVEL) - 1;
 
       const x = Number(req.params.x); // X goes from 0 to 2^zoom − 1
-      if (!inRange(x, 0, zoomGrid)) {
+      if (!inRange(x, 0, zoomGrid + 1)) {
         throw new InvalidParameterError(`X coordinate must be between 0-${zoomGrid} (2^zoom − 1)`, 400);
       }
       const y = Number(req.params.y); // Y goes from 0 to 2^zoom − 1
-      if (!inRange(x, 0, zoomGrid)) {
+      if (!inRange(x, 0, zoomGrid + 1)) {
         throw new InvalidParameterError(`X coordinate must be between 0-${zoomGrid} (2^zoom − 1)`, 400);
       }
 
@@ -47,17 +66,17 @@ const getRouter = (basePath: string = '/', routePath: string = '/tiles') => {
         throw new RecordNotFound(`Could not retrieve layer.`, 404);
       }
 
-      const layerConfig = get(layer.config, 'layerConfig');
-      if (isEmpty(layerConfig)) {
-        throw new ParameterRequiredError('Required config property "layerConfig" missing', 400);
+      const source = get(layer.config, 'source');
+      if (isEmpty(source)) {
+        throw new ParameterRequiredError('Required config property "source" missing', 400);
       }
-      const assetId = get(layer.config, 'layerConfig.assetId');
+      const assetId = get(layer.config, 'source.assetId');
       if (!assetId) {
-        throw new ParameterRequiredError('Required config property "layerConfig.assetId" missing', 400);
+        throw new ParameterRequiredError('Required config property "source.assetId" missing', 400);
       }
 
-      const styleType = get(layerConfig, 'body.styleType');
-      const style = get(layerConfig, 'body.sldValue');
+      const styleType = get(source, 'styleType');
+      const style = get(source, 'sldValue');
 
       try {
         let eeImage = ee.Image(assetId);

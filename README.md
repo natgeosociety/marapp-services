@@ -59,6 +59,21 @@ The following environment variables are required by the application. For more de
 
 The required environment variables are also described in [.env.sample](.env.sample).
 
+####  VPC Configuration
+
+You can configure the functions to connect to private subnets in a virtual private cloud (VPC) in your account.
+
+The following environment variables are required to connect to a VPC.
+```shell script
+VPC_SECURITY_GROUP_ID_1='<SECURITY-GROUP-ID1>'
+VPC_SECURITY_GROUP_ID_2='<SECURITY-GROUP-ID2>'
+...
+VPC_SUBNET_ID_1='<SUBNET_ID1>'
+VPC_SUBNET_ID_2='<SUBNET_ID2>'
+...
+```
+For more details, see: https://www.serverless.com/framework/docs/providers/aws/guide/functions#vpc-configuration
+
 Start required services. 
 
 ```bash

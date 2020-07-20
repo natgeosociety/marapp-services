@@ -1,6 +1,26 @@
+/*
+  Copyright 2018-2020 National Geographic Society
+
+  Use of this software does not constitute endorsement by National Geographic
+  Society (NGS). The NGS name and NGS logo may not be used for any purpose without
+  written permission from NGS.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+  this file except in compliance with the License. You may obtain a copy of the
+  License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software distributed
+  under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+  CONDITIONS OF ANY KIND, either express or implied. See the License for the
+  specific language governing permissions and limitations under the License.
+*/
+
 import { Errback, NextFunction, Request, Response } from 'express';
 import jwt from 'express-jwt';
 import jwksRsa from 'jwks-rsa';
+import ms from 'ms';
 
 import { SERVICE_API_KEY } from '../config';
 import { AUTH0_DOMAIN } from '../config/auth0';
@@ -8,6 +28,8 @@ import { UnauthorizedError } from '../errors';
 import { getLogger } from '../logging';
 
 const logger = getLogger();
+
+let jwksRsaClient;
 
 /**
  * Extract the JWT from the Authorization header.
@@ -42,6 +64,41 @@ const isValidApiKey = (apiKey: string): boolean => {
 };
 
 /**
+ * RSA signing keys provider.
+ * Caches results in order to prevent excessive HTTP requests to the JWKS endpoint.
+ * @param req
+ * @param header
+ * @param payload
+ * @param cb
+ */
+const secretProvider = (req, header, payload, cb) => {
+  // Only RS256 is supported.
+  if (!header || header.alg !== 'RS256') {
+    return cb(null, null);
+  }
+  if (!jwksRsaClient) {
+    jwksRsaClient = jwksRsa({
+      strictSsl: true,
+      cache: true,
+      cacheMaxEntries: 5,
+      cacheMaxAge: ms('10m'),
+      rateLimit: true,
+      jwksRequestsPerMinute: 5,
+      jwksUri: `https://${AUTH0_DOMAIN}/.well-known/jwks.json`,
+      timeout: ms('30s'),
+    });
+  }
+  jwksRsaClient.getSigningKey(header.kid, (err, key) => {
+    if (err) {
+      logger.error(err);
+      return cb(err, null);
+    }
+    // Provide the key.
+    return cb(null, key.publicKey || key.rsaPublicKey);
+  });
+};
+
+/**
  * Middleware that validates a JsonWebToken (JWT) and sets a property on the request
  * with the decoded attributes.
  *
@@ -55,19 +112,15 @@ export const jwtRSA = (req: Request, res: Response, next: NextFunction) => {
     res.locals.isServiceAccount = true; // forward response local variables scoped to the request;
     return next();
   }
-  return jwt({
+  const options = {
     userProperty: 'identity',
-    secret: jwksRsa.expressJwtSecret({
-      cache: true,
-      rateLimit: true,
-      jwksRequestsPerMinute: 5,
-      jwksUri: `https://${AUTH0_DOMAIN}/.well-known/jwks.json`,
-    }),
+    secret: secretProvider,
     algorithms: ['RS256'],
     issuer: `https://${AUTH0_DOMAIN}/`,
     credentialsRequired: true,
     getToken: getToken,
-  })(req, res, next);
+  };
+  return jwt(options)(req, res, next);
 };
 
 /**

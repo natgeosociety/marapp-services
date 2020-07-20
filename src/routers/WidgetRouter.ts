@@ -1,3 +1,22 @@
+/*
+  Copyright 2018-2020 National Geographic Society
+
+  Use of this software does not constitute endorsement by National Geographic
+  Society (NGS). The NGS name and NGS logo may not be used for any purpose without
+  written permission from NGS.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+  this file except in compliance with the License. You may obtain a copy of the
+  License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software distributed
+  under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+  CONDITIONS OF ANY KIND, either express or implied. See the License for the
+  specific language governing permissions and limitations under the License.
+*/
+
 import { Response, Router } from 'express';
 import asyncHandler from 'express-async-handler';
 import { merge } from 'lodash';
@@ -39,8 +58,10 @@ const getRouter = (basePath: string = '/', routePath: string = '/widgets') => {
       const predefined = queryFilters.concat([{ key: 'organization', op: 'in', value: req.groups }]);
       const queryOptions = parser.parse(req.query, { predefined }, ['search']);
 
-      const searchIds = await WidgetModel.esSearchOnlyIds(search, { organization: req.groups, published: true });
-      const { docs, total, cursor, aggs } = await getAll(WidgetModel, queryOptions, searchIds);
+      const searchResult = await WidgetModel.esSearchOnlyIds(search, { organization: req.groups, published: true });
+      const searchIds = Object.keys(searchResult);
+
+      const { docs, total, cursor, aggs } = await getAll(WidgetModel, queryOptions, search ? searchIds : null);
 
       const paginator = new PaginationHelper({
         sizeTotal: total,
@@ -66,8 +87,13 @@ const getRouter = (basePath: string = '/', routePath: string = '/widgets') => {
         meta.pagination = merge(meta.pagination, { page: queryOptions.skip });
       }
 
+      const searchedDocs = docs.map((doc) => ({
+        ...doc.toObject(),
+        $searchHint: searchResult[doc.id] || {},
+      }));
+
       const code = 200;
-      const response = createSerializer(include, paginationLinks, meta).serialize(docs);
+      const response = createSerializer(include, paginationLinks, meta).serialize(searchedDocs);
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);
@@ -119,8 +145,10 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const predefined = queryFilters.concat([{ key: 'organization', op: 'in', value: req.groups }]);
       const queryOptions = parser.parse(req.query, { predefined }, ['search']);
 
-      const searchIds = await WidgetModel.esSearchOnlyIds(search, { organization: req.groups });
-      const { docs, total, cursor, aggs } = await getAll(WidgetModel, queryOptions, searchIds);
+      const searchResult = await WidgetModel.esSearchOnlyIds(search, { organization: req.groups });
+      const searchIds = Object.keys(searchResult);
+
+      const { docs, total, cursor, aggs } = await getAll(WidgetModel, queryOptions, search ? searchIds : null);
 
       const paginator = new PaginationHelper({
         sizeTotal: total,
@@ -146,8 +174,13 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         meta.pagination = merge(meta.pagination, { page: queryOptions.skip });
       }
 
+      const searchedDocs = docs.map((doc) => ({
+        ...doc.toObject(),
+        $searchHint: searchResult[doc.id] || {},
+      }));
+
       const code = 200;
-      const response = createSerializer(include, paginationLinks, meta).serialize(docs);
+      const response = createSerializer(include, paginationLinks, meta).serialize(searchedDocs);
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);

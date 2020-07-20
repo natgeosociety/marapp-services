@@ -1,18 +1,36 @@
 #!/usr/bin/env ts-node --files
 
+/*
+  Copyright 2018-2020 National Geographic Society
+
+  Use of this software does not constitute endorsement by National Geographic
+  Society (NGS). The NGS name and NGS logo may not be used for any purpose without
+  written permission from NGS.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+  this file except in compliance with the License. You may obtain a copy of the
+  License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software distributed
+  under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+  CONDITIONS OF ANY KIND, either express or implied. See the License for the
+  specific language governing permissions and limitations under the License.
+*/
+
 import axios from 'axios';
 import * as chalk from 'chalk';
 import * as readline from 'readline';
 import slug from 'slug';
-import * as yargs from 'yargs';
 import { v4 as uuidv4 } from 'uuid';
+import * as yargs from 'yargs';
 
 import { API_BASE } from '../src/config';
 import { Location, LocationTypeEnum } from '../src/models';
 
-const API_HOST = '<API_HOST_NAME>';
-
 const argv = yargs.options({
+  apiHost: { type: 'string', demandOption: true },
   organization: { type: 'string', demandOption: true },
   dryRun: { type: 'boolean', default: false },
   apiKey: { type: 'string', demandOption: true },
@@ -80,7 +98,7 @@ const createResource = async (body: Location): Promise<void> => {
     'Content-Type': 'application/json',
   };
 
-  const endpoint = `${API_HOST}/${API_BASE}/management/locations?group=${argv.organization}`;
+  const endpoint = `${argv.apiHost}/${API_BASE}/management/locations?group=${argv.organization}`;
   try {
     const response = await axios.post(endpoint, body, { headers });
     if (response.status === 200) {

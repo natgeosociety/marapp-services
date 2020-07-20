@@ -17,16 +17,26 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { Handler } from 'aws-lambda';
+import { Serializer, SerializerOptions } from 'jsonapi-serializer';
 
-import { API_BASE } from '../config';
-import { getLogger } from '../logging';
-import LayerRouter from '../routers/LayerRouter';
+import { PaginationLinks } from '.';
 
-import { authenticated } from '.';
+export const ORG_ATTRIBUTES: string[] = ['id', 'name', 'description'];
 
-const logger = getLogger();
-
-export const openHandler: Handler = authenticated(LayerRouter.getRouter(API_BASE));
-
-export const managementHandler: Handler = authenticated(LayerRouter.getAdminRouter(API_BASE));
+export const createSerializer = (
+  include: string[] = [],
+  pagination: PaginationLinks = {},
+  meta: any = {},
+  opts: SerializerOptions = {}
+): Serializer => {
+  return new Serializer('organization', {
+    attributes: ORG_ATTRIBUTES,
+    keyForAttribute: (attribute: any) => {
+      return attribute;
+    },
+    pluralizeType: false,
+    topLevelLinks: pagination,
+    meta: meta,
+    ...opts,
+  } as any);
+};

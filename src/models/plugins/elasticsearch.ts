@@ -1,3 +1,22 @@
+/*
+  Copyright 2018-2020 National Geographic Society
+
+  Use of this software does not constitute endorsement by National Geographic
+  Society (NGS). The NGS name and NGS logo may not be used for any purpose without
+  written permission from NGS.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+  this file except in compliance with the License. You may obtain a copy of the
+  License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software distributed
+  under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+  CONDITIONS OF ANY KIND, either express or implied. See the License for the
+  specific language governing permissions and limitations under the License.
+*/
+
 import { isEmpty, pick, set } from 'lodash';
 import { MongooseDocument, Schema } from 'mongoose';
 
@@ -8,7 +27,7 @@ import { ElasticSearchService, ESIndexConfig } from '../../services/search-servi
 export interface IESPlugin {
   esSync?(): Promise<any>;
   esSearch?(esQuery: object, from: number, size: number): Promise<any>;
-  esSearchOnlyIds?(query_string: string, filterBy?: { [key: string]: any }, fields?: string[]): Promise<string[]>;
+  esSearchOnlyIds?(query_string: string, filterBy?: { [key: string]: any }, fields?: string[]): Promise<object>;
   esSearchOnlyIdsAndAggs?(
     query_string: string,
     field: string,
@@ -80,7 +99,7 @@ export default (schema: Schema, options: ESIndexConfig) => {
     fields: string[] = ['name']
   ) {
     if (!query_string) {
-      return;
+      return {};
     }
     let query = {
       bool: {
@@ -104,11 +123,32 @@ export default (schema: Schema, options: ESIndexConfig) => {
       set(query, ['bool', 'filter'], filters);
     }
     try {
-      const data = await this.esSearch({ _source: false, query }, 0, 10000);
-      return data.body.hits.hits.map((hit) => hit._id);
+      const data = await this.esSearch(
+        {
+          _source: false,
+          query,
+          highlight: {
+            pre_tags: ['{{'],
+            post_tags: ['}}'],
+            fields: fields.reduce((a, c) => (a[c] = {}) && a, {}),
+          },
+        },
+        0,
+        10000
+      );
+
+      return data.body.hits.hits.reduce((result, { _id, highlight }) => {
+        result[_id] = Object.keys(highlight).reduce((a, c) => {
+          a[c] = highlight[c][0];
+
+          return a;
+        }, {});
+
+        return result;
+      }, {});
     } catch (err) {
       logger.error(err);
-      return [];
+      return {};
     }
   };
 

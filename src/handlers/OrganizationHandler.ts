@@ -21,12 +21,10 @@ import { Handler } from 'aws-lambda';
 
 import { API_BASE } from '../config';
 import { getLogger } from '../logging';
-import LayerRouter from '../routers/LayerRouter';
+import OrganizationRouter from '../routers/OrganizationRouter';
 
 import { authenticated } from '.';
 
 const logger = getLogger();
 
-export const openHandler: Handler = authenticated(LayerRouter.getRouter(API_BASE));
-
-export const managementHandler: Handler = authenticated(LayerRouter.getAdminRouter(API_BASE));
+export const managementHandler: Handler = authenticated(OrganizationRouter.getAdminRouter(API_BASE));

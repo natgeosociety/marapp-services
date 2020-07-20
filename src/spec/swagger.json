@@ -63,6 +63,10 @@
       "description": "User management"
     },
     {
+      "name": "organizations-management",
+      "description": "Organization management"
+    },
+    {
       "name": "tile-map",
       "description": "Tile map service"
     }
@@ -3282,6 +3286,161 @@
         ]
       }
     },
+    "/management/organizations": {
+      "get": {
+        "tags": ["organizations-management"],
+        "summary": "Find all organizations",
+        "description": "",
+        "operationId": "getOrganizations",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page[number]",
+            "description": "Page number.",
+            "required": false,
+            "type": "number",
+            "default": 1
+          },
+          {
+            "in": "query",
+            "name": "page[size]",
+            "description": "Results per page.",
+            "required": false,
+            "type": "number",
+            "default": 10
+          },
+          {
+            "in": "query",
+            "name": "group",
+            "description": "Primary group name. Required when multiple primary groups included in the token.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [],
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/management/organizations/{id}": {
+      "get": {
+        "tags": ["organizations-management"],
+        "summary": "Find an organization by ID",
+        "description": "",
+        "operationId": "getOrganizationById",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Organization ID.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "group",
+            "description": "Primary group name. Required when multiple primary groups included in the token.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [],
+            "Bearer": []
+          }
+        ]
+      },
+      "put": {
+        "tags": ["organizations-management"],
+        "summary": "Update an organization by ID",
+        "description": "",
+        "operationId": "updateOrganizationById",
+        "parameters": [
+          {
+            "name": "organization",
+            "in": "path",
+            "description": "Organization ID",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "description": "",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Organization"
+            }
+          },
+          {
+            "in": "query",
+            "name": "group",
+            "description": "Primary group name. Required when multiple primary groups included in the token.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [],
+            "Bearer": []
+          }
+        ]
+      }
+    },
     "/tiles/{layer}/{z}/{x}/{y}": {
       "get": {
         "tags": ["tile-map"],
@@ -3563,6 +3722,20 @@
       },
       "xml": {
         "name": "User"
+      }
+    },
+    "Organization": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "xml": {
+        "name": "Organization"
       }
     },
     "Operation": {
