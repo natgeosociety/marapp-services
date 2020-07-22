@@ -97,6 +97,8 @@ const getRouter = (basePath: string = '/', routePath: string = '/tiles') => {
 
         if (!storageUrl) {
           storageUrl = await uploadMapTile(tileUrl, layerId, rawMap.mapid, z, x, y);
+        } else {
+          logger.debug(`tile key exists ${layerId}/${z}/${x}/${y}/: ${storageUrl}`);
         }
 
         res.redirect(storageUrl);
