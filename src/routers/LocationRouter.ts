@@ -46,11 +46,14 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
 
   router.get(
     path,
+    guard.allowAnonymous,
     guard.enforcePrimaryGroup(false, true),
     AuthzGuards.readLocationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const search = <string>req.query.search;
       const include = queryParamGroup(<string>req.query.include);
+
+      console.log(req.groups);
 
       const predefined = queryFilters.concat([{ key: 'organization', op: 'in', value: req.groups }]);
       const queryOptions = parser.parse(req.query, { predefined }, ['search']);
@@ -101,6 +104,7 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
 
   router.get(
     `${path}/:id`,
+    guard.allowAnonymous,
     guard.enforcePrimaryGroup(false, true),
     AuthzGuards.readLocationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {

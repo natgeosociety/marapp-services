@@ -112,6 +112,12 @@ export const jwtRSA = (req: Request, res: Response, next: NextFunction) => {
     res.locals.isServiceAccount = true; // forward response local variables scoped to the request;
     return next();
   }
+
+  if (!getToken(req)) {
+    res.locals.isAnonymous = true;
+    return next();
+  }
+
   const options = {
     userProperty: 'identity',
     secret: secretProvider,
