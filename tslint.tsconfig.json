@@ -3,7 +3,8 @@
   "include": [
     "src/**/*.ts",
     "src/**/*.json",
-    "scripts/**/*.ts"
+    "scripts/**/*.ts",
+    "tests/**/*.ts"
   ],
   "exclude": [
     "node_modules"
