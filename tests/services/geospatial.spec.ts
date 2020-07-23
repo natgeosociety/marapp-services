@@ -18,12 +18,12 @@
 */
 
 import {
+  computeAreaKm2,
   computeShapeBbox,
   computeShapeCentroid,
-  computeAreaKm2,
   GeoComputeError,
-  normalizeGeojson,
   mergeGeojson,
+  normalizeGeojson,
 } from '../../src/services/geospatial';
 import { readFile } from '../util';
 

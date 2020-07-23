@@ -11,7 +11,7 @@
     "test": "jest --runInBand --passWithNoTests",
     "typecheck": "tsc --noEmit",
     "lint": "tslint --project tslint.tsconfig.json",
-    "prettify": "prettier --write '{src,tests,dbtriggers,scripts}/**/*.{js,ts,json}'",
+    "prettify": "prettier --write '{src,tests,scripts}/**/*.{js,ts,json}'",
     "serverless:start": "serverless offline --verbose",
     "serverless:start:local": "serverless offline --verbose --noPrependStageInUrl",
     "serverless:start:debug": "SLS_DEBUG=1 serverless offline --verbose",
