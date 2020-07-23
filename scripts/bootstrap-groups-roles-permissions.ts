@@ -65,11 +65,17 @@ const SCOPES_WRITE_DESCRIPTION =
 type Permission = { name: string; readScopes: string[]; writeScopes: string[]; description: string };
 
 const PERMISSIONS: { [key: string]: Permission } = {
+  owner: {
+    name: 'Owner',
+    readScopes: ['read:*'],
+    writeScopes: ['write:*'],
+    description: 'Complete power over the assets managed by an organization.',
+  },
   admin: {
     name: 'Admin',
     readScopes: ['read:*'],
     writeScopes: ['write:*'],
-    description: 'Full power over the assets managed by an organization.',
+    description: 'Power over the assets managed by an organization.',
   },
   editor: {
     name: 'Editor',
@@ -131,15 +137,17 @@ const main = async (): Promise<void> => {
     const viewerGroupName = [groupName, 'VIEWER'].join('-');
     const editorGroupName = [groupName, 'EDITOR'].join('-');
     const adminGroupName = [groupName, 'ADMIN'].join('-');
+    const ownerGroupName = [groupName, 'OWNER'].join('-');
 
     // create the main group + nested groups;
     const root = await authzService.createGroup(groupName, groupName);
+    const owner = await authzService.createGroup(ownerGroupName, `${groupName} Owner`);
     const admin = await authzService.createGroup(adminGroupName, `${groupName} Admin`);
     const editor = await authzService.createGroup(editorGroupName, `${groupName} Editor`);
     const viewer = await authzService.createGroup(viewerGroupName, `${groupName} Viewer`);
 
     // add the nested groups under the main group;
-    await authzService.addNestedGroups(root._id, [viewer._id, editor._id, admin._id]);
+    await authzService.addNestedGroups(root._id, [viewer._id, editor._id, admin._id, owner._id]);
 
     const permissionMap: { [key: string]: string } = {};
 
@@ -171,11 +179,17 @@ const main = async (): Promise<void> => {
       ...PERMISSIONS.admin.readScopes.map((scope) => permissionMap[scope]),
       ...PERMISSIONS.admin.writeScopes.map((scope) => permissionMap[scope]),
     ]);
+    const ownerName = [groupName, PERMISSIONS.owner.name].join(':');
+    const ownerRole = await authzService.createRole(ownerName, PERMISSIONS.owner.description, argv.applicationId, [
+      ...PERMISSIONS.owner.readScopes.map((scope) => permissionMap[scope]),
+      ...PERMISSIONS.owner.writeScopes.map((scope) => permissionMap[scope]),
+    ]);
 
     // add the roles for each of the nested groups;
     await authzService.addGroupRoles(viewer._id, [viewerRole._id]);
     await authzService.addGroupRoles(editor._id, [editorRole._id]);
     await authzService.addGroupRoles(admin._id, [adminRole._id]);
+    await authzService.addGroupRoles(owner._id, [ownerRole._id]);
   }
 
   if (argv.userEmail && argv.userEmail.trim() && argv.groupId && argv.groupId.trim()) {

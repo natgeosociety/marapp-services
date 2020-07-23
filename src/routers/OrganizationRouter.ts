@@ -54,13 +54,22 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         size: Math.min(Math.max(parseInt(<string>pageSize), 0), 25),
       };
 
-      const groups = (await authzService.getGroups()).groups
-        .filter((group) => 'nested' in group)
-        .map(({ name, description, _id: id }) => ({
-          name,
-          description,
-          id,
-        }));
+      const allGroups = (await authzService.getGroups()).groups;
+
+      const groups = [];
+
+      for (const group of allGroups) {
+        if (!('nested' in group)) {
+          continue;
+        }
+
+        groups.push({
+          id: group._id,
+          name: group.name,
+          description: group.description,
+          owners: (await authzService.getGroupOwners(group._id)).map((owner) => owner.email),
+        });
+      }
 
       const paginationOffset = (pageOptions.page - 1) * pageOptions.size;
 
@@ -102,7 +111,11 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const group = await authzService.getGroup(id);
 
       const code = 200;
-      const response = createOrganizationSerializer(include).serialize({ id, ...group });
+      const response = createOrganizationSerializer(include).serialize({
+        id,
+        owners: (await authzService.getGroupOwners(id)).map((owner) => owner.email),
+        ...group,
+      });
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);
