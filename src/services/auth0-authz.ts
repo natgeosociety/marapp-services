@@ -31,6 +31,9 @@ const logger = getLogger();
 export interface AuthzService {
   getGroups();
   getGroup(id: string);
+  getUserGroups(id: string);
+  getGroupOwners(id: string);
+  isGroupOwner(userId: string, groupId: string);
   createGroup(name: string, description: string, members?: string[]);
   updateGroup(id: string, name: string, description: string);
   addNestedGroups(groupId: string, nestedGroupIds: string[]);
@@ -67,6 +70,27 @@ export class Auth0AuthzService implements AuthzService {
 
   async getGroup(id: string) {
     return this.client.getGroup({ groupId: id });
+  }
+
+  async getUserGroups(id: string) {
+    return this.client.getUserGroups({ userId: id });
+  }
+
+  async getGroupOwners(id: string) {
+    const nestedGroups = await this.getNestedGroups(id);
+    const ownerGroup = nestedGroups.find((group) => group.name.endsWith('OWNER'));
+
+    if (!ownerGroup || !Array.isArray(ownerGroup.members)) {
+      return [];
+    }
+
+    return Promise.all(ownerGroup.members.map((userId) => this.client.getUser({ userId })));
+  }
+
+  async isGroupOwner(userId: string, groupId: string) {
+    const owners = await this.getGroupOwners(groupId);
+
+    return owners.find((owner) => owner.user_id === userId);
   }
 
   async createGroup(name: string, description: string, members?: string[]) {

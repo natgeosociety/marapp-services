@@ -21,7 +21,7 @@ import { Serializer, SerializerOptions } from 'jsonapi-serializer';
 
 import { PaginationLinks } from '.';
 
-export const ORG_ATTRIBUTES: string[] = ['id', 'name', 'description'];
+export const ORG_ATTRIBUTES: string[] = ['id', 'name', 'description', 'owners'];
 
 export const createSerializer = (
   include: string[] = [],
