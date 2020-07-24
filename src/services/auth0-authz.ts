@@ -77,24 +77,14 @@ export class Auth0AuthzService implements AuthzService {
   }
 
   async getGroupOwners(id: string) {
-    const owners = [];
-
     const nestedGroups = await this.getNestedGroups(id);
     const ownerGroup = nestedGroups.find((group) => group.name.endsWith('OWNER'));
 
-    if (!ownerGroup) {
-      return owners;
+    if (!ownerGroup || !Array.isArray(ownerGroup.members)) {
+      return [];
     }
 
-    if (!Array.isArray(ownerGroup.members)) {
-      return owners;
-    }
-
-    for (const userId of ownerGroup.members) {
-      owners.push(await this.client.getUser({ userId }));
-    }
-
-    return owners;
+    return Promise.all(ownerGroup.members.map((userId) => this.client.getUser({ userId })));
   }
 
   async isGroupOwner(userId: string, groupId: string) {
