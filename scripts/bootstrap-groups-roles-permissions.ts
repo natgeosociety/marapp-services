@@ -33,8 +33,7 @@ const argv = yargs.options({
   getAllPermissions: { type: 'boolean', default: false },
   getAllRoles: { type: 'boolean', default: false },
   applicationId: { type: 'string', demandOption: true },
-  userEmail: { type: 'string' },
-  groupId: { type: 'string' },
+  ownerEmail: { type: 'string' },
 }).argv;
 
 const SCOPES_READ = [
@@ -132,7 +131,15 @@ const main = async (): Promise<void> => {
     console.log(chalk.yellow(JSON.stringify(roles, null, 2)));
   }
 
-  if (argv.createGroup && argv.createGroup.trim()) {
+  if (argv.createGroup && argv.createGroup.trim() && argv.ownerEmail && argv.ownerEmail.trim()) {
+    const user = await authMgmtService.getUserByEmail(argv.ownerEmail);
+
+    if (!user) {
+      console.error(`No user found for the provided owner (${argv.ownerEmail}).`);
+
+      return;
+    }
+
     const groupName = argv.createGroup.trim().toUpperCase();
     const viewerGroupName = [groupName, 'VIEWER'].join('-');
     const editorGroupName = [groupName, 'EDITOR'].join('-');
@@ -190,12 +197,9 @@ const main = async (): Promise<void> => {
     await authzService.addGroupRoles(editor._id, [editorRole._id]);
     await authzService.addGroupRoles(admin._id, [adminRole._id]);
     await authzService.addGroupRoles(owner._id, [ownerRole._id]);
-  }
 
-  if (argv.userEmail && argv.userEmail.trim() && argv.groupId && argv.groupId.trim()) {
-    const user = await authMgmtService.getUserByEmail(argv.userEmail);
-    const userId = get(user, 'user_id');
-    await authzService.addGroupMembers(argv.groupId, [userId]);
+    // set owner;
+    await authzService.addGroupMembers(owner._id, [user.user_id]);
   }
 };
 
