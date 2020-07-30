@@ -30,6 +30,8 @@ import { createSerializer as createOrganizationSerializer } from '../serializers
 import { AuthzService } from '../services/auth0-authz';
 import { ResponseMeta, SuccessResponse } from '../types/response';
 
+import { forEachAsync } from '../helpers/util';
+
 import { queryParamGroup } from '.';
 
 const logger = getLogger();
@@ -54,13 +56,19 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         size: Math.min(Math.max(parseInt(<string>pageSize), 0), 25),
       };
 
-      const groups = (await authzService.getGroups()).groups
-        .filter((group) => 'nested' in group)
-        .map(({ name, description, _id: id }) => ({
-          name,
-          description,
-          id,
-        }));
+      const allGroups = (await authzService.getGroups()).groups;
+      const nested = allGroups.filter((g) => 'nested' in g);
+
+      const groups = await forEachAsync(nested, async (group) => {
+        const owners = await authzService.getGroupOwners(group._id);
+
+        return {
+          id: group._id,
+          name: group.name,
+          description: group.description,
+          owners: owners.map((owner) => owner.email),
+        };
+      });
 
       const paginationOffset = (pageOptions.page - 1) * pageOptions.size;
 
@@ -100,9 +108,14 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const include = queryParamGroup(<string>req.query.include);
 
       const group = await authzService.getGroup(id);
+      const owners = await authzService.getGroupOwners(id);
 
       const code = 200;
-      const response = createOrganizationSerializer(include).serialize({ id, ...group });
+      const response = createOrganizationSerializer(include).serialize({
+        id,
+        owners: owners.map((owner) => owner.email),
+        ...group,
+      });
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);
