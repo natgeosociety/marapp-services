@@ -123,8 +123,13 @@ export class AuthzGuard {
    *
    * @param includeServiceAccounts: require a primary group for operations with Service Accounts (apiKeys).
    * @param allowMultiple: allow multiple groups delimited by ","
+   * @param sep: group value separator
    */
-  public enforcePrimaryGroup(includeServiceAccounts: boolean = false, allowMultiple: boolean = false): Handler {
+  public enforcePrimaryGroup(
+    includeServiceAccounts: boolean = false,
+    allowMultiple: boolean = false,
+    sep: string = ';'
+  ): Handler {
     return (req: Request, res: Response, next: NextFunction) => {
       const isServiceAccount = res.locals.isServiceAccount;
 
@@ -135,7 +140,7 @@ export class AuthzGuard {
               new UnauthorizedError('Permission denied. Service accounts need to specify a primary group.', 403)
             );
           }
-          const groups: string[] = (req.query.group as string).split(',');
+          const groups: string[] = (req.query.group as string).split(sep);
           set(req, this.options.reqGroupKey, groups);
         }
         return next();
