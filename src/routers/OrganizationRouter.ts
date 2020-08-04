@@ -43,7 +43,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
   router.get(
     path,
     guard.enforcePrimaryGroup(true),
-    AuthzGuards.readUsersGuard,
+    AuthzGuards.readOrganizationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzService = req.app.locals.authzService;
 
@@ -100,7 +100,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
   router.get(
     `${path}/:id`,
     guard.enforcePrimaryGroup(true),
-    AuthzGuards.readUsersGuard,
+    AuthzGuards.readOrganizationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzService = req.app.locals.authzService;
 
@@ -125,7 +125,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
   router.put(
     `${path}/:id`,
     guard.enforcePrimaryGroup(true),
-    AuthzGuards.writeUsersGuard,
+    AuthzGuards.writeOrganizationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzService = req.app.locals.authzService;
 
