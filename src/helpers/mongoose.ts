@@ -32,7 +32,7 @@ import { ErrorObject, PaginationCursor } from '../types/response';
 
 export const MongoError = makeError('ConnectionError');
 
-export type QueryFilterOperators = '==' | '!=' | '>' | '<' | '>=' | '<=' | 'in';
+export type QueryFilterOperators = '==' | '!=' | '>' | '<' | '>=' | '<=' | 'in' | 'nin';
 
 export type MongooseQueryFilter = { key: string; op: QueryFilterOperators; value: string | string[] };
 
@@ -205,14 +205,15 @@ export class MongooseQueryParser {
       if (matcher && matcher.length >= 3) {
         acc.push({ key: matcher[1], op: matcher[2], value: matcher[3] });
       } else {
-        const lastFilter = acc[acc.length - 1];
-
-        if (!Array.isArray(lastFilter.value)) {
-          lastFilter.op = 'in';
-          lastFilter.value = [lastFilter.value];
-        }
-
-        lastFilter.value.push(sanitized);
+        const errors: ErrorObject[] = [
+          {
+            code: 400,
+            source: { parameter: 'filter' },
+            title: 'ValidationError',
+            detail: `Invalid filter expression: ${filter}`,
+          },
+        ];
+        throw new ValidationError(errors, 400);
       }
       return acc;
     }, []);
@@ -223,8 +224,8 @@ export class MongooseQueryParser {
     }
 
     return filters.reduce((acc, { key, op, value }) => {
-      const operator = this.parseFilterOperator(op);
-      set(acc, [key, operator], operator === '$in' && !Array.isArray(value) ? value.split(',') : value);
+      const [operator, parsed] = this.parseFilterQueryOperators(op, value);
+      set(acc, [key, operator], parsed);
       return acc;
     }, {});
   }
@@ -380,23 +381,47 @@ export class MongooseQueryParser {
       }, {});
   };
 
-  private parseFilterOperator = (operator) => {
-    if (operator === '==') {
-      return '$eq';
-    } else if (operator === '!=') {
-      return '$ne';
-    } else if (operator === '>') {
-      return '$gt';
-    } else if (operator === '>=') {
-      return '$gte';
-    } else if (operator === '<') {
-      return '$lt';
-    } else if (operator === '<=') {
-      return '$lte';
-    } else if (operator === 'in') {
-      return '$in';
-    } else if (!operator) {
-      return '$exists';
+  private parseFilterQueryOperators = (
+    op: string,
+    value: string | string[],
+    sep: string = ';'
+  ): [string, string | string[]] => {
+    if (op === '==') {
+      // special case for multiple equalities;
+      if (Array.isArray(value)) {
+        return ['$in', value];
+      } else if (value.split(sep).length > 1) {
+        return ['$in', value.split(sep)];
+      }
+      return ['$eq', value];
+    } else if (op === '!=') {
+      // special case for multiple equalities;
+      if (Array.isArray(value)) {
+        return ['$nin', value];
+      } else if (value.split(sep).length > 1) {
+        return ['$nin', value.split(sep)];
+      }
+      return ['$ne', value];
+    } else if (op === '>') {
+      return ['$gt', value];
+    } else if (op === '>=') {
+      return ['$gte', value];
+    } else if (op === '<') {
+      return ['$lt', value];
+    } else if (op === '<=') {
+      return ['$lte', value];
+    } else if (op === 'in') {
+      if (!Array.isArray(value)) {
+        return ['$in', value.split(sep)];
+      }
+      return ['$in', value];
+    } else if (op === 'nin') {
+      if (!Array.isArray(value)) {
+        return ['$nin', value.split(sep)];
+      }
+      return ['$nin', value];
+    } else if (!op) {
+      return ['$exists', value];
     }
   };
 

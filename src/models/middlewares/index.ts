@@ -24,18 +24,10 @@ import { SchemaOptions } from 'mongoose';
  */
 export const schemaOptions: SchemaOptions = {
   toObject: {
-    transform: function (doc, ret) {
-      ret.id = ret._id;
-      delete ret._id;
-      delete ret.__v;
-    },
+    virtuals: true,
   },
   toJSON: {
-    transform: function (doc, ret) {
-      ret.id = ret._id;
-      delete ret._id;
-      delete ret.__v;
-    },
+    virtuals: true,
   },
   timestamps: true,
   minimize: false, // store empty objects;
