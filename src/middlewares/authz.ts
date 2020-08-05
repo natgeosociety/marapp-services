@@ -169,7 +169,7 @@ export class AuthzGuard {
       if (!req.query.group) {
         return next(new UnauthorizedError('Permission denied. No primary groups specified for user', 403));
       }
-      const groups: string[] = (req.query.group as string).split(',');
+      const groups: string[] = (req.query.group as string).split(sep);
       if (!groups.every((group) => primaryGroups.includes(group))) {
         return next(new UnauthorizedError('Permission denied. Invalid primary groups specified for user', 403));
       }
