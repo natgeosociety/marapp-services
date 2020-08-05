@@ -120,7 +120,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const isOwner = await authzService.isGroupOwner(req.identity.sub, groupId);
 
       const nestedGroupsFilter = isOwner
-        ? nestedGroups
+        ? nestedGroups.filter((r) => ['OWNER'].every((k) => !r.name.endsWith(k)))
         : nestedGroups.filter((r) => ['OWNER', 'ADMIN'].every((k) => !r.name.endsWith(k)));
 
       const nestedGroupRoles = await forEachAsync(nestedGroupsFilter, async (group: any) => {
@@ -220,7 +220,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const isOwner = await authzService.isGroupOwner(req.identity.sub, groupId);
 
       const nestedGroupsFilter = isOwner
-        ? nestedGroups
+        ? nestedGroups.filter((r) => ['OWNER'].every((k) => !r.name.endsWith(k)))
         : nestedGroups.filter((r) => ['OWNER', 'ADMIN'].every((k) => !r.name.endsWith(k)));
 
       const available = nestedGroupsFilter.map((group: any) => get(group, '_id'));

@@ -28,6 +28,7 @@ import { getLogger } from '../logging';
 import { AuthzGuards, AuthzRequest, guard } from '../middlewares/authz-guards';
 import { createSerializer as createOrganizationSerializer } from '../serializers/OrganizationSerializer';
 import { AuthzService } from '../services/auth0-authz';
+import { AuthManagementService } from '../services/auth0-management';
 import { ResponseMeta, SuccessResponse } from '../types/response';
 
 import { forEachAsync } from '../helpers/util';
@@ -128,15 +129,45 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
     AuthzGuards.writeOrganizationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzService = req.app.locals.authzService;
+      const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
       const id = req.params.id;
       const body = req.body;
 
       const description = get(body, 'description', '');
+      const ownersEmails = get(body, 'owners', []);
 
       const group = await authzService.getGroup(id);
 
-      const success = !!(await authzService.updateGroup(id, group.name, description));
+      const owners = await forEachAsync(ownersEmails, async (owner: any) => {
+        const user = await authMgmtService.getUserByEmail(owner);
+
+        return user.user_id;
+      });
+
+      const nestedGroups = await authzService.getNestedGroups(id);
+
+      const ownerGroup = nestedGroups.find((group) => group.name.endsWith('OWNER'));
+
+      const ownersOperations = [
+        ...owners
+          .filter((userId) => !ownerGroup.members.includes(userId))
+          .map((userId) => ({ operation: 'add', userId })),
+
+        ...ownerGroup.members
+          .filter((userId) => !owners.includes(userId))
+          .map((userId) => ({ operation: 'remove', userId })),
+      ];
+
+      const responses = await forEachAsync(ownersOperations, async (item: any) => {
+        if (item.operation === 'add') {
+          return authzService.addGroupMembers(ownerGroup._id, [item.userId]);
+        } else if (item.operation === 'remove') {
+          return authzService.deleteGroupMembers(ownerGroup._id, [item.userId]);
+        }
+      });
+
+      const success = !!responses && !!(await authzService.updateGroup(id, group.name, description));
 
       const code = 200;
       const response: SuccessResponse = { code, data: { success } };
