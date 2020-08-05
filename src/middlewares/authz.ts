@@ -128,7 +128,7 @@ export class AuthzGuard {
   public enforcePrimaryGroup(
     includeServiceAccounts: boolean = false,
     allowMultiple: boolean = false,
-    sep: string = ';'
+    sep: string = '|'
   ): Handler {
     return (req: Request, res: Response, next: NextFunction) => {
       const isServiceAccount = res.locals.isServiceAccount;
