@@ -43,19 +43,20 @@ Available commands:
 The following environment variables are required by the application. For more details about obtaining them, see required configuration section.
 
 
-| **Key**                | **Description**                                                                  |
-| ---------------------- |----------------------------------------------------------------------------------|
-| NODE_ENV               | Environment stage.                                                               |
-| MONGODB_URI            | MongoDB Connection URI.                                                          |
-| GOOGLE_SERVICE_ACCOUNT | GCP Service Account Private Key.                                                 |
-| REDIS_URI              | Redis Connection URI.                                                            |
-| ELASTICSEARCH_URI      | Elasticsearch Connection URI.                                                    |
-| SERVICE_API_KEY        | API Key secret.                                                                  |
-| SNS_TOPIC_MANAGER_ARN  | Topic ARN from [marapp-workers](https://github.com/natgeosociety/marapp-workers).|
-| AUTH0_CLIENT_ID        | Auth0 M2M Client ID.                                                             |
-| AUTH0_CLIENT_SECRET    | Auth0 M2M Client Secret.                                                         |
-| AUTH0_DOMAIN           | Auth0 Domain URL.                                                                |
-| AUTH0_EXTENSION_URL    | Auth0 API access URL                                                             |
+| **Key**                       | **Description**                                                                  |
+| ----------------------------- |----------------------------------------------------------------------------------|
+| NODE_ENV                      | Environment stage.                                                               |
+| MONGODB_URI                   | MongoDB Connection URI.                                                          |
+| GOOGLE_SERVICE_ACCOUNT        | GCP Service Account Private Key.                                                 |
+| REDIS_URI                     | Redis Connection URI.                                                            |
+| ELASTICSEARCH_URI             | Elasticsearch Connection URI.                                                    |
+| SERVICE_API_KEY               | API Key secret.                                                                  |
+| SNS_TOPIC_MANAGER_ARN         | Topic ARN from [marapp-workers](https://github.com/natgeosociety/marapp-workers).|
+| AUTH0_CLIENT_ID               | Auth0 M2M Client ID.                                                             |
+| AUTH0_CLIENT_SECRET           | Auth0 M2M Client Secret.                                                         |
+| AUTH0_DOMAIN                  | Auth0 Domain URL.                                                                |
+| AUTH0_EXTENSION_URL           | Auth0 API access URL                                                             |
+| AUTH0_APPLICATION_CLIENT_ID   | Auth0 Application Client ID                                                      |
 
 The required environment variables are also described in [.env.sample](.env.sample).
 

@@ -219,6 +219,7 @@ export const initAuthzClient = (): Promise<AuthorizationClient> => {
         domain: AUTH0_DOMAIN,
         extensionUrl: AUTH0_EXTENSION_URL,
       });
+
       logger.warn('Auth0 Authorization client initialized successfully');
 
       resolve(authzClient);
