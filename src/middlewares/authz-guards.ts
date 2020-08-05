@@ -78,6 +78,6 @@ export const AuthzGuards = {
   writeDashboardsGuard: guard.enforce([[ScopesEnum.WriteDashboards], [ScopesEnum.WriteAll]]),
   readUsersGuard: guard.enforce([[ScopesEnum.ReadUsers], [ScopesEnum.ReadAll]]),
   writeUsersGuard: guard.enforce([[ScopesEnum.WriteUsers], [ScopesEnum.WriteAll]]),
-  readOrganizationsGuard: guard.enforce([ScopesEnum.ReadOrganizations]),
-  writeOrganizationsGuard: guard.enforce([ScopesEnum.WriteOrganizations]),
+  readOrganizationsGuard: guard.enforce([ScopesEnum.ReadOrganizations], true),
+  writeOrganizationsGuard: guard.enforce([ScopesEnum.WriteOrganizations], true),
 };
