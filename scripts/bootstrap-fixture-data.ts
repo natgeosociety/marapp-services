@@ -41,7 +41,7 @@ const processLine = async (line: string): Promise<void> => {
 
   const location: Location = {
     id: data['id'] || uuidv4(),
-    slug: data['slug'] || slugifyName(data['name']),
+    slug: slugifyName(data['name']),
     name: cleanStr(data['name']),
     type: <LocationTypeEnum>splitPascalCase(data['type']),
     description: cleanStr(data['description']),
