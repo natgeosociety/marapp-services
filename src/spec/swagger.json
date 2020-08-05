@@ -88,7 +88,7 @@
           {
             "in": "query",
             "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \">=\", \"<=\", \">\", \"<\".",
+            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
             "required": false,
             "type": "string"
           },
@@ -395,7 +395,7 @@
           {
             "in": "query",
             "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \">=\", \"<=\", \">\", \"<\".",
+            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
             "required": false,
             "type": "string"
           },
@@ -581,7 +581,7 @@
           {
             "in": "query",
             "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \">=\", \"<=\", \">\", \"<\".",
+            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
             "required": false,
             "type": "string"
           },
@@ -881,7 +881,7 @@
           {
             "in": "query",
             "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \">=\", \"<=\", \">\", \"<\".",
+            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
             "required": false,
             "type": "string"
           },
@@ -1045,7 +1045,7 @@
           {
             "in": "query",
             "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \">=\", \"<=\", \">\", \"<\".",
+            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
             "required": false,
             "type": "string"
           },
@@ -1219,7 +1219,7 @@
           {
             "in": "query",
             "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \">=\", \"<=\", \">\", \"<\".",
+            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
             "required": false,
             "type": "string"
           },
@@ -1599,7 +1599,7 @@
           {
             "in": "query",
             "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \">=\", \"<=\", \">\", \"<\".",
+            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
             "required": false,
             "type": "string"
           },
@@ -1762,7 +1762,7 @@
           {
             "in": "query",
             "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \">=\", \"<=\", \">\", \"<\".",
+            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
             "required": false,
             "type": "string"
           },
@@ -2062,7 +2062,7 @@
           {
             "in": "query",
             "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \">=\", \"<=\", \">\", \"<\".",
+            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
             "required": false,
             "type": "string"
           },
@@ -2248,7 +2248,7 @@
           {
             "in": "query",
             "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \">=\", \"<=\", \">\", \"<\".",
+            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
             "required": false,
             "type": "string"
           },
@@ -2548,7 +2548,7 @@
           {
             "in": "query",
             "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \">=\", \"<=\", \">\", \"<\".",
+            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
             "required": false,
             "type": "string"
           },
@@ -2711,7 +2711,7 @@
           {
             "in": "query",
             "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \">=\", \"<=\", \">\", \"<\".",
+            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
             "required": false,
             "type": "string"
           },

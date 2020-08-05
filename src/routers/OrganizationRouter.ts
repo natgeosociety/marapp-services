@@ -24,13 +24,12 @@ import urljoin from 'url-join';
 
 import { DEFAULT_CONTENT_TYPE } from '../config';
 import { PaginationHelper } from '../helpers/paginator';
+import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
 import { AuthzGuards, AuthzRequest, guard } from '../middlewares/authz-guards';
 import { createSerializer as createOrganizationSerializer } from '../serializers/OrganizationSerializer';
 import { AuthzService } from '../services/auth0-authz';
 import { ResponseMeta, SuccessResponse } from '../types/response';
-
-import { forEachAsync } from '../helpers/util';
 
 import { queryParamGroup } from '.';
 
