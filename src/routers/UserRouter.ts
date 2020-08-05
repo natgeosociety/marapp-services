@@ -116,14 +116,10 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const groupMembership = await authzService.calculateGroupMemberships(req.identity.sub);
       const groupId = authzService.findPrimaryGroupId(groupMembership, req.groups[0]); // enforce a single primary group;
 
-      const nestedGroups = await authzService.getNestedGroups(groupId);
       const isOwner = await authzService.isGroupOwner(req.identity.sub, groupId);
+      const nestedGroups = await authzService.getNestedGroups(groupId, isOwner ? ['OWNER'] : ['OWNER', 'ADMIN']);
 
-      const nestedGroupsFilter = isOwner
-        ? nestedGroups
-        : nestedGroups.filter((r) => ['OWNER', 'ADMIN'].every((k) => !r.name.endsWith(k)));
-
-      const nestedGroupRoles = await forEachAsync(nestedGroupsFilter, async (group: any) => {
+      const nestedGroupRoles = await forEachAsync(nestedGroups, async (group: any) => {
         return authzService.getNestedGroupRoles(group._id);
       });
 
@@ -215,21 +211,17 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const groupId = authzService.findPrimaryGroupId(groupMembership, req.groups[0]); // enforce a single primary group;
 
       const groups = get(body, 'groups', []);
-      const nestedGroups = await authzService.getNestedGroups(groupId);
 
       const isOwner = await authzService.isGroupOwner(req.identity.sub, groupId);
+      const nestedGroups = await authzService.getNestedGroups(groupId, isOwner ? ['OWNER'] : ['OWNER', 'ADMIN']);
 
-      const nestedGroupsFilter = isOwner
-        ? nestedGroups
-        : nestedGroups.filter((r) => ['OWNER', 'ADMIN'].every((k) => !r.name.endsWith(k)));
-
-      const available = nestedGroupsFilter.map((group: any) => get(group, '_id'));
+      const available = nestedGroups.map((group: any) => get(group, '_id'));
 
       if (Array.isArray(groups) && !groups.every((r) => available.includes(r))) {
         throw new RecordNotFound('Invalid group specified.', 404);
       }
 
-      const responses = await forEachAsync(nestedGroupsFilter, async (group: any) => {
+      const responses = await forEachAsync(nestedGroups, async (group: any) => {
         const groupId = get(group, '_id');
         const members = get(group, 'members', []);
 
