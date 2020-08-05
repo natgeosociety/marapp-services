@@ -78,6 +78,7 @@ export class AuthzGuard {
         return next(new Error(`Request required property: ${this.options.reqIdentityKey}`));
       }
       const groups: string[] = get(req, this.options.reqGroupKey);
+
       if (!groups) {
         return next(new Error(`Request required property: ${this.options.reqGroupKey}`));
       }
@@ -92,6 +93,11 @@ export class AuthzGuard {
         return next(new UnauthorizedError('Permission denied. Invalid scope/permission included in token', 403));
       }
       logger.debug(`token scopes/permissions: ${permissions.join(', ')}`);
+
+      // when the user has "special" permissions, include a "wildcard" group
+      if (permissions.find((permission) => permission.startsWith('*:'))) {
+        groups.push('*');
+      }
 
       const scopedGroups = groups.filter((group: string) => {
         const hasAccess = scopes.some((required: string[]) => {

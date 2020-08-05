@@ -52,7 +52,7 @@ export interface AuthzService {
   );
   deleteRole(roleId: string);
   calculateGroupMemberships(groupId: string);
-  getNestedGroups(groupId: string);
+  getNestedGroups(groupId: string, excludeGroups?: Groups[]);
   getNestedGroupMembers(groupId: string, page?: number, perPage?: number);
   getNestedGroupRoles(groupId: string);
   mapNestedGroupRoles(nestedGroupRoles: any[]);
@@ -60,6 +60,8 @@ export interface AuthzService {
   addGroupMembers(groupId: string, userIds: string[]);
   deleteGroupMembers(groupId: string, userIds: string[]);
 }
+
+type Groups = 'OWNER' | 'ADMIN' | 'EDITOR' | 'VIEWER';
 
 export class Auth0AuthzService implements AuthzService {
   constructor(private client: AuthorizationClient) {}
@@ -139,8 +141,10 @@ export class Auth0AuthzService implements AuthzService {
     return this.client.deleteRole({ roleId });
   }
 
-  async getNestedGroups(groupId: string) {
-    return this.client.getNestedGroups({ groupId });
+  async getNestedGroups(groupId: string, excludeGroups: Groups[] = []) {
+    const nestedGroups = await this.client.getNestedGroups({ groupId });
+
+    return nestedGroups.filter((r) => excludeGroups.every((k) => !r.name.endsWith(k)));
   }
 
   async getNestedGroupMembers(groupId: string, page: number = 1, perPage: number = 10) {

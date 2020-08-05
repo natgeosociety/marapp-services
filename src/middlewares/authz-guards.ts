@@ -57,6 +57,8 @@ enum ScopesEnum {
   WriteDashboards = 'write:dashboards',
   ReadUsers = 'read:users',
   WriteUsers = 'write:users',
+  ReadOrganizations = 'read:organizations',
+  WriteOrganizations = 'write:organizations',
 }
 
 export const AuthzGuards = {
@@ -76,4 +78,6 @@ export const AuthzGuards = {
   writeDashboardsGuard: guard.enforce([[ScopesEnum.WriteDashboards], [ScopesEnum.WriteAll]]),
   readUsersGuard: guard.enforce([[ScopesEnum.ReadUsers], [ScopesEnum.ReadAll]]),
   writeUsersGuard: guard.enforce([[ScopesEnum.WriteUsers], [ScopesEnum.WriteAll]]),
+  readOrganizationsGuard: guard.enforce([ScopesEnum.ReadOrganizations]),
+  writeOrganizationsGuard: guard.enforce([ScopesEnum.WriteOrganizations]),
 };
