@@ -391,7 +391,7 @@ export class MongooseQueryParser {
   private parseFilterQueryOperators = (
     op: string,
     value: string | string[],
-    sep: string = '|'
+    sep: string = ';'
   ): [string, string | string[]] => {
     if (op === '==') {
       // special case for multiple equalities;
