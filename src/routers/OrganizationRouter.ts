@@ -165,7 +165,6 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         ScopesEnum.ReadWidgets,
         ScopesEnum.ReadDashboards,
         ScopesEnum.ReadUsers,
-        ScopesEnum.ReadOrganizations,
       ];
       const SCOPES_READ_DESCRIPTION = 'Reading the full information about a single resource inside an organization.';
 
@@ -178,7 +177,6 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         ScopesEnum.WriteWidgets,
         ScopesEnum.WriteDashboards,
         ScopesEnum.WriteUsers,
-        ScopesEnum.WriteOrganizations,
       ];
       const SCOPES_WRITE_DESCRIPTION =
         'Modifying the resource in any way e.g. creating, editing, or deleting inside an organization.';
