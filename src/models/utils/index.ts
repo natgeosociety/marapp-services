@@ -280,14 +280,14 @@ export const aggregateCount = async <T extends Document, L extends keyof T>(
 ): Promise<AggCount[]> => {
   const result = await model
     .aggregate([
+      // filter docs to match the specified condition(s);
       { $match: omit(query, [field]) },
+      // pass docs to next stage in the pipeline;
       { $project: { [field]: true } },
-      {
-        $group: {
-          _id: '$' + field,
-          count: { $sum: 1 },
-        },
-      },
+      // deconstructs an array field to output a document for each element;
+      { $unwind: '$' + field },
+      // group by the specified _id expression and output a document for each distinct grouping;
+      { $group: { _id: '$' + field, count: { $sum: 1 } } },
     ])
     .exec();
 

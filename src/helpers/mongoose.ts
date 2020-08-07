@@ -203,7 +203,10 @@ export class MongooseQueryParser {
 
       const matcher = sanitized.match(regexp);
       if (matcher && matcher.length >= 3) {
-        acc.push({ key: matcher[1], op: matcher[2], value: matcher[3] });
+        const cond = { key: matcher[1], op: matcher[2], value: matcher[3] };
+        logger.debug(`resolved filter expression: ${JSON.stringify(cond)}`);
+
+        acc.push(cond);
       } else {
         const errors: ErrorObject[] = [
           {
@@ -223,11 +226,15 @@ export class MongooseQueryParser {
       filters = filters.concat(predefined);
     }
 
-    return filters.reduce((acc, { key, op, value }) => {
+    const queryCond = filters.reduce((acc, { key, op, value }) => {
       const [operator, parsed] = this.parseFilterQueryOperators(op, value);
       set(acc, [key, operator], parsed);
       return acc;
     }, {});
+
+    logger.debug(`resolved query: ${JSON.stringify(queryCond)}`);
+
+    return queryCond;
   }
 
   /**
@@ -384,7 +391,7 @@ export class MongooseQueryParser {
   private parseFilterQueryOperators = (
     op: string,
     value: string | string[],
-    sep: string = '|'
+    sep: string = ';'
   ): [string, string | string[]] => {
     if (op === '==') {
       // special case for multiple equalities;
@@ -395,7 +402,7 @@ export class MongooseQueryParser {
       }
       return ['$eq', value];
     } else if (op === '!=') {
-      // special case for multiple equalities;
+      // special case for multiple inequalities;
       if (Array.isArray(value)) {
         return ['$nin', value];
       } else if (value.split(sep).length > 1) {
