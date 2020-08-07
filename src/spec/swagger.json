@@ -3308,13 +3308,43 @@
             "required": false,
             "type": "number",
             "default": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
           {
-            "in": "query",
-            "name": "group",
-            "description": "Primary group name. Required when multiple primary groups included in the token.",
-            "required": false,
-            "type": "string"
+            "ApiKey": [],
+            "Bearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": ["organizations-management"],
+        "summary": "Add a new organization",
+        "description": "",
+        "operationId": "addOrganization",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Organization"
+            }
           }
         ],
         "responses": {
@@ -3358,13 +3388,6 @@
             "in": "path",
             "description": "Organization ID.",
             "required": true,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "group",
-            "description": "Primary group name. Required when multiple primary groups included in the token.",
-            "required": false,
             "type": "string"
           }
         ],
@@ -3410,13 +3433,6 @@
             "schema": {
               "$ref": "#/definitions/Organization"
             }
-          },
-          {
-            "in": "query",
-            "name": "group",
-            "description": "Primary group name. Required when multiple primary groups included in the token.",
-            "required": false,
-            "type": "string"
           }
         ],
         "responses": {
@@ -3732,6 +3748,12 @@
         },
         "description": {
           "type": "string"
+        },
+        "owners": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "xml": {

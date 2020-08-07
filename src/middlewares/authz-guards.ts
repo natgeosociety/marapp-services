@@ -40,7 +40,7 @@ export const guard = new AuthzGuard({
   jwtPermissionKey: JWT_PERMISSION_KEY,
 });
 
-enum ScopesEnum {
+export const enum ScopesEnum {
   ReadAll = 'read:*',
   WriteAll = 'write:*',
   ReadLocations = 'read:locations',

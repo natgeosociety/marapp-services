@@ -77,11 +77,7 @@ export class AuthzGuard {
       if (!identity) {
         return next(new Error(`Request required property: ${this.options.reqIdentityKey}`));
       }
-      const groups: string[] = get(req, this.options.reqGroupKey);
-
-      if (!groups) {
-        return next(new Error(`Request required property: ${this.options.reqGroupKey}`));
-      }
+      const groups: string[] = get(req, this.options.reqGroupKey, []);
 
       let permissions: string | string[] = get(identity, this.options.jwtPermissionKey);
       if (!permissions) {

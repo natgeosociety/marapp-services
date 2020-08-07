@@ -23,10 +23,12 @@ import { get } from 'lodash';
 import urljoin from 'url-join';
 
 import { DEFAULT_CONTENT_TYPE } from '../config';
+import { AUTH0_APPLICATION_CLIENT_ID } from '../config/auth0';
+import { ParameterRequiredError, UserNotFoundError } from '../errors';
 import { PaginationHelper } from '../helpers/paginator';
 import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
-import { AuthzGuards, AuthzRequest, guard } from '../middlewares/authz-guards';
+import { AuthzGuards, AuthzRequest, ScopesEnum } from '../middlewares/authz-guards';
 import { createSerializer as createOrganizationSerializer } from '../serializers/OrganizationSerializer';
 import { AuthzService } from '../services/auth0-authz';
 import { AuthManagementService } from '../services/auth0-management';
@@ -42,7 +44,6 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.get(
     path,
-    guard.enforcePrimaryGroup(true),
     AuthzGuards.readOrganizationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzService = req.app.locals.authzService;
@@ -99,7 +100,6 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.get(
     `${path}/:id`,
-    guard.enforcePrimaryGroup(true),
     AuthzGuards.readOrganizationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzService = req.app.locals.authzService;
@@ -122,9 +122,198 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
     })
   );
 
+  router.post(
+    path,
+    AuthzGuards.writeOrganizationsGuard,
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const authzService: AuthzService = req.app.locals.authzService;
+      const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
+
+      const { name, description, owners } = req.body;
+
+      const groupName = name.trim().toUpperCase();
+      const groupDescription = description.trim();
+
+      if (!groupName) {
+        throw new ParameterRequiredError('Invalid name.', 400);
+      }
+
+      if (!groupDescription) {
+        throw new ParameterRequiredError('Invalid description.', 400);
+      }
+
+      if (!Array.isArray(owners)) {
+        throw new ParameterRequiredError('Invalid owners.', 400);
+      }
+
+      const ownerEmail = owners[0];
+
+      const user = await authMgmtService.getUserByEmail(ownerEmail);
+
+      if (!user) {
+        throw new UserNotFoundError('Invalid owner specified.', 404);
+      }
+
+      const SCOPES_READ = [
+        ScopesEnum.ReadAll,
+        ScopesEnum.ReadLocations,
+        ScopesEnum.ReadMetrics,
+        ScopesEnum.ReadCollections,
+        ScopesEnum.ReadLayers,
+        ScopesEnum.ReadWidgets,
+        ScopesEnum.ReadDashboards,
+        ScopesEnum.ReadUsers,
+      ];
+      const SCOPES_READ_DESCRIPTION = 'Reading the full information about a single resource inside an organization.';
+
+      const SCOPES_WRITE = [
+        ScopesEnum.WriteAll,
+        ScopesEnum.WriteLocations,
+        ScopesEnum.WriteMetrics,
+        ScopesEnum.WriteCollections,
+        ScopesEnum.WriteLayers,
+        ScopesEnum.WriteWidgets,
+        ScopesEnum.WriteDashboards,
+        ScopesEnum.WriteUsers,
+      ];
+      const SCOPES_WRITE_DESCRIPTION =
+        'Modifying the resource in any way e.g. creating, editing, or deleting inside an organization.';
+
+      type Permission = { name: string; readScopes: string[]; writeScopes: string[]; description: string };
+
+      const PERMISSIONS: { [key: string]: Permission } = {
+        owner: {
+          name: 'Owner',
+          readScopes: [ScopesEnum.ReadAll],
+          writeScopes: [ScopesEnum.WriteAll],
+          description: 'Complete power over the assets managed by an organization.',
+        },
+        admin: {
+          name: 'Admin',
+          readScopes: [ScopesEnum.ReadAll],
+          writeScopes: [ScopesEnum.WriteAll],
+          description: 'Power over the assets managed by an organization.',
+        },
+        editor: {
+          name: 'Editor',
+          readScopes: [
+            ScopesEnum.ReadLocations,
+            ScopesEnum.ReadMetrics,
+            ScopesEnum.ReadCollections,
+            ScopesEnum.ReadLayers,
+            ScopesEnum.ReadWidgets,
+            ScopesEnum.ReadDashboards,
+          ],
+          writeScopes: [
+            ScopesEnum.WriteLocations,
+            ScopesEnum.WriteMetrics,
+            ScopesEnum.WriteCollections,
+            ScopesEnum.WriteLayers,
+            ScopesEnum.WriteWidgets,
+            ScopesEnum.WriteDashboards,
+          ],
+          description: 'Full content permission across the entire organization.',
+        },
+        viewer: {
+          name: 'Viewer',
+          readScopes: [
+            ScopesEnum.ReadLocations,
+            ScopesEnum.ReadMetrics,
+            ScopesEnum.ReadCollections,
+            ScopesEnum.ReadLayers,
+            ScopesEnum.ReadWidgets,
+            ScopesEnum.ReadDashboards,
+          ],
+          writeScopes: [],
+          description: 'Can view content managed by the organization',
+        },
+      };
+
+      const viewerGroupName = [groupName, 'VIEWER'].join('-');
+      const editorGroupName = [groupName, 'EDITOR'].join('-');
+      const adminGroupName = [groupName, 'ADMIN'].join('-');
+      const ownerGroupName = [groupName, 'OWNER'].join('-');
+
+      // create the main group + nested groups;
+      const [root, owner, admin, editor, viewer] = await Promise.all([
+        authzService.createGroup(groupName, groupDescription),
+        authzService.createGroup(ownerGroupName, `${groupName} Owner`),
+        authzService.createGroup(adminGroupName, `${groupName} Admin`),
+        authzService.createGroup(editorGroupName, `${groupName} Editor`),
+        authzService.createGroup(viewerGroupName, `${groupName} Viewer`),
+      ]);
+
+      // add the nested groups under the main group;
+      await authzService.addNestedGroups(root._id, [viewer._id, editor._id, admin._id, owner._id]);
+
+      const permissionMap: { [key: string]: string } = {};
+
+      // create permissions;
+      const permissionsResult = await Promise.all([
+        ...SCOPES_READ.map((scope) => {
+          const read = [groupName, scope].join(':');
+
+          return authzService
+            .createPermission(read, SCOPES_READ_DESCRIPTION, AUTH0_APPLICATION_CLIENT_ID)
+            .then((permission) => ({ scope, id: permission._id }));
+        }),
+        ...SCOPES_WRITE.map((scope) => {
+          const write = [groupName, scope].join(':');
+
+          return authzService
+            .createPermission(write, SCOPES_WRITE_DESCRIPTION, AUTH0_APPLICATION_CLIENT_ID)
+            .then((permission) => ({ scope, id: permission._id }));
+        }),
+      ]);
+
+      permissionsResult.forEach((permission) => (permissionMap[permission.scope] = permission.id));
+
+      // create roles;
+      const viewerName = [groupName, PERMISSIONS.viewer.name].join(':');
+      const editorName = [groupName, PERMISSIONS.editor.name].join(':');
+      const adminName = [groupName, PERMISSIONS.admin.name].join(':');
+      const ownerName = [groupName, PERMISSIONS.owner.name].join(':');
+
+      const [viewerRole, editorRole, adminRole, ownerRole] = await Promise.all([
+        authzService.createRole(viewerName, PERMISSIONS.viewer.description, AUTH0_APPLICATION_CLIENT_ID, [
+          ...PERMISSIONS.viewer.readScopes.map((scope) => permissionMap[scope]),
+          ...PERMISSIONS.viewer.writeScopes.map((scope) => permissionMap[scope]),
+        ]),
+        authzService.createRole(editorName, PERMISSIONS.editor.description, AUTH0_APPLICATION_CLIENT_ID, [
+          ...PERMISSIONS.editor.readScopes.map((scope) => permissionMap[scope]),
+          ...PERMISSIONS.editor.writeScopes.map((scope) => permissionMap[scope]),
+        ]),
+        authzService.createRole(adminName, PERMISSIONS.admin.description, AUTH0_APPLICATION_CLIENT_ID, [
+          ...PERMISSIONS.admin.readScopes.map((scope) => permissionMap[scope]),
+          ...PERMISSIONS.admin.writeScopes.map((scope) => permissionMap[scope]),
+        ]),
+        authzService.createRole(ownerName, PERMISSIONS.owner.description, AUTH0_APPLICATION_CLIENT_ID, [
+          ...PERMISSIONS.owner.readScopes.map((scope) => permissionMap[scope]),
+          ...PERMISSIONS.owner.writeScopes.map((scope) => permissionMap[scope]),
+        ]),
+      ]);
+
+      // add the roles for each of the nested groups;
+      await Promise.all([
+        authzService.addGroupRoles(viewer._id, [viewerRole._id]),
+        authzService.addGroupRoles(editor._id, [editorRole._id]),
+        authzService.addGroupRoles(admin._id, [adminRole._id]),
+        authzService.addGroupRoles(owner._id, [ownerRole._id]),
+      ]);
+
+      // set owner;
+      await authzService.addGroupMembers(owner._id, [user.user_id]);
+
+      const code = 200;
+      const response: SuccessResponse = { code, data: { success: true } };
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
+
   router.put(
     `${path}/:id`,
-    guard.enforcePrimaryGroup(true),
     AuthzGuards.writeOrganizationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzService = req.app.locals.authzService;
