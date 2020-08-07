@@ -51,9 +51,8 @@ export class AuthzGuard {
    * The JWT must have a `scope` claim and it must either be a string of space-separated
    * permissions or an array of strings.
    * @param required
-   * @param skipGroupsCheck
    */
-  public enforce(required: string | string[] | string[][], skipGroupsCheck: boolean = false): Handler {
+  public enforce(required: string | string[] | string[][]): Handler {
     let scopes: string[][];
 
     if (isString(required)) {
@@ -79,10 +78,6 @@ export class AuthzGuard {
         return next(new Error(`Request required property: ${this.options.reqIdentityKey}`));
       }
       const groups: string[] = get(req, this.options.reqGroupKey, []);
-
-      if ((!groups || groups.length < 1) && !skipGroupsCheck) {
-        return next(new Error(`Request required property: ${this.options.reqGroupKey}`));
-      }
 
       let permissions: string | string[] = get(identity, this.options.jwtPermissionKey);
       if (!permissions) {

@@ -24,15 +24,15 @@ import urljoin from 'url-join';
 
 import { DEFAULT_CONTENT_TYPE } from '../config';
 import { AUTH0_APPLICATION_CLIENT_ID } from '../config/auth0';
+import { ParameterRequiredError, UserNotFoundError } from '../errors';
 import { PaginationHelper } from '../helpers/paginator';
 import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
-import { AuthzGuards, AuthzRequest, guard, ScopesEnum } from '../middlewares/authz-guards';
+import { AuthzGuards, AuthzRequest, ScopesEnum } from '../middlewares/authz-guards';
 import { createSerializer as createOrganizationSerializer } from '../serializers/OrganizationSerializer';
 import { AuthzService } from '../services/auth0-authz';
 import { AuthManagementService } from '../services/auth0-management';
 import { ResponseMeta, SuccessResponse } from '../types/response';
-import { UserNotFoundError, ParameterRequiredError } from '../errors';
 
 import { queryParamGroup } from '.';
 
@@ -44,7 +44,6 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.get(
     path,
-    guard.enforcePrimaryGroup(true),
     AuthzGuards.readOrganizationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzService = req.app.locals.authzService;
@@ -101,7 +100,6 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.get(
     `${path}/:id`,
-    guard.enforcePrimaryGroup(true),
     AuthzGuards.readOrganizationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzService = req.app.locals.authzService;
@@ -316,7 +314,6 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.put(
     `${path}/:id`,
-    guard.enforcePrimaryGroup(true),
     AuthzGuards.writeOrganizationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzService = req.app.locals.authzService;

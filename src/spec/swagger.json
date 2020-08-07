@@ -3308,13 +3308,6 @@
             "required": false,
             "type": "number",
             "default": 10
-          },
-          {
-            "in": "query",
-            "name": "group",
-            "description": "Primary group name. Required when multiple primary groups included in the token.",
-            "required": false,
-            "type": "string"
           }
         ],
         "responses": {
@@ -3396,13 +3389,6 @@
             "description": "Organization ID.",
             "required": true,
             "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "group",
-            "description": "Primary group name. Required when multiple primary groups included in the token.",
-            "required": false,
-            "type": "string"
           }
         ],
         "responses": {
@@ -3447,13 +3433,6 @@
             "schema": {
               "$ref": "#/definitions/Organization"
             }
-          },
-          {
-            "in": "query",
-            "name": "group",
-            "description": "Primary group name. Required when multiple primary groups included in the token.",
-            "required": false,
-            "type": "string"
           }
         ],
         "responses": {
