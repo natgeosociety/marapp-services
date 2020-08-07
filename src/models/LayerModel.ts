@@ -62,6 +62,7 @@ export interface Layer {
   slug: string;
   name: string;
   description: string;
+  primary: boolean;
   type: LayerTypeEnum;
   provider: LayerProviderEnum;
   category: LayerCategoryEnum;
@@ -88,6 +89,7 @@ const LayerSchema: Schema = new Schema(
     },
     name: { type: String, required: true },
     description: { type: String },
+    primary: { type: Boolean, default: false },
     type: { type: String, enum: Object.values(LayerTypeEnum), required: true },
     provider: { type: String, enum: Object.values(LayerProviderEnum), required: true },
     category: {
