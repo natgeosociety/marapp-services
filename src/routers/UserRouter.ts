@@ -23,7 +23,7 @@ import { get } from 'lodash';
 import urljoin from 'url-join';
 
 import { DEFAULT_CONTENT_TYPE } from '../config';
-import { NotImplementedError, RecordNotFound } from '../errors';
+import { NotImplementedError, RecordNotFound, UnauthorizedError } from '../errors';
 import { PaginationHelper } from '../helpers/paginator';
 import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
@@ -257,6 +257,20 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
       const groupMembership = await authzService.calculateGroupMemberships(req.identity.sub);
       const groupId = authzService.findPrimaryGroupId(groupMembership, req.groups[0]); // enforce a single primary group;
+
+      const triesToDeleteAnOwner = await authzService.isGroupOwner(userId, groupId);
+
+      if (triesToDeleteAnOwner) {
+        throw new UnauthorizedError('You cannot delete an owner.', 403);
+      }
+
+      const triesToDeleteAnAdmin = await authzService.isGroupAdmin(userId, groupId);
+
+      const isOwner = await authzService.isGroupOwner(req.identity.sub, groupId);
+
+      if (triesToDeleteAnAdmin && !isOwner) {
+        throw new UnauthorizedError('You need to be an owner to delete an admin', 403);
+      }
 
       const nestedGroups = await authzService.getNestedGroups(groupId);
 
