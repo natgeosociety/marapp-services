@@ -18,7 +18,7 @@
 */
 
 import { eachDeep } from 'deepdash/standalone';
-import { isEmpty, isNil, omit, set } from 'lodash';
+import { get, isEmpty, isNil, omit, set } from 'lodash';
 import { Document, Model, Query } from 'mongoose';
 
 import { DocumentError, ExposedError, RecordNotFound, ValidationError } from '../../errors';
@@ -291,16 +291,14 @@ export const aggregateCount = async <T extends Document, L extends keyof T>(
     ])
     .exec();
 
-  //@ts-ignore
-  const possibleValues = model.schema.path(field).enumValues;
+  const options = get(model.schema.path(field), 'options.enum', []);
 
-  if (Array.isArray(possibleValues)) {
+  if (options && options.length) {
     // add the missing values with count 0;
-    result.push(
-      ...possibleValues
-        .filter((value: string) => !result.find((item) => item._id === value))
-        .map((value: string) => ({ _id: value, count: 0 }))
-    );
+    const nulls = options
+      .filter((v: string) => !result.find((item) => item._id === v))
+      .map((v: string) => ({ _id: v, count: 0 }));
+    result.push(...nulls);
   }
 
   return result.map((item) => ({ key: field, value: item._id, count: item.count })); // "ES like"
