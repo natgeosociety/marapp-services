@@ -210,9 +210,22 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const groupMembership = await authzService.calculateGroupMemberships(req.identity.sub);
       const groupId = authzService.findPrimaryGroupId(groupMembership, req.groups[0]); // enforce a single primary group;
 
-      const groups = get(body, 'groups', []);
+      const triesToUpdateAnOwner = await authzService.isGroupOwner(userId, groupId);
+
+      if (triesToUpdateAnOwner) {
+        throw new UnauthorizedError('You cannot update an owner.', 403);
+      }
+
+      const triesToUpdateAnAdmin = await authzService.isGroupAdmin(userId, groupId);
 
       const isOwner = await authzService.isGroupOwner(req.identity.sub, groupId);
+
+      if (triesToUpdateAnAdmin && !isOwner) {
+        throw new UnauthorizedError('You cannot update an admin.', 403);
+      }
+
+      const groups = get(body, 'groups', []);
+
       const nestedGroups = await authzService.getNestedGroups(groupId, isOwner ? ['OWNER'] : ['OWNER', 'ADMIN']);
 
       const available = nestedGroups.map((group: any) => get(group, '_id'));
