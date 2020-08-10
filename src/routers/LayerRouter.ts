@@ -49,7 +49,6 @@ const getRouter = (basePath: string = '/', routePath: string = '/layers') => {
 
   router.get(
     path,
-    guard.allowAnonymous(),
     guard.enforcePrimaryGroup(false, true),
     AuthzGuards.readLayersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -105,7 +104,6 @@ const getRouter = (basePath: string = '/', routePath: string = '/layers') => {
 
   router.get(
     `${path}/:id`,
-    guard.allowAnonymous(),
     guard.enforcePrimaryGroup(false, true),
     AuthzGuards.readLayersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {

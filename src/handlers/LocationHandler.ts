@@ -23,10 +23,10 @@ import { API_BASE } from '../config';
 import { getLogger } from '../logging';
 import LocationRouter from '../routers/LocationRouter';
 
-import { authenticated } from '.';
+import { anonymous, authenticated } from '.';
 
 const logger = getLogger();
 
-export const openHandler: Handler = authenticated(LocationRouter.getRouter(API_BASE));
+export const openHandler: Handler = anonymous(LocationRouter.getRouter(API_BASE));
 
 export const managementHandler: Handler = authenticated(LocationRouter.getAdminRouter(API_BASE));
