@@ -38,7 +38,7 @@ export const S3_MAP_TILES_TTL = requireEnv('S3_MAP_TILES_TTL', String(31536000))
 export const S3_ASSETS_PATH_PREFIX = requireEnv('S3_ASSETS_PATH_PREFIX', 'assets');
 export const S3_ASSETS_BUCKET = requireEnv('S3_ASSETS_BUCKET', 'marapp-assets');
 export const ES_INDEX_PREFIX = requireEnv('ES_INDEX_PREFIX', 'marapp');
-export const PUBLIC_ORG = requireEnv('PUBLIC_ORG', 'MARAPP');
+export const PUBLIC_ORG = requireEnv('PUBLIC_ORG', 'MARAPP'); // allow anonymous access;
 
 export const MONGODB_URI = requireEnv('MONGODB_URI');
 export const REDIS_URI = requireEnv('REDIS_URI');

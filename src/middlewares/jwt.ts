@@ -22,7 +22,7 @@ import jwt from 'express-jwt';
 import jwksRsa from 'jwks-rsa';
 import ms from 'ms';
 
-import { SERVICE_API_KEY } from '../config';
+import { SERVICE_API_KEY, PUBLIC_ORG } from '../config';
 import { AUTH0_DOMAIN } from '../config/auth0';
 import { UnauthorizedError } from '../errors';
 import { getLogger } from '../logging';
@@ -114,7 +114,7 @@ export const jwtRSA = (credentialsRequired: boolean = true) => (req: Request, re
   }
 
   // mark anonymous access for middlewares;
-  res.locals.isAnonymousAllowed = !credentialsRequired;
+  res.locals.isAnonymousAllowed = !credentialsRequired && PUBLIC_ORG;
 
   const options = {
     userProperty: 'identity',
