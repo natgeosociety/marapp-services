@@ -49,7 +49,6 @@ const getRouter = (basePath: string = '/', routePath: string = '/dashboards') =>
 
   router.get(
     path,
-
     guard.enforcePrimaryGroup(false, true),
     AuthzGuards.readDashboardsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {

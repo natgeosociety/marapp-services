@@ -57,6 +57,7 @@ The following environment variables are required by the application. For more de
 | AUTH0_DOMAIN                  | Auth0 Domain URL.                                                                |
 | AUTH0_EXTENSION_URL           | Auth0 API access URL                                                             |
 | AUTH0_APPLICATION_CLIENT_ID   | Auth0 Application Client ID                                                      |
+| PUBLIC_ORG                    | The name of the public organzation (Auth0)                                       |
 
 The required environment variables are also described in [.env.sample](.env.sample).
 

@@ -20,6 +20,7 @@
 import { Handler, NextFunction, Request, Response } from 'express';
 import { get, isArray, isString, set } from 'lodash';
 
+import { PUBLIC_ORG } from '../config';
 import { UnauthorizedError } from '../errors';
 import { getLogger } from '../logging';
 
@@ -66,7 +67,7 @@ export class AuthzGuard {
     return (req: Request, res: Response, next: NextFunction) => {
       logger.debug(`evaluating scopes: ${scopes.join(', ')}`);
 
-      const isServiceAccount = res.locals.isServiceAccount;
+      const { isAnonymousAllowed, isServiceAccount } = res.locals;
 
       if (isServiceAccount) {
         logger.debug('service account, skipping authz checks');
@@ -75,7 +76,11 @@ export class AuthzGuard {
 
       const identity = get(req, this.options.reqIdentityKey);
       if (!identity) {
-        return next(new Error(`Request required property: ${this.options.reqIdentityKey}`));
+        if (isAnonymousAllowed) {
+          logger.debug('anonymous account, skipping authz checks');
+          return next();
+        }
+        return next(new UnauthorizedError('Permission denied. Anonymous access not allowed.', 401));
       }
       const groups: string[] = get(req, this.options.reqGroupKey, []);
 
@@ -124,8 +129,8 @@ export class AuthzGuard {
    * groups or an array of strings.
    *
    * @param includeServiceAccounts: require a primary group for operations with Service Accounts (apiKeys).
-   * @param allowMultiple: allow multiple groups delimited by ","
-   * @param sep: group value separator
+   * @param allowMultiple: allow multiple groups delimited by sep.
+   * @param sep: group value separator.
    */
   public enforcePrimaryGroup(
     includeServiceAccounts: boolean = false,
@@ -133,7 +138,7 @@ export class AuthzGuard {
     sep: string = ','
   ): Handler {
     return (req: Request, res: Response, next: NextFunction) => {
-      const isServiceAccount = res.locals.isServiceAccount;
+      const { isAnonymousAllowed, isServiceAccount } = res.locals;
 
       if (isServiceAccount) {
         if (includeServiceAccounts) {
@@ -150,8 +155,15 @@ export class AuthzGuard {
 
       const identity = get(req, this.options.reqIdentityKey);
       if (!identity) {
-        return next(new Error(`Request required property: ${this.options.reqIdentityKey}`));
+        if (isAnonymousAllowed) {
+          logger.debug(`anonymous user, setting public group: ${PUBLIC_ORG}`);
+
+          set(req, this.options.reqGroupKey, [PUBLIC_ORG]);
+          return next();
+        }
+        return next(new UnauthorizedError('Permission denied. Anonymous access not allowed.', 401));
       }
+
       let tokenGroups: string | string[] = get(identity, this.options.jwtGroupKey);
       if (!tokenGroups) {
         return next(new UnauthorizedError('Permission denied. Groups not included in token', 403));
