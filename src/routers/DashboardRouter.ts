@@ -49,7 +49,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/dashboards') =>
 
   router.get(
     path,
-
+    guard.allowAnonymous(),
     guard.enforcePrimaryGroup(false, true),
     AuthzGuards.readDashboardsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -103,6 +103,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/dashboards') =>
 
   router.get(
     `${path}/:id`,
+    guard.allowAnonymous(),
     guard.enforcePrimaryGroup(false, true),
     AuthzGuards.readDashboardsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {

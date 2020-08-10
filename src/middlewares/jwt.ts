@@ -112,6 +112,14 @@ export const jwtRSA = (req: Request, res: Response, next: NextFunction) => {
     res.locals.isServiceAccount = true; // forward response local variables scoped to the request;
     return next();
   }
+
+  // when no JWT token is provided, allow an intermediary step (allowAnonymous middleware)
+  if (!getToken(req)) {
+    res.locals.isAnonymous = true;
+
+    return next();
+  }
+
   const options = {
     userProperty: 'identity',
     secret: secretProvider,

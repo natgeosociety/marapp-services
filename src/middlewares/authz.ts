@@ -23,6 +23,8 @@ import { get, isArray, isString, set } from 'lodash';
 import { UnauthorizedError } from '../errors';
 import { getLogger } from '../logging';
 
+import { PUBLIC_ORG } from '../config';
+
 const logger = getLogger();
 
 interface GuardOptions {
@@ -43,6 +45,20 @@ export class AuthzGuard {
 
   constructor(options?: GuardOptions) {
     this.options = Object.assign({}, this.defaults, options);
+  }
+
+  /**
+   * Middleware which allows a route to be used without a JWT token.
+   */
+
+  public allowAnonymous() {
+    return (req: Request, res: Response, next: NextFunction) => {
+      if (res.locals.isAnonymous) {
+        res.locals.isAnonymousAllowed = true;
+      }
+
+      next();
+    };
   }
 
   /**
@@ -71,6 +87,16 @@ export class AuthzGuard {
       if (isServiceAccount) {
         logger.debug('service account, skipping authz checks');
         return next();
+      }
+
+      if (res.locals.isAnonymous) {
+        if (res.locals.isAnonymousAllowed) {
+          logger.debug('anonymoys account, skipping authz checks');
+
+          return next();
+        }
+
+        return next(new UnauthorizedError('Permission denied. Anonymous is not allowed', 401));
       }
 
       const identity = get(req, this.options.reqIdentityKey);
@@ -145,6 +171,12 @@ export class AuthzGuard {
           const groups: string[] = (req.query.group as string).split(sep);
           set(req, this.options.reqGroupKey, groups);
         }
+        return next();
+      }
+
+      if (res.locals.isAnonymous) {
+        set(req, this.options.reqGroupKey, [PUBLIC_ORG]);
+
         return next();
       }
 
