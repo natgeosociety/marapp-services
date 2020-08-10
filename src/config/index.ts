@@ -38,6 +38,7 @@ export const S3_MAP_TILES_TTL = requireEnv('S3_MAP_TILES_TTL', String(31536000))
 export const S3_ASSETS_PATH_PREFIX = requireEnv('S3_ASSETS_PATH_PREFIX', 'assets');
 export const S3_ASSETS_BUCKET = requireEnv('S3_ASSETS_BUCKET', 'marapp-assets');
 export const ES_INDEX_PREFIX = requireEnv('ES_INDEX_PREFIX', 'marapp');
+export const PUBLIC_ORG = requireEnv('PUBLIC_ORG', 'MARAPP');
 
 export const MONGODB_URI = requireEnv('MONGODB_URI');
 export const REDIS_URI = requireEnv('REDIS_URI');
@@ -46,5 +47,3 @@ export const GOOGLE_SERVICE_ACCOUNT = requireEnv('GOOGLE_SERVICE_ACCOUNT');
 export const SNS_TOPIC_SUBSCRIPTION_ARN = requireEnv('SNS_TOPIC_SUBSCRIPTION_ARN');
 export const SNS_TOPIC_MANAGER_ARN = requireEnv('SNS_TOPIC_MANAGER_ARN');
 export const SERVICE_API_KEY = requireEnv('SERVICE_API_KEY');
-
-export const PUBLIC_ORG = requireEnv('PUBLIC_ORG', 'MARAPP');

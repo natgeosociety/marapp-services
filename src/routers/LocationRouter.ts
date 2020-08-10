@@ -46,7 +46,6 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
 
   router.get(
     path,
-    guard.allowAnonymous(),
     guard.enforcePrimaryGroup(false, true),
     AuthzGuards.readLocationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -102,7 +101,6 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
 
   router.get(
     `${path}/:id`,
-    guard.allowAnonymous(),
     guard.enforcePrimaryGroup(false, true),
     AuthzGuards.readLocationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
