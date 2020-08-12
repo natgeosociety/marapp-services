@@ -65,6 +65,7 @@ custom:
   # Plugins configuration
   serverless-offline:
     httpPort: 4000
+    useChildProcesses: true
   localstack:
     debug: true
     stages:

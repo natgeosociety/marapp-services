@@ -77,30 +77,3 @@ export const validateKeys = <T, K extends keyof T>(
  */
 export const forEachAsync = async (records: any[], callback: (i: any) => Promise<any>) =>
   Promise.all(records.map((i) => callback(i)));
-
-/**
- * Latinize given string
- * @param term
- */
-export const latinizeTerm = (term: string = ''): string =>
-  term
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-
-/**
- * Appends hint symbols for searched term
- * @param searchTerm
- * @param searchWholeValue
- */
-export const searchTermHint = (searchTerm: string = '', searchWholeValue: string = ''): string => {
-  const searchTermIndex = latinizeTerm(searchWholeValue).indexOf(latinizeTerm(searchTerm));
-
-  return [
-    searchWholeValue.slice(0, searchTermIndex),
-    '{{',
-    searchWholeValue.slice(searchTermIndex, searchTermIndex + searchTerm.length),
-    '}}',
-    searchWholeValue.slice(searchTermIndex + searchTerm.length),
-  ].join('');
-};

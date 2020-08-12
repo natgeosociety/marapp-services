@@ -28,7 +28,9 @@ export const Auth0Error = makeError('Auth0Error');
 
 const logger = getLogger();
 
-export interface AuthzService {
+type GroupType = 'OWNER' | 'ADMIN' | 'EDITOR' | 'VIEWER';
+
+export interface AuthzServiceSpec {
   getGroups();
   getGroup(id: string);
   getUserGroups(id: string);
@@ -39,6 +41,7 @@ export interface AuthzService {
   createGroup(name: string, description: string, members?: string[]);
   updateGroup(id: string, name: string, description: string);
   addNestedGroups(groupId: string, nestedGroupIds: string[]);
+  deleteNestedGroups(groupId: string, nestedGroupIds: string[]);
   addGroupRoles(groupId: string, roleIds: string[]);
   deleteGroup(groupId: string);
   getPermission();
@@ -54,7 +57,7 @@ export interface AuthzService {
   );
   deleteRole(roleId: string);
   calculateGroupMemberships(groupId: string);
-  getNestedGroups(groupId: string, excludeGroups?: Groups[]);
+  getNestedGroups(groupId: string, filterGroups?: GroupType[], excludeGroups?: GroupType[]);
   getNestedGroupMembers(groupId: string, page?: number, perPage?: number);
   getNestedGroupRoles(groupId: string);
   mapNestedGroupRoles(nestedGroupRoles: any[]);
@@ -63,9 +66,7 @@ export interface AuthzService {
   deleteGroupMembers(groupId: string, userIds: string[]);
 }
 
-type Groups = 'OWNER' | 'ADMIN' | 'EDITOR' | 'VIEWER';
-
-export class Auth0AuthzService implements AuthzService {
+export class Auth0AuthzService implements AuthzServiceSpec {
   constructor(private client: AuthorizationClient) {}
 
   async getGroups() {
@@ -81,25 +82,21 @@ export class Auth0AuthzService implements AuthzService {
   }
 
   async getGroupOwners(id: string) {
-    const nestedGroups = await this.getNestedGroups(id);
-    const ownerGroup = nestedGroups.find((group) => group.name.endsWith('OWNER'));
+    const groups = await this.getNestedGroups(id, ['OWNER']);
 
-    if (!ownerGroup || !Array.isArray(ownerGroup.members)) {
+    if (!groups.length || !Array.isArray(groups[0].members)) {
       return [];
     }
-
-    return Promise.all(ownerGroup.members.map((userId) => this.client.getUser({ userId })));
+    return Promise.all(groups[0].members.map((userId) => this.client.getUser({ userId })));
   }
 
   async getGroupAdmins(id: string) {
-    const nestedGroups = await this.getNestedGroups(id);
-    const adminGroup = nestedGroups.find((group) => group.name.endsWith('ADMIN'));
+    const groups = await this.getNestedGroups(id, ['ADMIN']);
 
-    if (!adminGroup || !Array.isArray(adminGroup.members)) {
+    if (!groups.length || !Array.isArray(groups[0].members)) {
       return [];
     }
-
-    return Promise.all(adminGroup.members.map((userId) => this.client.getUser({ userId })));
+    return Promise.all(groups[0].members.map((userId) => this.client.getUser({ userId })));
   }
 
   async isGroupOwner(userId: string, groupId: string) {
@@ -124,6 +121,10 @@ export class Auth0AuthzService implements AuthzService {
 
   async addNestedGroups(groupId: string, nestedGroupIds: string[]) {
     return this.client.addNestedGroups({ groupId, nestedGroupIds });
+  }
+
+  async deleteNestedGroups(groupId: string, nestedGroupIds: string[]) {
+    return this.client.deleteNestedGroups({ groupId, nestedGroupIds });
   }
 
   async addGroupRoles(groupId: string, roleIds: string[]) {
@@ -160,9 +161,11 @@ export class Auth0AuthzService implements AuthzService {
     return this.client.deleteRole({ roleId });
   }
 
-  async getNestedGroups(groupId: string, excludeGroups: Groups[] = []) {
-    const nestedGroups = await this.client.getNestedGroups({ groupId });
-
+  async getNestedGroups(groupId: string, filterGroups: GroupType[] = [], excludeGroups: GroupType[] = []) {
+    let nestedGroups = await this.client.getNestedGroups({ groupId });
+    if (filterGroups.length) {
+      nestedGroups = nestedGroups.filter((g) => filterGroups.every((k) => g.name.endsWith(k)));
+    }
     return nestedGroups.filter((r) => excludeGroups.every((k) => !r.name.endsWith(k)));
   }
 

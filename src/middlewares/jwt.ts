@@ -22,7 +22,7 @@ import jwt from 'express-jwt';
 import jwksRsa from 'jwks-rsa';
 import ms from 'ms';
 
-import { SERVICE_API_KEY, PUBLIC_ORG } from '../config';
+import { PUBLIC_ORG, SERVICE_API_KEY } from '../config';
 import { AUTH0_DOMAIN } from '../config/auth0';
 import { UnauthorizedError } from '../errors';
 import { getLogger } from '../logging';

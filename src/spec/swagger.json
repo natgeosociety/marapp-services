@@ -3377,17 +3377,17 @@
         "operationId": "getOrganizationById",
         "parameters": [
           {
-            "in": "query",
-            "name": "include",
-            "description": "Comma separated relationship paths.",
-            "required": false,
-            "type": "string"
-          },
-          {
             "name": "id",
             "in": "path",
             "description": "Organization ID.",
             "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
             "type": "string"
           }
         ],
@@ -3419,7 +3419,7 @@
         "operationId": "updateOrganizationById",
         "parameters": [
           {
-            "name": "organization",
+            "name": "id",
             "in": "path",
             "description": "Organization ID",
             "required": true,
@@ -3433,6 +3433,41 @@
             "schema": {
               "$ref": "#/definitions/Organization"
             }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [],
+            "Bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": ["organizations-management"],
+        "summary": "Delete an organization by ID",
+        "description": "",
+        "operationId": "deleteOrganization",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Organization ID.",
+            "required": true,
+            "type": "string"
           }
         ],
         "responses": {

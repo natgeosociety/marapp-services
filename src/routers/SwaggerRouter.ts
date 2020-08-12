@@ -31,8 +31,15 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/docs') => 
   const router: Router = Router();
   const path = urljoin(basePath, routePath);
 
-  router.use(path, swaggerUi.serveWithOptions({ redirect: false }));
-  router.get(path, swaggerUi.setup(swaggerDocument));
+  const req: any = {};
+  const res: any = { send: () => {} };
+
+  // Make a mock request to the swagger ui middleware to initialize it.
+  // Workaround issue: https://github.com/scottie1984/swagger-ui-express/issues/178
+  const swaggerUiMiddleware = swaggerUi.setup(swaggerDocument);
+  swaggerUiMiddleware(req, res, () => {});
+
+  router.use(path, swaggerUi.serveWithOptions({ redirect: false }), swaggerUiMiddleware);
 
   return router;
 };

@@ -30,7 +30,7 @@ import { getLogger } from '../logging';
 import { AuthzGuards, AuthzRequest, guard } from '../middlewares/authz-guards';
 import { createSerializer as createGroupSerializer } from '../serializers/GroupRoleSerializer';
 import { createSerializer as createUserSerializer } from '../serializers/UserSerializer';
-import { AuthzService } from '../services/auth0-authz';
+import { AuthzServiceSpec } from '../services/auth0-authz';
 import { AuthManagementService } from '../services/auth0-management';
 import { ResponseMeta, SuccessResponse } from '../types/response';
 
@@ -47,7 +47,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
     guard.enforcePrimaryGroup(true),
     AuthzGuards.readUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
-      const authzService: AuthzService = req.app.locals.authzService;
+      const authzService: AuthzServiceSpec = req.app.locals.authzService;
 
       const include = queryParamGroup(<string>req.query.include);
       const pageNumber = get(req.query, 'page.number', 0);
@@ -109,7 +109,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
     guard.enforcePrimaryGroup(true),
     AuthzGuards.readUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
-      const authzService: AuthzService = req.app.locals.authzService;
+      const authzService: AuthzServiceSpec = req.app.locals.authzService;
 
       const include = queryParamGroup(<string>req.query.include);
 
@@ -117,7 +117,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const groupId = authzService.findPrimaryGroupId(groupMembership, req.groups[0]); // enforce a single primary group;
 
       const isOwner = await authzService.isGroupOwner(req.identity.sub, groupId);
-      const nestedGroups = await authzService.getNestedGroups(groupId, isOwner ? ['OWNER'] : ['OWNER', 'ADMIN']);
+      const nestedGroups = await authzService.getNestedGroups(groupId, [], isOwner ? ['OWNER'] : ['OWNER', 'ADMIN']);
 
       const nestedGroupRoles = await forEachAsync(nestedGroups, async (group: any) => {
         return authzService.getNestedGroupRoles(group._id);
@@ -138,7 +138,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
     guard.enforcePrimaryGroup(true),
     AuthzGuards.readUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
-      const authzService: AuthzService = req.app.locals.authzService;
+      const authzService: AuthzServiceSpec = req.app.locals.authzService;
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
       const email = req.params.email;
@@ -178,7 +178,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
     guard.enforcePrimaryGroup(true),
     AuthzGuards.writeUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
-      const authzService: AuthzService = req.app.locals.authzService;
+      const authzService: AuthzServiceSpec = req.app.locals.authzService;
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
       const body = req.body;
@@ -198,7 +198,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
     guard.enforcePrimaryGroup(true),
     AuthzGuards.writeUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
-      const authzService: AuthzService = req.app.locals.authzService;
+      const authzService: AuthzServiceSpec = req.app.locals.authzService;
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
       const email = req.params.email;
@@ -226,7 +226,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
       const groups = get(body, 'groups', []);
 
-      const nestedGroups = await authzService.getNestedGroups(groupId, isOwner ? ['OWNER'] : ['OWNER', 'ADMIN']);
+      const nestedGroups = await authzService.getNestedGroups(groupId, [], isOwner ? ['OWNER'] : ['OWNER', 'ADMIN']);
 
       const available = nestedGroups.map((group: any) => get(group, '_id'));
 
@@ -260,7 +260,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
     guard.enforcePrimaryGroup(true),
     AuthzGuards.writeUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
-      const authzService: AuthzService = req.app.locals.authzService;
+      const authzService: AuthzServiceSpec = req.app.locals.authzService;
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
       const email = req.params.email;
