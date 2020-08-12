@@ -11,8 +11,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "tslint --project tslint.tsconfig.json",
     "prettify": "prettier --write '{src,tests,scripts}/**/*.{js,ts,json}'",
-    "serverless:start": "nodemon --exec serverless offline --verbose --noPrependStageInUrl",
-    "serverless:start:debug": "SLS_DEBUG=1 serverless offline --verbose",
+    "serverless:start": "serverless offline --verbose --noPrependStageInUrl",
+    "serverless:start:debug": "SLS_DEBUG=1 serverless offline --verbose --noPrependStageInUrl",
     "serverless:deploy": "serverless deploy --verbose",
     "serverless:deploy:debug": "SLS_DEBUG=1 serverless deploy --verbose",
     "serverless:deploy:local": "SLS_DEBUG=1 serverless deploy --stage local --verbose"
@@ -85,7 +85,6 @@
     "husky": "^4.2.5",
     "jest": "^26.1.0",
     "lint-staged": "^10.2.11",
-    "nodemon": "^2.0.4",
     "prettier": "^2.0.5",
     "serverless": "^1.78.0",
     "serverless-dotenv-plugin": "^3.0.0",
