@@ -46,6 +46,8 @@ export default (schema: Schema, options: ESIndexConfig) => {
     const indexName: string = [ES_INDEX_PREFIX, modelName.toLowerCase()].filter((e) => !!e).join('-');
     const docId: string = doc.id || doc._id;
 
+    logger.debug(`indexing es document by id: ${docId}`);
+
     const fieldsToIndex: string[] = Object.keys(options.mappings.properties);
     const partial = <MongooseDocument>pick(doc, fieldsToIndex);
 
@@ -137,6 +139,8 @@ export default (schema: Schema, options: ESIndexConfig) => {
         10000
       );
 
+      logger.debug(`found ${data.body.hits.hits.length} hits for query: ${JSON.stringify(query)}`);
+
       return data.body.hits.hits.reduce((result, { _id, highlight }) => {
         result[_id] = Object.keys(highlight).reduce((a, c) => {
           a[c] = highlight[c][0];
@@ -192,6 +196,8 @@ export default (schema: Schema, options: ESIndexConfig) => {
         0,
         10000
       );
+
+      logger.debug(`found ${data.body.hits.hits.length} hits for query: ${JSON.stringify(query)}`);
 
       result.ids = data.body.hits.hits.map((hit) => hit._id);
       result.aggs = data.body.aggregations.default.buckets;
