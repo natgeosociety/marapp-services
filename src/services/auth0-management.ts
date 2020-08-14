@@ -18,7 +18,6 @@
 */
 
 import { ManagementClient } from 'auth0';
-import { get } from 'lodash';
 import makeError from 'make-error';
 
 import { AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET, AUTH0_DOMAIN } from '../config/auth0';

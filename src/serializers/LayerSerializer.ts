@@ -28,6 +28,7 @@ export const LAYER_ATTRIBUTES: string[] = [
   'slug',
   'name',
   'description',
+  'primary',
   'type',
   'provider',
   'category',

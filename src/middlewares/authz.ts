@@ -20,6 +20,7 @@
 import { Handler, NextFunction, Request, Response } from 'express';
 import { get, isArray, isString, set } from 'lodash';
 
+import { PUBLIC_ORG } from '../config';
 import { UnauthorizedError } from '../errors';
 import { getLogger } from '../logging';
 
@@ -66,7 +67,7 @@ export class AuthzGuard {
     return (req: Request, res: Response, next: NextFunction) => {
       logger.debug(`evaluating scopes: ${scopes.join(', ')}`);
 
-      const isServiceAccount = res.locals.isServiceAccount;
+      const { isAnonymousAllowed, isServiceAccount } = res.locals;
 
       if (isServiceAccount) {
         logger.debug('service account, skipping authz checks');
@@ -75,12 +76,13 @@ export class AuthzGuard {
 
       const identity = get(req, this.options.reqIdentityKey);
       if (!identity) {
-        return next(new Error(`Request required property: ${this.options.reqIdentityKey}`));
+        if (isAnonymousAllowed) {
+          logger.debug('anonymous account, skipping authz checks');
+          return next();
+        }
+        return next(new UnauthorizedError('Permission denied. Anonymous access not allowed.', 401));
       }
-      const groups: string[] = get(req, this.options.reqGroupKey);
-      if (!groups) {
-        return next(new Error(`Request required property: ${this.options.reqGroupKey}`));
-      }
+      const groups: string[] = get(req, this.options.reqGroupKey, []);
 
       let permissions: string | string[] = get(identity, this.options.jwtPermissionKey);
       if (!permissions) {
@@ -92,6 +94,11 @@ export class AuthzGuard {
         return next(new UnauthorizedError('Permission denied. Invalid scope/permission included in token', 403));
       }
       logger.debug(`token scopes/permissions: ${permissions.join(', ')}`);
+
+      // when the user has "special" permissions, include a "wildcard" group
+      if (permissions.find((permission) => permission.startsWith('*:'))) {
+        groups.push('*');
+      }
 
       const scopedGroups = groups.filter((group: string) => {
         const hasAccess = scopes.some((required: string[]) => {
@@ -122,11 +129,16 @@ export class AuthzGuard {
    * groups or an array of strings.
    *
    * @param includeServiceAccounts: require a primary group for operations with Service Accounts (apiKeys).
-   * @param allowMultiple: allow multiple groups delimited by ","
+   * @param allowMultiple: allow multiple groups delimited by sep.
+   * @param sep: group value separator.
    */
-  public enforcePrimaryGroup(includeServiceAccounts: boolean = false, allowMultiple: boolean = false): Handler {
+  public enforcePrimaryGroup(
+    includeServiceAccounts: boolean = false,
+    allowMultiple: boolean = false,
+    sep: string = ','
+  ): Handler {
     return (req: Request, res: Response, next: NextFunction) => {
-      const isServiceAccount = res.locals.isServiceAccount;
+      const { isAnonymousAllowed, isServiceAccount } = res.locals;
 
       if (isServiceAccount) {
         if (includeServiceAccounts) {
@@ -135,7 +147,7 @@ export class AuthzGuard {
               new UnauthorizedError('Permission denied. Service accounts need to specify a primary group.', 403)
             );
           }
-          const groups: string[] = (req.query.group as string).split(',');
+          const groups: string[] = (req.query.group as string).split(sep);
           set(req, this.options.reqGroupKey, groups);
         }
         return next();
@@ -143,8 +155,15 @@ export class AuthzGuard {
 
       const identity = get(req, this.options.reqIdentityKey);
       if (!identity) {
-        return next(new Error(`Request required property: ${this.options.reqIdentityKey}`));
+        if (isAnonymousAllowed) {
+          logger.debug(`anonymous user, setting public group: ${PUBLIC_ORG}`);
+
+          set(req, this.options.reqGroupKey, [PUBLIC_ORG]);
+          return next();
+        }
+        return next(new UnauthorizedError('Permission denied. Anonymous access not allowed.', 401));
       }
+
       let tokenGroups: string | string[] = get(identity, this.options.jwtGroupKey);
       if (!tokenGroups) {
         return next(new UnauthorizedError('Permission denied. Groups not included in token', 403));
@@ -164,7 +183,7 @@ export class AuthzGuard {
       if (!req.query.group) {
         return next(new UnauthorizedError('Permission denied. No primary groups specified for user', 403));
       }
-      const groups: string[] = (req.query.group as string).split(',');
+      const groups: string[] = (req.query.group as string).split(sep);
       if (!groups.every((group) => primaryGroups.includes(group))) {
         return next(new UnauthorizedError('Permission denied. Invalid primary groups specified for user', 403));
       }

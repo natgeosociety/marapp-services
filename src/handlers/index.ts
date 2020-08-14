@@ -124,7 +124,15 @@ export const open = (...handlers: RequestHandler[]): Handler => baseHandler(hand
  * Wrapper for authenticated handlers.
  * @param handlers
  */
-export const authenticated = (...handlers: RequestHandler[]): Handler => baseHandler([jwtRSA, jwtError, ...handlers]);
+export const authenticated = (...handlers: RequestHandler[]): Handler =>
+  baseHandler([jwtRSA(true), jwtError, ...handlers]);
+
+/**
+ * Wrapper for (optional) anonymous handlers.
+ * @param handlers
+ */
+export const anonymous = (...handlers: RequestHandler[]): Handler =>
+  baseHandler([jwtRSA(false), jwtError, ...handlers]);
 
 /**
  * Wrapper for system handlers (apiKey).

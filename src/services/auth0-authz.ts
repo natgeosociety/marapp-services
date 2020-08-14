@@ -28,15 +28,20 @@ export const Auth0Error = makeError('Auth0Error');
 
 const logger = getLogger();
 
-export interface AuthzService {
+type GroupType = 'OWNER' | 'ADMIN' | 'EDITOR' | 'VIEWER';
+
+export interface AuthzServiceSpec {
   getGroups();
   getGroup(id: string);
   getUserGroups(id: string);
   getGroupOwners(id: string);
+  getGroupAdmins(id: string);
   isGroupOwner(userId: string, groupId: string);
+  isGroupAdmin(userId: string, groupId: string);
   createGroup(name: string, description: string, members?: string[]);
   updateGroup(id: string, name: string, description: string);
   addNestedGroups(groupId: string, nestedGroupIds: string[]);
+  deleteNestedGroups(groupId: string, nestedGroupIds: string[]);
   addGroupRoles(groupId: string, roleIds: string[]);
   deleteGroup(groupId: string);
   getPermission();
@@ -52,7 +57,7 @@ export interface AuthzService {
   );
   deleteRole(roleId: string);
   calculateGroupMemberships(groupId: string);
-  getNestedGroups(groupId: string);
+  getNestedGroups(groupId: string, filterGroups?: GroupType[], excludeGroups?: GroupType[]);
   getNestedGroupMembers(groupId: string, page?: number, perPage?: number);
   getNestedGroupRoles(groupId: string);
   mapNestedGroupRoles(nestedGroupRoles: any[]);
@@ -61,7 +66,7 @@ export interface AuthzService {
   deleteGroupMembers(groupId: string, userIds: string[]);
 }
 
-export class Auth0AuthzService implements AuthzService {
+export class Auth0AuthzService implements AuthzServiceSpec {
   constructor(private client: AuthorizationClient) {}
 
   async getGroups() {
@@ -77,20 +82,33 @@ export class Auth0AuthzService implements AuthzService {
   }
 
   async getGroupOwners(id: string) {
-    const nestedGroups = await this.getNestedGroups(id);
-    const ownerGroup = nestedGroups.find((group) => group.name.endsWith('OWNER'));
+    const groups = await this.getNestedGroups(id, ['OWNER']);
 
-    if (!ownerGroup || !Array.isArray(ownerGroup.members)) {
+    if (!groups.length || !Array.isArray(groups[0].members)) {
       return [];
     }
+    return Promise.all(groups[0].members.map((userId) => this.client.getUser({ userId })));
+  }
 
-    return Promise.all(ownerGroup.members.map((userId) => this.client.getUser({ userId })));
+  async getGroupAdmins(id: string) {
+    const groups = await this.getNestedGroups(id, ['ADMIN']);
+
+    if (!groups.length || !Array.isArray(groups[0].members)) {
+      return [];
+    }
+    return Promise.all(groups[0].members.map((userId) => this.client.getUser({ userId })));
   }
 
   async isGroupOwner(userId: string, groupId: string) {
     const owners = await this.getGroupOwners(groupId);
 
     return owners.find((owner) => owner.user_id === userId);
+  }
+
+  async isGroupAdmin(userId: string, groupId: string) {
+    const admins = await this.getGroupAdmins(groupId);
+
+    return admins.find((admin) => admin.user_id === userId);
   }
 
   async createGroup(name: string, description: string, members?: string[]) {
@@ -103,6 +121,10 @@ export class Auth0AuthzService implements AuthzService {
 
   async addNestedGroups(groupId: string, nestedGroupIds: string[]) {
     return this.client.addNestedGroups({ groupId, nestedGroupIds });
+  }
+
+  async deleteNestedGroups(groupId: string, nestedGroupIds: string[]) {
+    return this.client.deleteNestedGroups({ groupId, nestedGroupIds });
   }
 
   async addGroupRoles(groupId: string, roleIds: string[]) {
@@ -139,8 +161,12 @@ export class Auth0AuthzService implements AuthzService {
     return this.client.deleteRole({ roleId });
   }
 
-  async getNestedGroups(groupId: string) {
-    return this.client.getNestedGroups({ groupId });
+  async getNestedGroups(groupId: string, filterGroups: GroupType[] = [], excludeGroups: GroupType[] = []) {
+    let nestedGroups = await this.client.getNestedGroups({ groupId });
+    if (filterGroups.length) {
+      nestedGroups = nestedGroups.filter((g) => filterGroups.every((k) => g.name.endsWith(k)));
+    }
+    return nestedGroups.filter((r) => excludeGroups.every((k) => !r.name.endsWith(k)));
   }
 
   async getNestedGroupMembers(groupId: string, page: number = 1, perPage: number = 10) {
@@ -215,6 +241,7 @@ export const initAuthzClient = (): Promise<AuthorizationClient> => {
         domain: AUTH0_DOMAIN,
         extensionUrl: AUTH0_EXTENSION_URL,
       });
+
       logger.warn('Auth0 Authorization client initialized successfully');
 
       resolve(authzClient);

@@ -22,7 +22,7 @@ import jwt from 'express-jwt';
 import jwksRsa from 'jwks-rsa';
 import ms from 'ms';
 
-import { SERVICE_API_KEY } from '../config';
+import { PUBLIC_ORG, SERVICE_API_KEY } from '../config';
 import { AUTH0_DOMAIN } from '../config/auth0';
 import { UnauthorizedError } from '../errors';
 import { getLogger } from '../logging';
@@ -106,18 +106,22 @@ const secretProvider = (req, header, payload, cb) => {
  *
  * Signing key verification results are cached in order to prevent excessive HTTP requests to the JWKS endpoint
  */
-export const jwtRSA = (req: Request, res: Response, next: NextFunction) => {
+export const jwtRSA = (credentialsRequired: boolean = true) => (req: Request, res: Response, next: NextFunction) => {
   const apiKey = getApiKey(req);
   if (apiKey && isValidApiKey(apiKey)) {
     res.locals.isServiceAccount = true; // forward response local variables scoped to the request;
     return next();
   }
+
+  // mark anonymous access for middlewares;
+  res.locals.isAnonymousAllowed = !credentialsRequired && PUBLIC_ORG;
+
   const options = {
     userProperty: 'identity',
     secret: secretProvider,
     algorithms: ['RS256'],
     issuer: `https://${AUTH0_DOMAIN}/`,
-    credentialsRequired: true,
+    credentialsRequired: credentialsRequired,
     getToken: getToken,
   };
   return jwt(options)(req, res, next);

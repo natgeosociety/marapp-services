@@ -88,7 +88,7 @@
           {
             "in": "query",
             "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \">=\", \"<=\", \">\", \"<\".",
+            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
             "required": false,
             "type": "string"
           },
@@ -395,7 +395,7 @@
           {
             "in": "query",
             "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \">=\", \"<=\", \">\", \"<\".",
+            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
             "required": false,
             "type": "string"
           },
@@ -581,7 +581,7 @@
           {
             "in": "query",
             "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \">=\", \"<=\", \">\", \"<\".",
+            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
             "required": false,
             "type": "string"
           },
@@ -881,7 +881,7 @@
           {
             "in": "query",
             "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \">=\", \"<=\", \">\", \"<\".",
+            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
             "required": false,
             "type": "string"
           },
@@ -1045,7 +1045,7 @@
           {
             "in": "query",
             "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \">=\", \"<=\", \">\", \"<\".",
+            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
             "required": false,
             "type": "string"
           },
@@ -1219,7 +1219,7 @@
           {
             "in": "query",
             "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \">=\", \"<=\", \">\", \"<\".",
+            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
             "required": false,
             "type": "string"
           },
@@ -1599,7 +1599,7 @@
           {
             "in": "query",
             "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \">=\", \"<=\", \">\", \"<\".",
+            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
             "required": false,
             "type": "string"
           },
@@ -1762,7 +1762,7 @@
           {
             "in": "query",
             "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \">=\", \"<=\", \">\", \"<\".",
+            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
             "required": false,
             "type": "string"
           },
@@ -2062,7 +2062,7 @@
           {
             "in": "query",
             "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \">=\", \"<=\", \">\", \"<\".",
+            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
             "required": false,
             "type": "string"
           },
@@ -2248,7 +2248,7 @@
           {
             "in": "query",
             "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \">=\", \"<=\", \">\", \"<\".",
+            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
             "required": false,
             "type": "string"
           },
@@ -2548,7 +2548,7 @@
           {
             "in": "query",
             "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \">=\", \"<=\", \">\", \"<\".",
+            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
             "required": false,
             "type": "string"
           },
@@ -2711,7 +2711,7 @@
           {
             "in": "query",
             "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \">=\", \"<=\", \">\", \"<\".",
+            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
             "required": false,
             "type": "string"
           },
@@ -3308,13 +3308,43 @@
             "required": false,
             "type": "number",
             "default": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
           {
-            "in": "query",
-            "name": "group",
-            "description": "Primary group name. Required when multiple primary groups included in the token.",
-            "required": false,
-            "type": "string"
+            "ApiKey": [],
+            "Bearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": ["organizations-management"],
+        "summary": "Add a new organization",
+        "description": "",
+        "operationId": "addOrganization",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Organization"
+            }
           }
         ],
         "responses": {
@@ -3347,13 +3377,6 @@
         "operationId": "getOrganizationById",
         "parameters": [
           {
-            "in": "query",
-            "name": "include",
-            "description": "Comma separated relationship paths.",
-            "required": false,
-            "type": "string"
-          },
-          {
             "name": "id",
             "in": "path",
             "description": "Organization ID.",
@@ -3362,8 +3385,8 @@
           },
           {
             "in": "query",
-            "name": "group",
-            "description": "Primary group name. Required when multiple primary groups included in the token.",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
             "required": false,
             "type": "string"
           }
@@ -3396,7 +3419,7 @@
         "operationId": "updateOrganizationById",
         "parameters": [
           {
-            "name": "organization",
+            "name": "id",
             "in": "path",
             "description": "Organization ID",
             "required": true,
@@ -3410,12 +3433,40 @@
             "schema": {
               "$ref": "#/definitions/Organization"
             }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
           {
-            "in": "query",
-            "name": "group",
-            "description": "Primary group name. Required when multiple primary groups included in the token.",
-            "required": false,
+            "ApiKey": [],
+            "Bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": ["organizations-management"],
+        "summary": "Delete an organization by ID",
+        "description": "",
+        "operationId": "deleteOrganization",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Organization ID.",
+            "required": true,
             "type": "string"
           }
         ],
@@ -3732,6 +3783,12 @@
         },
         "description": {
           "type": "string"
+        },
+        "owners": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "xml": {
