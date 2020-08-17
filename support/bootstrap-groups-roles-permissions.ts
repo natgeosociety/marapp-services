@@ -20,7 +20,6 @@
 */
 
 import * as chalk from 'chalk';
-import { get } from 'lodash';
 import * as yargs from 'yargs';
 
 import { forEachAsync } from '../src/helpers/util';
