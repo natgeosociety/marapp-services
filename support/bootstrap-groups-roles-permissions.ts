@@ -20,7 +20,6 @@
 */
 
 import * as chalk from 'chalk';
-import { get } from 'lodash';
 import * as yargs from 'yargs';
 
 import { forEachAsync } from '../src/helpers/util';
@@ -29,6 +28,7 @@ import { Auth0ManagementService, initAuthMgmtClient } from '../src/services/auth
 
 const argv = yargs.options({
   createGroup: { type: 'string' },
+  upsertGroupsConfig: { type: 'boolean', default: false },
   getAllGroups: { type: 'boolean', default: false },
   getAllPermissions: { type: 'boolean', default: false },
   getAllRoles: { type: 'boolean', default: false },
@@ -129,6 +129,70 @@ const main = async (): Promise<void> => {
   if (argv.getAllRoles) {
     const roles = await authzService.getRoles();
     console.log(chalk.yellow(JSON.stringify(roles, null, 2)));
+  }
+
+  if (argv.upsertGroupsConfig) {
+    const { groups } = await authzService.getGroups();
+    const primaryGroups = groups.filter((group) => 'nested' in group);
+
+    const { permissions } = await authzService.getPermission();
+    const existingPermissionsMap = permissions.reduce((a, c) => {
+      a[c.name] = c;
+      return a;
+    }, {});
+
+    const nestedGroups = Object.keys(PERMISSIONS).map((p) => ({ name: PERMISSIONS[p].name, key: p }));
+
+    for (const primaryGroup of primaryGroups) {
+      for (const nestedGroup of nestedGroups) {
+        const nestedGroupName = [primaryGroup.name, nestedGroup.name.toUpperCase()].join('-');
+
+        // check for the missing nested groups;
+        if (!groups.find((group) => group.name === nestedGroupName)) {
+          // create the missing nested group;
+          const missingNestedGroup = await authzService.createGroup(
+            nestedGroupName,
+            `${primaryGroup.name} ${nestedGroup.name}`
+          );
+
+          await authzService.addNestedGroups(primaryGroup._id, [missingNestedGroup._id]);
+
+          const permissionMap: { [key: string]: string } = {};
+
+          // create the missing permissions;
+          await forEachAsync(SCOPES_READ, async (scope) => {
+            const read = [primaryGroup.name, scope].join(':');
+            const permission =
+              existingPermissionsMap[read] ||
+              (await authzService.createPermission(read, SCOPES_READ_DESCRIPTION, argv.applicationId));
+            permissionMap[scope] = permission._id;
+          });
+
+          await forEachAsync(SCOPES_WRITE, async (scope) => {
+            const write = [primaryGroup.name, scope].join(':');
+            const permission =
+              existingPermissionsMap[write] ||
+              (await authzService.createPermission(write, SCOPES_WRITE_DESCRIPTION, argv.applicationId));
+            permissionMap[scope] = permission._id;
+          });
+
+          // create the missing role;
+          const missingRoleName = [primaryGroup.name, nestedGroup.name].join(':');
+          const missingRole = await authzService.createRole(
+            missingRoleName,
+            PERMISSIONS[nestedGroup.key].description,
+            argv.applicationId,
+            [
+              ...PERMISSIONS[nestedGroup.key].readScopes.map((scope) => permissionMap[scope]),
+              ...PERMISSIONS[nestedGroup.key].writeScopes.map((scope) => permissionMap[scope]),
+            ]
+          );
+
+          // add the role for the missing nested group;
+          await authzService.addGroupRoles(missingNestedGroup._id, [missingRole._id]);
+        }
+      }
+    }
   }
 
   if (argv.createGroup && argv.createGroup.trim() && argv.ownerEmail && argv.ownerEmail.trim()) {

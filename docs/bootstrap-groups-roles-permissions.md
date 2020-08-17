@@ -10,7 +10,7 @@ More details about Auth0 Authorization Extension API and using the extension can
 #### Creating groups, roles & permissions, assigning the owner.
 
 ```bash
-./scripts/bootstrap-groups-roles-permissions.ts --clientId <AUTH0_M2M_CLIENT_ID> --clientSecret <AUTH0_M2M_CLIENT_SECRET> --applicationId <AUTH0_CLIENT_ID> --createGroup <ORG_NAME> --ownerEmail <EMAIL>
+./support/bootstrap-groups-roles-permissions.ts --clientId <AUTH0_M2M_CLIENT_ID> --clientSecret <AUTH0_M2M_CLIENT_SECRET> --applicationId <AUTH0_CLIENT_ID> --createGroup <ORG_NAME> --ownerEmail <EMAIL>
 ```
 - AUTH0_M2M_CLIENT_ID: Auth0 Machine to Machine (M2M) client ID.
 - AUTH0_M2M_CLIENT_SECRET: Auth0 Machine to Machine (M2M) client secret.

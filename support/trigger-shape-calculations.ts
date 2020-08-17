@@ -27,11 +27,11 @@ import { API_BASE } from '../src/config';
 import { forEachAsync } from '../src/helpers/util';
 import { OperationTypeEnum, publishSNSMessage, SNSMessage } from '../src/services/sns';
 
-const API_HOST = '<API_HOST_NAME>';
-
 const argv = yargs.options({
+  apiHost: { type: 'string', demandOption: true },
+  organization: { type: 'string', demandOption: true },
+  dryRun: { type: 'boolean', default: false },
   apiKey: { type: 'string', demandOption: true },
-  organization: { type: 'string' },
 }).argv;
 
 const main = async (): Promise<void> => {
@@ -77,7 +77,7 @@ async function* fetchResources() {
 }
 
 const fetchResourcePage = async (pageNumber: number = 1, pageSize: number = 100) => {
-  let endpoint = `${API_HOST}/${API_BASE}/management/locations`;
+  let endpoint = `${argv.apiHost}/${API_BASE}/management/locations`;
   const headers = {
     ApiKey: argv.apiKey,
   };
@@ -103,6 +103,7 @@ const fetchResourcePage = async (pageNumber: number = 1, pageSize: number = 100)
 
 main()
   .then(() => {
+    console.debug('Success!');
     process.exit(0);
   })
   .catch((err) => {

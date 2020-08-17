@@ -49,5 +49,5 @@ Note: `ApiKey` authorization can be used instead of the Bearer token via `-H 'ap
 Required format
 - same as above, but in JSONL format (see: http://jsonlines.org)
 ```
-$ cat example.jsonl | ./scripts/bootstrap-fixture-data.ts --apiKey <APIKEY> --organization <GROUP>
+$ cat example.jsonl | ./support/bootstrap-fixture-data.ts --apiKey <APIKEY> --organization <GROUP>
 ```
