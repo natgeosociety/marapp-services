@@ -25,6 +25,7 @@ import { getLogger } from '../logging';
 
 import { schemaOptions } from './middlewares';
 import esPlugin, { IESPlugin } from './plugins/elasticsearch';
+import slugifyPlugin, { ISlugifyPlugin } from './plugins/slugify';
 import { isArrayEmptyValidator, isEmptyValidator, slugValidator } from './validators';
 
 const logger = getLogger('LayerModel');
@@ -154,6 +155,9 @@ LayerSchema.index({ name: 'text', type: 'text' });
 // Create single field index for sorting;
 LayerSchema.index({ name: 1 });
 
+// Slugify plugin;
+LayerSchema.plugin(slugifyPlugin, { uniqueField: 'slug', separator: '-' });
+
 /**
  * Pre-save middleware, handles versioning.
  */
@@ -192,6 +196,6 @@ LayerSchema.post('remove', async function () {
   logger.debug(`removed reference: ${id} from ${resLayer.nModified} layer(s)`);
 });
 
-interface ILayerModel extends Model<LayerDocument>, IESPlugin {}
+interface ILayerModel extends Model<LayerDocument>, IESPlugin, ISlugifyPlugin {}
 
 export const LayerModel: ILayerModel = model<LayerDocument>('Layer', LayerSchema);

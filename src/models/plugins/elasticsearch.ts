@@ -24,6 +24,8 @@ import { ES_INDEX_PREFIX } from '../../config';
 import { getLogger } from '../../logging';
 import { ElasticSearchService, ESIndexConfig } from '../../services/search-service';
 
+const logger = getLogger();
+
 export interface IESPlugin {
   esSync?(): Promise<any>;
   esSearch?(esQuery: object, from: number, size: number): Promise<any>;
@@ -35,8 +37,6 @@ export interface IESPlugin {
     fields?: string[]
   ): Promise<any>;
 }
-
-const logger = getLogger();
 
 export default (schema: Schema, options: ESIndexConfig) => {
   const searchService = new ElasticSearchService();

@@ -26,6 +26,7 @@ import { getLogger } from '../logging';
 import { Layer, MetricModel } from '.';
 import { schemaOptions } from './middlewares';
 import esPlugin, { IESPlugin } from './plugins/elasticsearch';
+import slugifyPlugin, { ISlugifyPlugin } from './plugins/slugify';
 import {
   hasUniqueValuesValidator,
   isArrayEmptyValidator,
@@ -126,6 +127,9 @@ WidgetSchema.index({ name: 'text' });
 // Create single field index for sorting;
 WidgetSchema.index({ name: 1 });
 
+// Slugify plugin;
+WidgetSchema.plugin(slugifyPlugin, { uniqueField: 'slug', separator: '-' });
+
 /**
  * Pre-save middleware, handles versioning.
  */
@@ -149,6 +153,6 @@ WidgetSchema.post('remove', async function () {
   logger.debug(`removed reference: ${id} from ${resDashboard.nModified} dashboard(s)`);
 });
 
-interface IWidgetModel extends Model<WidgetDocument>, IESPlugin {}
+interface IWidgetModel extends Model<WidgetDocument>, IESPlugin, ISlugifyPlugin {}
 
 export const WidgetModel: IWidgetModel = model<WidgetDocument>('Widget', WidgetSchema);

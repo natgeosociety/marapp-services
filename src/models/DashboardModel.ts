@@ -26,6 +26,7 @@ import { getLogger } from '../logging';
 import { Layer, Widget } from '.';
 import { schemaOptions } from './middlewares';
 import esPlugin, { IESPlugin } from './plugins/elasticsearch';
+import slugifyPlugin, { ISlugifyPlugin } from './plugins/slugify';
 import { slugValidator } from './validators';
 
 const logger = getLogger('DashboardModel');
@@ -114,6 +115,9 @@ DashboardSchema.index({ name: 'text' });
 // Create single field index for sorting;
 DashboardSchema.index({ name: 1 });
 
+// Slugify plugin;
+DashboardSchema.plugin(slugifyPlugin, { uniqueField: 'slug', separator: '-' });
+
 /**
  * Pre-save middleware, handles versioning.
  */
@@ -127,6 +131,6 @@ DashboardSchema.pre('save', async function () {
   }
 });
 
-interface IDashboardModel extends Model<DashboardDocument>, IESPlugin {}
+interface IDashboardModel extends Model<DashboardDocument>, IESPlugin, ISlugifyPlugin {}
 
 export const DashboardModel: IDashboardModel = model<DashboardDocument>('Dashboard', DashboardSchema);
