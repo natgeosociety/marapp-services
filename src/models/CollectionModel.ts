@@ -29,6 +29,7 @@ import { computeAreaKm2, computeShapeBbox, computeShapeCentroid, mergeGeojson } 
 import { Location, LocationModel, Metric } from '.';
 import { schemaOptions } from './middlewares';
 import esPlugin, { IESPlugin } from './plugins/elasticsearch';
+import slugifyPlugin, { ISlugifyPlugin } from './plugins/slugify';
 import { getByIds } from './utils';
 import { slugValidator } from './validators';
 
@@ -129,6 +130,9 @@ CollectionSchema.plugin(esPlugin, {
   },
 });
 
+// Slugify plugin;
+CollectionSchema.plugin(slugifyPlugin, { uniqueField: 'slug', separator: '-' });
+
 /**
  * Post-save middleware, computes geojson, areaKm2, geojson, centroid.
  */
@@ -171,6 +175,6 @@ CollectionSchema.post('findOne', async function (result: CollectionDocument) {
   }
 });
 
-interface ICollectionModel extends Model<CollectionDocument>, IESPlugin {}
+interface ICollectionModel extends Model<CollectionDocument>, IESPlugin, ISlugifyPlugin {}
 
 export const CollectionModel: ICollectionModel = model<CollectionDocument>('Collection', CollectionSchema);

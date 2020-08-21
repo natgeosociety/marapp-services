@@ -192,6 +192,29 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
   );
 
   router.get(
+    `${path}/slug`,
+    guard.enforcePrimaryGroup(true),
+    AuthzGuards.readLocationsGuard,
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const keyword = <string>req.query.keyword;
+      const type = req.query.type;
+
+      logger.debug(`received keyword: ${keyword}`);
+
+      const predefined = queryFilters.concat([{ key: 'organization', op: 'in', value: req.groups }]);
+      const queryOptions = parser.parse(req.query, { predefined });
+
+      const slug = await LayerModel.getUniqueSlug(keyword, queryOptions.filter, <any>type);
+
+      const code = 200;
+      const response: SuccessResponse = { code, data: { slug: slug } };
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
+
+  router.get(
     `${path}/:id`,
     guard.enforcePrimaryGroup(),
     AuthzGuards.readLayersGuard,

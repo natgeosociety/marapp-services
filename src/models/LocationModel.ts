@@ -28,6 +28,7 @@ import { computeAreaKm2, computeShapeBbox, computeShapeCentroid, normalizeGeojso
 import { Metric } from '.';
 import { schemaOptions } from './middlewares';
 import esPlugin, { IESPlugin } from './plugins/elasticsearch';
+import slugifyPlugin, { ISlugifyPlugin } from './plugins/slugify';
 import { slugValidator } from './validators';
 
 const logger = getLogger('LocationModel');
@@ -148,6 +149,9 @@ LocationSchema.plugin(esPlugin, {
   },
 });
 
+// Slugify plugin;
+LocationSchema.plugin(slugifyPlugin, { uniqueField: 'slug', separator: '-' });
+
 /**
  * Pre-save middleware, handles versioning and computes area related measurements when shape changes.
  */
@@ -186,6 +190,6 @@ LocationSchema.post('remove', async function () {
   logger.debug(`removed reference: ${id} from ${resCollection.nModified} collection(s)`);
 });
 
-interface ILocationModel extends Model<LocationDocument>, IESPlugin {}
+interface ILocationModel extends Model<LocationDocument>, IESPlugin, ISlugifyPlugin {}
 
 export const LocationModel: ILocationModel = model<LocationDocument>('Location', LocationSchema);

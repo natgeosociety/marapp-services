@@ -211,6 +211,58 @@
         ]
       }
     },
+    "/management/locations/slug": {
+      "get": {
+        "tags": ["locations-management"],
+        "summary": "Generate a unique slug.",
+        "description": "",
+        "operationId": "getLocationSlug",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "keyword",
+            "description": "Text string.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "description": "Increment type. Supported options are: \"counter\", \"shortid\"",
+            "required": true,
+            "enum": ["counter", "shortid"],
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "group",
+            "description": "Primary group name. Required when multiple primary groups included in the token.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [],
+            "Bearer": []
+          }
+        ]
+      }
+    },
     "/management/locations/{id}": {
       "get": {
         "tags": ["locations-management"],
@@ -243,13 +295,6 @@
             "in": "query",
             "name": "sort",
             "description": "Comma separated field names. The sort order of each path is ascending unless the path name is prefixed with \"-\".",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "organization",
-            "description": "Filter content based on selected organization. Required when multiple organization groups included in the token.",
             "required": false,
             "type": "string"
           },
@@ -673,6 +718,58 @@
             "schema": {
               "$ref": "#/definitions/Collection"
             }
+          },
+          {
+            "in": "query",
+            "name": "group",
+            "description": "Primary group name. Required when multiple primary groups included in the token.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [],
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/management/collections/slug": {
+      "get": {
+        "tags": ["collections-management"],
+        "summary": "Generate a unique slug.",
+        "description": "",
+        "operationId": "getCollectionSlug",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "keyword",
+            "description": "Text string.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "description": "Increment type. Supported options are: \"counter\", \"shortid\"",
+            "required": true,
+            "enum": ["counter", "shortid"],
+            "type": "string"
           },
           {
             "in": "query",
@@ -1885,6 +1982,58 @@
         ]
       }
     },
+    "/management/widgets/slug": {
+      "get": {
+        "tags": ["widgets-management"],
+        "summary": "Generate a unique slug.",
+        "description": "",
+        "operationId": "getWidgetSlug",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "keyword",
+            "description": "Text string.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "description": "Increment type. Supported options are: \"counter\", \"shortid\"",
+            "required": true,
+            "enum": ["counter", "shortid"],
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "group",
+            "description": "Primary group name. Required when multiple primary groups included in the token.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [],
+            "Bearer": []
+          }
+        ]
+      }
+    },
     "/management/widgets/{id}": {
       "get": {
         "tags": ["widgets-management"],
@@ -2371,6 +2520,58 @@
         ]
       }
     },
+    "/management/layers/slug": {
+      "get": {
+        "tags": ["layers-management"],
+        "summary": "Generate a unique slug.",
+        "description": "",
+        "operationId": "getLayerSlug",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "keyword",
+            "description": "Text string.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "description": "Increment type. Supported options are: \"counter\", \"shortid\"",
+            "required": true,
+            "enum": ["counter", "shortid"],
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "group",
+            "description": "Primary group name. Required when multiple primary groups included in the token.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [],
+            "Bearer": []
+          }
+        ]
+      }
+    },
     "/management/layers/{id}": {
       "get": {
         "tags": ["layers-management"],
@@ -2803,6 +3004,58 @@
             "schema": {
               "$ref": "#/definitions/Dashboard"
             }
+          },
+          {
+            "in": "query",
+            "name": "group",
+            "description": "Primary group name. Required when multiple primary groups included in the token.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [],
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/management/dashboards/slug": {
+      "get": {
+        "tags": ["dashboards-management"],
+        "summary": "Generate a unique slug.",
+        "description": "",
+        "operationId": "getDashboardSlug",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "keyword",
+            "description": "Text string.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "description": "Increment type. Supported options are: \"counter\", \"shortid\"",
+            "required": true,
+            "enum": ["counter", "shortid"],
+            "type": "string"
           },
           {
             "in": "query",
