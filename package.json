@@ -9,7 +9,7 @@
     "watch": "tsc --watch",
     "test": "jest --runInBand --passWithNoTests",
     "typecheck": "tsc --noEmit",
-    "lint": "tslint --project tslint.tsconfig.json",
+    "lint": "tslint --project tslint.tsconfig.json --fix",
     "prettify": "prettier --write '{src,tests,support}/**/*.{js,ts,json}'",
     "serverless:start": "serverless offline --verbose --noPrependStageInUrl",
     "serverless:start:debug": "SLS_DEBUG=1 serverless offline --verbose --noPrependStageInUrl",
