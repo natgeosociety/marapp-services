@@ -384,11 +384,18 @@ export class MembershipService implements MembershipServiceSpec {
             logger.debug(`creating role: ${roleName} for group: ${groupsMap[nestedName].name}`);
 
             // create role;
-            const role = await this.authzService.createRole(roleName, roleType.description, applicationId, [
-              ...roleType.readScopes.map((scope) => permissionsMap[scope]._id),
-              ...roleType.writeScopes.map((scope) => permissionsMap[scope]._id),
+            rolesMap[roleName] = await this.authzService.createRole(roleName, roleType.description, applicationId, [
+              ...roleType.readScopes.map((scope) => {
+                const s = [groupName, scope].join(':');
+                return permissionsMap[s]._id;
+              }),
+              ...roleType.writeScopes.map((scope) => {
+                const s = [groupName, scope].join(':');
+                return permissionsMap[s]._id;
+              }),
             ]);
-            logger.debug(`assigning role: ${role._id} to group: ${groupsMap[nestedName].name}`);
+
+            logger.debug(`assigning role: ${rolesMap[roleName]._id} to group: ${groupsMap[nestedName].name}`);
 
             // add the role to the nested group;
             await this.authzService.addGroupRoles(groupsMap[nestedName]._id, [rolesMap[roleName]._id]);
