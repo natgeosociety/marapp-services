@@ -30,6 +30,7 @@ import { getLogger } from '../logging';
 import { AuthzGuards, AuthzRequest, guard } from '../middlewares/authz-guards';
 import { WidgetModel } from '../models';
 import { getAll, getById, remove, save, update } from '../models/utils';
+import { createSerializer as createSlugSerializer } from '../serializers/SlugSerializer';
 import { createSerializer } from '../serializers/WidgetSerializer';
 import { ResponseMeta, SuccessResponse } from '../types/response';
 
@@ -203,7 +204,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const slug = await WidgetModel.getUniqueSlug(keyword, queryOptions.filter, <any>type);
 
       const code = 200;
-      const response: SuccessResponse = { code, data: { slug: slug } };
+      const response = createSlugSerializer().serialize({ slug });
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);

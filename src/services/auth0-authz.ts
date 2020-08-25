@@ -31,8 +31,8 @@ const logger = getLogger();
 type GroupType = 'OWNER' | 'ADMIN' | 'EDITOR' | 'VIEWER';
 
 export interface AuthzServiceSpec {
-  getGroups();
   getGroup(id: string);
+  getGroups(filterGroups?: string[]);
   getUserGroups(id: string);
   getGroupOwners(id: string);
   getGroupAdmins(id: string);
@@ -47,12 +47,21 @@ export interface AuthzServiceSpec {
   getPermission();
   createPermission(name: string, description: string, applicationId: string, applicationType?: string);
   deletePermission(permissionId: string);
+  getRole(roleId: string);
   getRoles();
   createRole(
     name: string,
     description: string,
     applicationId: string,
     permissions?: string[],
+    applicationType?: string
+  );
+  updateRole(
+    id: string,
+    name: string,
+    description: string,
+    applicationId: string,
+    permissions: string[],
     applicationType?: string
   );
   deleteRole(roleId: string);
@@ -69,8 +78,13 @@ export interface AuthzServiceSpec {
 export class Auth0AuthzService implements AuthzServiceSpec {
   constructor(private client: AuthorizationClient) {}
 
-  async getGroups() {
-    return this.client.getGroups();
+  async getGroups(filterGroups: string[] = []) {
+    let groups = await this.client.getGroups();
+    if (filterGroups.length) {
+      groups.groups = groups.groups.filter((g) => filterGroups.every((k) => g.name === k));
+      groups.total = groups.groups.length;
+    }
+    return groups;
   }
 
   async getGroup(id: string) {
@@ -143,6 +157,10 @@ export class Auth0AuthzService implements AuthzServiceSpec {
     return this.client.deletePermission({ permissionId });
   }
 
+  async getRole(roleId: string) {
+    return this.client.getRole({ roleId });
+  }
+
   async getRoles() {
     return this.client.getRoles();
   }
@@ -155,6 +173,17 @@ export class Auth0AuthzService implements AuthzServiceSpec {
     applicationType: string = 'client'
   ) {
     return this.client.createRole({ name, description, applicationId, applicationType, permissions });
+  }
+
+  async updateRole(
+    id: string,
+    name: string,
+    description: string,
+    applicationId: string,
+    permissions: string[],
+    applicationType: string = 'client'
+  ) {
+    return this.client.updateRole({ _id: id, name, description, applicationId, applicationType, permissions });
   }
 
   async deleteRole(roleId: string) {

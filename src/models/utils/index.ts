@@ -479,6 +479,40 @@ export const removeByIds = async <T extends Document>(
 };
 
 /**
+ * Counts number of matching documents in a database collection.
+ * @param model
+ * @param queryCond
+ * @param estimatedCount
+ * @param raiseError
+ */
+export const countByQuery = async <T extends Document, L extends keyof T>(
+  model: Model<T>,
+  queryCond: { [key in L]?: any } = {},
+  estimatedCount: boolean = false,
+  raiseError: boolean = true
+): Promise<number> => {
+  let countQuery: Query<number>;
+  if (estimatedCount) {
+    // estimates the number of documents in a MongoDB collection,
+    // uses collection metadata rather than scanning the entire collection.
+    countQuery = model.estimatedDocumentCount(queryCond);
+  } else {
+    countQuery = model.countDocuments(<any>queryCond);
+  }
+
+  let count: number = 0;
+  try {
+    count = await countQuery.exec();
+  } catch (err) {
+    logger.error(err);
+    if (raiseError) {
+      throw new DocumentError('Could not count documents.', 500);
+    }
+  }
+  return count;
+};
+
+/**
  * Return all documents that intersect the given geometry.
  * $geometry uses EPSG:4326 as the default coordinate reference system (CRS).
  *

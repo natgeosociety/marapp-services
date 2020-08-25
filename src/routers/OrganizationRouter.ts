@@ -24,11 +24,15 @@ import urljoin from 'url-join';
 
 import { DEFAULT_CONTENT_TYPE } from '../config';
 import { ParameterRequiredError, RecordNotFound } from '../errors';
+import { MongooseQueryFilter, MongooseQueryParser } from '../helpers/mongoose';
 import { PaginationHelper } from '../helpers/paginator';
 import { forEachAsync, validateKeys } from '../helpers/util';
 import { getLogger } from '../logging';
-import { AuthzGuards, AuthzRequest } from '../middlewares/authz-guards';
+import { AuthzGuards, AuthzRequest, guard } from '../middlewares/authz-guards';
+import { CollectionModel, DashboardModel, LayerModel, LocationModel, WidgetModel } from '../models';
+import { countByQuery } from '../models/utils';
 import { createSerializer } from '../serializers/OrganizationSerializer';
+import { createSerializer as createStatsSerializer } from '../serializers/StatsSerializer';
 import { AuthzServiceSpec } from '../services/auth0-authz';
 import { AuthManagementService } from '../services/auth0-management';
 import { MembershipService } from '../services/membership-service';
@@ -41,6 +45,50 @@ const logger = getLogger();
 const getAdminRouter = (basePath: string = '/', routePath: string = '/management/organizations') => {
   const router: Router = Router();
   const path = urljoin(basePath, routePath);
+
+  const parser = new MongooseQueryParser();
+  const queryFilters: MongooseQueryFilter[] = [];
+
+  router.get(
+    `${path}/stats`,
+    guard.enforcePrimaryGroup(true),
+    AuthzGuards.readStatsGuard,
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const authzService: AuthzServiceSpec = req.app.locals.authzService;
+
+      const predefined = queryFilters.concat([{ key: 'organization', op: 'in', value: req.groups }]);
+      const queryOptions = parser.parse(null, { predefined });
+
+      const groups = await authzService.getGroups(req.groups);
+      if (!groups.total) {
+        throw new RecordNotFound(`Could not retrieve document.`, 404);
+      }
+      const group = groups.groups[0];
+
+      const [locations, collections, layers, widgets, dashboards] = await forEachAsync(
+        [LocationModel, CollectionModel, LayerModel, WidgetModel, DashboardModel],
+        async (model) => countByQuery(model, queryOptions.filter)
+      );
+
+      const data = {
+        id: group?._id,
+        name: group?.name,
+        slug: group?.name,
+        description: group?.description,
+        locations,
+        collections,
+        layers,
+        widgets,
+        dashboards,
+      };
+
+      const code = 200;
+      const response = createStatsSerializer().serialize(data);
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
 
   router.get(
     path,
