@@ -60,6 +60,8 @@
     "winston": "^3.3.3"
   },
   "devDependencies": {
+    "@semantic-release/changelog": "^5.0.1",
+    "@semantic-release/git": "^9.0.0",
     "@types/async": "^3.2.3",
     "@types/auth0": "^2.20.5",
     "@types/aws-lambda": "^8.10.56",
@@ -89,6 +91,7 @@
     "jest": "^26.1.0",
     "lint-staged": "^10.2.11",
     "prettier": "^2.0.5",
+    "semantic-release": "^17.1.1",
     "serverless": "^1.78.0",
     "serverless-dotenv-plugin": "^3.0.0",
     "serverless-localstack": "^0.4.24",
