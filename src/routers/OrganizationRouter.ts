@@ -65,16 +65,21 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       }
       const group = groups.groups[0];
 
+      const [locations, collections, layers, widgets, dashboards] = await forEachAsync(
+        [LocationModel, CollectionModel, LayerModel, WidgetModel, DashboardModel],
+        async (model) => countByQuery(model, queryOptions.filter)
+      );
+
       const data = {
         id: group?._id,
         name: group?.name,
         slug: group?.name,
         description: group?.description,
-        collections: await countByQuery(CollectionModel, queryOptions.filter),
-        locations: await countByQuery(LocationModel, queryOptions.filter),
-        layers: await countByQuery(LayerModel, queryOptions.filter),
-        widgets: await countByQuery(WidgetModel, queryOptions.filter),
-        dashboards: await countByQuery(DashboardModel, queryOptions.filter),
+        locations,
+        collections,
+        layers,
+        widgets,
+        dashboards,
       };
 
       const code = 200;
