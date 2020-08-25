@@ -46,6 +46,7 @@ const SCOPES_READ = [
   ScopesEnum.ReadWidgets,
   ScopesEnum.ReadDashboards,
   ScopesEnum.ReadUsers,
+  ScopesEnum.ReadStats,
 ];
 const SCOPES_READ_SUPER_ADMIN = [ScopesEnum.ReadOrganizations];
 const SCOPES_READ_DESCRIPTION = 'Provides the ability to read data from a specific resource inside an organization.';
@@ -89,6 +90,7 @@ const ROLES: { [key in RoleEnum]?: PermissionType } = {
       ScopesEnum.ReadLayers,
       ScopesEnum.ReadWidgets,
       ScopesEnum.ReadDashboards,
+      ScopesEnum.ReadStats,
     ],
     writeScopes: [
       ScopesEnum.WriteLocations,
@@ -109,10 +111,14 @@ const ROLES: { [key in RoleEnum]?: PermissionType } = {
       ScopesEnum.ReadLayers,
       ScopesEnum.ReadWidgets,
       ScopesEnum.ReadDashboards,
+      ScopesEnum.ReadStats,
     ],
     writeScopes: [],
     description: 'Can view content managed by the organization.',
   },
+};
+
+const ROLES_NO_ORG: { [key in RoleEnum]?: PermissionType } = {
   [RoleEnum.SUPER_ADMIN]: {
     name: RoleEnum.SUPER_ADMIN,
     readScopes: [ScopesEnum.ReadOrganizations],
@@ -124,7 +130,8 @@ const ROLES: { [key in RoleEnum]?: PermissionType } = {
 export interface MembershipServiceSpec {
   createOrganization(name: string, description: string, ownerIds: string[], applicationId?: string): Promise<void>;
   deleteOrganization(id: string): Promise<boolean>;
-  createSuperAdmin(): Promise<boolean>;
+  createSuperAdmin(applicationId?: string): Promise<boolean>;
+  updateOrganizationConfig(applicationId?: string): Promise<boolean>;
 }
 
 export class MembershipService implements MembershipServiceSpec {
@@ -270,39 +277,153 @@ export class MembershipService implements MembershipServiceSpec {
   }
 
   /**
-   * Bootstrap SuperAdmin role and permissions.
+   * Bootstrap "SuperAdmin" role and related permissions.
    * @param applicationId
    */
-  async createSuperAdmin(applicationId: string = AUTH0_APPLICATION_CLIENT_ID): Promise<any> {
-    const rootPrefix = '*';
-    const roleName = [rootPrefix, ROLES.SuperAdmin.name].join('-');
+  async createSuperAdmin(applicationId: string = AUTH0_APPLICATION_CLIENT_ID): Promise<boolean> {
+    let success: boolean = true;
+    try {
+      const rootPrefix = '*';
+      const roleName = [rootPrefix, ROLES_NO_ORG.SuperAdmin.name].join('-');
 
-    const permissionMap: { [key in ScopesEnum]?: string } = {};
+      const permissionMap: { [key in ScopesEnum]?: string } = {};
 
-    // create permissions;
-    await Promise.all([
-      ...SCOPES_READ_SUPER_ADMIN.map((scope) => {
-        const read = [rootPrefix, scope].join(':');
-        return this.authzService
-          .createPermission(read, SCOPES_READ_SUPER_ADMIN_DESCRIPTION, applicationId)
-          .then((perm) => {
-            permissionMap[scope] = perm._id;
+      // create permissions;
+      await Promise.all([
+        ...SCOPES_READ_SUPER_ADMIN.map((scope) => {
+          const read = [rootPrefix, scope].join(':');
+          return this.authzService
+            .createPermission(read, SCOPES_READ_SUPER_ADMIN_DESCRIPTION, applicationId)
+            .then((perm) => {
+              permissionMap[scope] = perm._id;
+            });
+        }),
+        ...SCOPES_WRITE_SUPER_ADMIN.map((scope) => {
+          const write = [rootPrefix, scope].join(':');
+          return this.authzService
+            .createPermission(write, SCOPES_WRITE_SUPER_ADMIN_DESCRIPTION, applicationId)
+            .then((perm) => {
+              permissionMap[scope] = perm._id;
+            });
+        }),
+      ]);
+
+      // create roles;
+      await this.authzService.createRole(roleName, ROLES_NO_ORG.SuperAdmin.description, AUTH0_APPLICATION_CLIENT_ID, [
+        ...ROLES_NO_ORG.SuperAdmin.readScopes.map((scope) => permissionMap[scope]),
+        ...ROLES_NO_ORG.SuperAdmin.writeScopes.map((scope) => permissionMap[scope]),
+      ]);
+    } catch (err) {
+      logger.error(err);
+      success = false;
+    }
+    return success;
+  }
+
+  /**
+   * Update configuration for existing organizations.
+   * @param applicationId
+   */
+  async updateOrganizationConfig(applicationId: string = AUTH0_APPLICATION_CLIENT_ID): Promise<boolean> {
+    let success: boolean = true;
+    try {
+      const { groups } = await this.authzService.getGroups();
+      const groupsMap = this.reduceByName<{ [key: string]: any }>(groups);
+      const groupsMapPrimary = this.reduceByName<{ [key: string]: any }>(groups.filter((g) => 'nested' in g));
+
+      const { permissions } = await this.authzService.getPermission();
+      const permissionsMap = this.reduceByName<{ [key in ScopesEnum]?: any }>(permissions);
+
+      const { roles } = await this.authzService.getRoles();
+      const rolesMap = this.reduceByName<{ [key in RoleEnum]?: any }>(roles);
+
+      for (const [groupName, primaryGroup] of Object.entries(groupsMapPrimary)) {
+        for (const roleType of Object.values(ROLES)) {
+          const nestedName = [groupName, roleType.name.toUpperCase()].join('-');
+          const nestedDescription = [groupName, roleType.name].join(' ');
+
+          if (!groupsMap[nestedName]) {
+            logger.debug(`creating nested group: ${nestedName}`);
+
+            // create the nested group;
+            const nested = await this.authzService.createGroup(nestedName, nestedDescription);
+            groupsMap[nested.name] = nested;
+
+            logger.debug(`attaching nested group: ${nested._id} to primary group: ${primaryGroup._id}`);
+
+            // add the nested group to the primary group;
+            await this.authzService.addNestedGroups(primaryGroup._id, [nested._id]);
+          }
+
+          // create permissions;
+          await forEachAsync(roleType.readScopes, async (scope) => {
+            const read = [groupName, scope].join(':');
+            if (!permissionsMap[read]) {
+              logger.debug(`creating permission: ${read} for group: ${groupsMap[nestedName].name}`);
+              permissionsMap[read] = await this.authzService.createPermission(
+                read,
+                SCOPES_READ_DESCRIPTION,
+                applicationId
+              );
+            }
           });
-      }),
-      ...SCOPES_WRITE_SUPER_ADMIN.map((scope) => {
-        const write = [rootPrefix, scope].join(':');
-        return this.authzService
-          .createPermission(write, SCOPES_WRITE_SUPER_ADMIN_DESCRIPTION, applicationId)
-          .then((perm) => {
-            permissionMap[scope] = perm._id;
+          await forEachAsync(roleType.writeScopes, async (scope) => {
+            const write = [groupName, scope].join(':');
+            if (!permissionsMap[write]) {
+              logger.debug(`creating permission: ${write} for group: ${groupsMap[nestedName].name}`);
+              permissionsMap[write] = await this.authzService.createPermission(
+                write,
+                SCOPES_WRITE_DESCRIPTION,
+                applicationId
+              );
+            }
           });
-      }),
-    ]);
 
-    // create roles;
-    await this.authzService.createRole(roleName, ROLES.SuperAdmin.description, AUTH0_APPLICATION_CLIENT_ID, [
-      ...ROLES.SuperAdmin.readScopes.map((scope) => permissionMap[scope]),
-      ...ROLES.SuperAdmin.writeScopes.map((scope) => permissionMap[scope]),
-    ]);
+          const roleName = [groupName, roleType.name].join(':');
+          if (!rolesMap[roleName]) {
+            logger.debug(`creating role: ${roleName} for group: ${groupsMap[nestedName].name}`);
+
+            // create role;
+            const role = await this.authzService.createRole(roleName, roleType.description, applicationId, [
+              ...roleType.readScopes.map((scope) => permissionsMap[scope]._id),
+              ...roleType.writeScopes.map((scope) => permissionsMap[scope]._id),
+            ]);
+            logger.debug(`assigning role: ${role._id} to group: ${groupsMap[nestedName].name}`);
+
+            // add the role to the nested group;
+            await this.authzService.addGroupRoles(groupsMap[nestedName]._id, [rolesMap[roleName]._id]);
+          } else {
+            const role = rolesMap[roleName];
+            logger.debug(`updating role: ${role.name} for group: ${groupsMap[nestedName].name}`);
+
+            const readScopes = roleType.readScopes.map((scope) => {
+              const read = [groupName, scope].join(':');
+              return permissionsMap[read]._id;
+            });
+            const writeScopes = roleType.writeScopes.map((scope) => {
+              const write = [groupName, scope].join(':');
+              return permissionsMap[write]._id;
+            });
+
+            // update role permissions;
+            await this.authzService.updateRole(role._id, role.name, role.description, applicationId, [
+              ...readScopes,
+              ...writeScopes,
+            ]);
+          }
+        }
+      }
+    } catch (err) {
+      logger.error(err);
+      success = false;
+    }
+    return success;
+  }
+
+  reduceByName<T>(records: any): T {
+    return records.reduce((acc, record) => {
+      acc[record.name] = record;
+      return acc;
+    }, <T>{});
   }
 }
