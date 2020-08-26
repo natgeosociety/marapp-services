@@ -55,7 +55,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
       const pageOptions = {
         page: Math.max(parseInt(<string>pageNumber), 1),
-        size: Math.min(Math.max(parseInt(<string>pageSize), 0), 25),
+        size: Math.min(Math.max(parseInt(<string>pageSize), 0), 10),
       };
 
       const groupMembership = await authzService.calculateGroupMemberships(req.identity.sub);
