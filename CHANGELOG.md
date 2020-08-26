@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/natgeosociety/marapp-services/compare/v1.0.0...v1.0.1) (2020-08-26)
+
+
+### Bug Fixes
+
+* handle error while creating missing role ([4f6be7d](https://github.com/natgeosociety/marapp-services/commit/4f6be7d2fde7d5284a41c4daf175e5c5e0ebde17))
+
 # 1.0.0-develop.1 (2020-08-26)
 
 
