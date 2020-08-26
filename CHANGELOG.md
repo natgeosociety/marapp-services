@@ -1,3 +1,10 @@
+# [1.0.0-develop.2](https://github.com/natgeosociety/marapp-services/compare/v1.0.0-develop.1...v1.0.0-develop.2) (2020-08-26)
+
+
+### Bug Fixes
+
+* add duplicate key error message for update operation ([0c5d5be](https://github.com/natgeosociety/marapp-services/commit/0c5d5be8efd7a511a494cf7345fe3f8704e46c47))
+
 # 1.0.0-develop.1 (2020-08-26)
 
 
