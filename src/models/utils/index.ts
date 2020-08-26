@@ -219,6 +219,9 @@ export const update = async <T extends Document, L extends keyof T>(
   } catch (err) {
     logger.error(err);
     if (raiseError) {
+      if (err.name === 'MongoError' && err.code === 11000) {
+        throw new DocumentError('Could not update document. Duplicate key error.', 400);
+      }
       if (err.name === 'ValidationError') {
         const errors: ErrorObject[] = Object.values(err.errors).map((e: any) => ({
           code: 400,
