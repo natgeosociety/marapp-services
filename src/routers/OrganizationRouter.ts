@@ -19,7 +19,7 @@
 
 import { Response, Router } from 'express';
 import asyncHandler from 'express-async-handler';
-import { get } from 'lodash';
+import { get, set } from 'lodash';
 import urljoin from 'url-join';
 
 import { DEFAULT_CONTENT_TYPE } from '../config';
@@ -109,13 +109,20 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const nested = all.groups.filter((g) => 'nested' in g);
 
       const groups = await forEachAsync(nested, async (group) => {
-        const owners = await authzService.getGroupOwners(group._id);
-        return {
-          id: group._id,
-          name: group.name,
-          description: group.description,
-          owners: owners.map((owner) => owner.email),
+        const entry = {
+          id: group?._id,
+          name: group?.name,
+          description: group?.description,
         };
+        if (include.includes('owners')) {
+          const owners = await authzService.getGroupOwners(group._id);
+          set(
+            entry,
+            'owners',
+            owners.map((owner) => owner?.email)
+          );
+        }
+        return entry;
       });
 
       const paginationOffset = (pageOptions.page - 1) * pageOptions.size;

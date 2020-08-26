@@ -3548,6 +3548,13 @@
         "parameters": [
           {
             "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
             "name": "page[number]",
             "description": "Page number.",
             "required": false,
