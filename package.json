@@ -1,6 +1,6 @@
 {
   "name": "marapp-services",
-  "version": "1.0.0",
+  "version": "1.0.0-develop.1",
   "description": "Marapp API services",
   "main": "dist/index.js",
   "license": "MIT",
@@ -46,6 +46,7 @@
     "mongoose-id-validator": "^0.6.0",
     "morgan": "^1.10.0",
     "ms": "^2.1.2",
+    "ngs-app-config": "git+ssh://git@github.com/natgeosociety/ngs-app-config.git",
     "query-string-encode": "^1.0.1",
     "redis": "^3.0.2",
     "redlock": "^4.1.0",
