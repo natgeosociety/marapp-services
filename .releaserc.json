@@ -15,7 +15,6 @@
     "@semantic-release/github"
   ],
   "branches": [
-    { "name": "master" },
-    { "name": "develop", "channel": "next", "prerelease": true }
+    { "name": "master" }
   ]
 }
