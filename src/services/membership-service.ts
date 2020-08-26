@@ -196,7 +196,7 @@ export class MembershipService implements MembershipServiceSpec {
     const [viewerRole, editorRole, adminRole, ownerRole] = await forEachAsync(
       [RoleEnum.VIEWER, RoleEnum.EDITOR, RoleEnum.ADMIN, RoleEnum.OWNER],
       async (roleType) => {
-        const name = [rootPrefix, ROLES[roleType].name].join('-');
+        const name = [rootPrefix, ROLES[roleType].name].join(':');
 
         return this.authzService.createRole(name, ROLES[roleType].description, AUTH0_APPLICATION_CLIENT_ID, [
           ...ROLES[roleType].readScopes.map((scope) => permissionMap[scope]),
