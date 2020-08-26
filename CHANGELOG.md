@@ -1,3 +1,15 @@
+# [1.1.0](https://github.com/natgeosociety/marapp-services/compare/v1.0.2...v1.1.0) (2020-08-26)
+
+
+### Bug Fixes
+
+* limit page number to 10 for users ([9b5ee8e](https://github.com/natgeosociety/marapp-services/commit/9b5ee8e2a597b2f5c32595e160c5eddfc53bc239))
+
+
+### Features
+
+* make owners as optional include on organization list ([38ca5bb](https://github.com/natgeosociety/marapp-services/commit/38ca5bb92ff51113fc08fd0d44f68bbb8342cf3a))
+
 ## [1.0.2](https://github.com/natgeosociety/marapp-services/compare/v1.0.1...v1.0.2) (2020-08-26)
 
 
