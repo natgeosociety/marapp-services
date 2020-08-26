@@ -6,6 +6,7 @@ plugins:
   - serverless-plugin-typescript
   - serverless-offline
   - serverless-localstack
+  - serverless-prune-plugin
 
 provider:
   name: aws
@@ -70,6 +71,9 @@ custom:
     debug: true
     stages:
       - local
+  prune:
+    automatic: true
+    number: 3
 
 package:
   # individually: true
