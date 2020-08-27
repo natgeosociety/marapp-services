@@ -263,7 +263,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       });
 
       const nestedGroups = await authzService.getNestedGroups(id, ['OWNER']);
-      const memberIds = nestedGroups[0].members;
+      const memberIds = get(nestedGroups[0], 'members', []);
 
       const ownersOperations = [
         ...ownerIds.filter((userId) => !memberIds.includes(userId)).map((userId) => ({ operation: 'add', userId })),
