@@ -207,6 +207,10 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const user = await authMgmtService.getUserByEmail(email);
       const userId = get(user, 'user_id');
 
+      if (req.identity.sub === userId) {
+        throw new UnauthorizedError('You cannot update your own user.', 403);
+      }
+
       const groupMembership = await authzService.calculateGroupMemberships(req.identity.sub);
       const groupId = authzService.findPrimaryGroupId(groupMembership, req.groups[0]); // enforce a single primary group;
 
@@ -267,6 +271,10 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
       const user = await authMgmtService.getUserByEmail(email);
       const userId = get(user, 'user_id');
+
+      if (req.identity.sub === userId) {
+        throw new UnauthorizedError('You cannot delete your own user.', 403);
+      }
 
       const groupMembership = await authzService.calculateGroupMemberships(req.identity.sub);
       const groupId = authzService.findPrimaryGroupId(groupMembership, req.groups[0]); // enforce a single primary group;
