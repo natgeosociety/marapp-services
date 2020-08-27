@@ -284,7 +284,7 @@ export class MembershipService implements MembershipServiceSpec {
     let success: boolean = true;
     try {
       const rootPrefix = '*';
-      const roleName = [rootPrefix, ROLES_NO_ORG.SuperAdmin.name].join('-');
+      const roleName = [rootPrefix, ROLES_NO_ORG.SuperAdmin.name].join(':');
 
       const permissionMap: { [key in ScopesEnum]?: string } = {};
 
