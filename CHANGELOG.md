@@ -1,3 +1,11 @@
+## [1.1.1](https://github.com/natgeosociety/marapp-services/compare/v1.1.0...v1.1.1) (2020-08-28)
+
+
+### Bug Fixes
+
+* forbid update/delete on own user [EP-2363] ([f595da5](https://github.com/natgeosociety/marapp-services/commit/f595da5c0a9f8611d931a06a42bf943b314eb48a))
+* handle no owner error ([936387b](https://github.com/natgeosociety/marapp-services/commit/936387b8376d405f852308684cdb37e532059d4c))
+
 # [1.1.0](https://github.com/natgeosociety/marapp-services/compare/v1.0.2...v1.1.0) (2020-08-26)
 
 
