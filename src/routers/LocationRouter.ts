@@ -61,6 +61,7 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
 
       const { docs, total, cursor, aggs } = await getAll(LocationModel, queryOptions, search ? searchIds : null, [
         'type',
+        'organization',
       ]);
 
       const paginator = new PaginationHelper({
