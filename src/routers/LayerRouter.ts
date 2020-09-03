@@ -64,6 +64,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/layers') => {
 
       const { docs, total, cursor, aggs } = await getAll(LayerModel, queryOptions, search ? searchIds : null, [
         'category',
+        'organization',
       ]);
 
       const paginator = new PaginationHelper({
