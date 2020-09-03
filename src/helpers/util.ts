@@ -17,9 +17,11 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { get } from 'lodash';
+import { Request } from 'express';
+import { get, isEmpty } from 'lodash';
 
-import { ParameterRequiredError } from '../errors';
+import { ParameterRequiredError, ValidationError } from '../errors';
+import { ErrorObject } from '../types/response';
 
 /**
  * Ensure required ENV variables are set during deployment.
@@ -77,3 +79,45 @@ export const validateKeys = <T, K extends keyof T>(
  */
 export const forEachAsync = async (records: any[], callback: (i: any) => Promise<any>) =>
   Promise.all(records.map((i) => callback(i)));
+
+/**
+ * Validates query parameter keys on request object.
+ *
+ * Field requiredParamKeys can accept nested values for keys,* eg: 'firstObject.secondObject.someKey'
+ *
+ * @param req
+ * @param requiredParamKeys
+ */
+export const requireReqParams = (req: Request, requiredParamKeys: string[]) => {
+  const missingParamKeys = requiredParamKeys.filter((key) => isEmpty(get(req.query, key)));
+  if (missingParamKeys.length) {
+    const errors: ErrorObject[] = missingParamKeys.map((key) => ({
+      code: 400,
+      source: { parameter: key },
+      title: 'ValidationError',
+      detail: 'Missing required parameter.',
+    }));
+    throw new ValidationError(errors, 400);
+  }
+};
+
+/**
+ * Validates object keys on request body.
+ *
+ * Field requiredParamKeys can accept nested values for keys,* eg: 'firstObject.secondObject.someKey'
+ *
+ * @param req
+ * @param requiredParamKeys
+ */
+export const requireReqBodyKeys = (req: Request, requiredParamKeys: string[]) => {
+  const missingParamKeys = requiredParamKeys.filter((key) => isEmpty(get(req.body, key)));
+  if (missingParamKeys.length) {
+    const errors: ErrorObject[] = missingParamKeys.map((key) => ({
+      code: 400,
+      source: { pointer: '/body/' + key },
+      title: 'ValidationError',
+      detail: 'Missing required parameter.',
+    }));
+    throw new ValidationError(errors, 400);
+  }
+};

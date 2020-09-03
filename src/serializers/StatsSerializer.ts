@@ -23,9 +23,9 @@ import { PaginationLinks } from '.';
 
 export const STATS_ATTRIBUTES: string[] = [
   'id',
-  'name',
   'slug',
-  'description',
+  'name',
+  'owners',
   'collections',
   'locations',
   'layers',

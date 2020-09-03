@@ -132,6 +132,7 @@ export interface MembershipServiceSpec {
   deleteOrganization(id: string): Promise<boolean>;
   createSuperAdmin(applicationId?: string): Promise<boolean>;
   updateOrganizationConfig(applicationId?: string): Promise<boolean>;
+  enforceOrganizationName(value: string): boolean;
 }
 
 export class MembershipService implements MembershipServiceSpec {
@@ -150,12 +151,13 @@ export class MembershipService implements MembershipServiceSpec {
     ownerIds: string[],
     applicationId: string = AUTH0_APPLICATION_CLIENT_ID
   ) {
-    const rootPrefix = name.trim().toUpperCase();
+    const nameClean = name.trim();
+    const descriptionClean = description.trim();
 
     // create the main group, fail if name already exists;
     let main;
     try {
-      main = await this.authzService.createGroup(rootPrefix, description);
+      main = await this.authzService.createGroup(nameClean, descriptionClean);
     } catch (err) {
       throw new AlreadyExistsError('An organization with the same name already exists.', 400);
     }
@@ -164,8 +166,8 @@ export class MembershipService implements MembershipServiceSpec {
     const [viewer, editor, admin, owner] = await forEachAsync(
       [RoleEnum.VIEWER, RoleEnum.EDITOR, RoleEnum.ADMIN, RoleEnum.OWNER],
       async (roleType) => {
-        const name = [rootPrefix, roleType.toUpperCase()].join('-');
-        const description = [rootPrefix, roleType].join(' ');
+        const name = [nameClean, roleType.toUpperCase()].join('-');
+        const description = [nameClean, roleType].join(' ');
 
         return this.authzService.createGroup(name, description);
       }
@@ -179,13 +181,13 @@ export class MembershipService implements MembershipServiceSpec {
     // create permissions;
     await Promise.all([
       ...SCOPES_READ.map((scope) => {
-        const read = [rootPrefix, scope].join(':');
+        const read = [nameClean, scope].join(':');
         return this.authzService.createPermission(read, SCOPES_READ_DESCRIPTION, applicationId).then((perm) => {
           permissionMap[scope] = perm._id;
         });
       }),
       ...SCOPES_WRITE.map((scope) => {
-        const write = [rootPrefix, scope].join(':');
+        const write = [nameClean, scope].join(':');
         return this.authzService.createPermission(write, SCOPES_WRITE_DESCRIPTION, applicationId).then((perm) => {
           permissionMap[scope] = perm._id;
         });
@@ -196,7 +198,7 @@ export class MembershipService implements MembershipServiceSpec {
     const [viewerRole, editorRole, adminRole, ownerRole] = await forEachAsync(
       [RoleEnum.VIEWER, RoleEnum.EDITOR, RoleEnum.ADMIN, RoleEnum.OWNER],
       async (roleType) => {
-        const name = [rootPrefix, ROLES[roleType].name].join(':');
+        const name = [nameClean, ROLES[roleType].name].join(':');
 
         return this.authzService.createRole(name, ROLES[roleType].description, AUTH0_APPLICATION_CLIENT_ID, [
           ...ROLES[roleType].readScopes.map((scope) => permissionMap[scope]),
@@ -425,6 +427,15 @@ export class MembershipService implements MembershipServiceSpec {
       success = false;
     }
     return success;
+  }
+
+  /**
+   * Enforce a URL friendly name for the organization.
+   * @param value
+   */
+  enforceOrganizationName(value: string): boolean {
+    const slugRegexp = new RegExp('^[A-Z0-9](-?[A-Z0-9])*$');
+    return !!value.match(slugRegexp);
   }
 
   reduceByName<T>(records: any): T {

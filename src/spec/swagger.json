@@ -3598,6 +3598,13 @@
         "operationId": "addOrganization",
         "parameters": [
           {
+            "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          },
+          {
             "in": "body",
             "name": "body",
             "description": "",
@@ -3686,6 +3693,13 @@
             "type": "string"
           },
           {
+            "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          },
+          {
             "in": "body",
             "name": "body",
             "description": "",
@@ -3759,6 +3773,13 @@
         "description": "",
         "operationId": "getOrganizationStats",
         "parameters": [
+          {
+            "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          },
           {
             "in": "query",
             "name": "group",
@@ -4075,10 +4096,10 @@
     "Organization": {
       "type": "object",
       "properties": {
-        "name": {
+        "slug": {
           "type": "string"
         },
-        "description": {
+        "name": {
           "type": "string"
         },
         "owners": {
