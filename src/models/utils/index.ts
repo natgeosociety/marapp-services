@@ -279,12 +279,13 @@ export const getByIds = async <T extends Document, L extends keyof T>(
 export const aggregateCount = async <T extends Document, L extends keyof T>(
   model: Model<T>,
   query: object,
-  field: string
+  field: string,
+  skipOmitField: boolean = false
 ): Promise<AggCount[]> => {
   const result = await model
     .aggregate([
       // filter docs to match the specified condition(s);
-      { $match: omit(query, [field]) },
+      { $match: skipOmitField ? query : omit(query, [field]) },
       // pass docs to next stage in the pipeline;
       { $project: { [field]: true } },
       // deconstructs an array field to output a document for each element;
@@ -390,7 +391,12 @@ export const getAll = async <T extends Document, L extends keyof T>(
 
   // aggregations based on specified fields;
   if (aggregateFields.length > 0) {
-    const arrays = await forEachAsync(aggregateFields, async (f) => aggregateCount(model, query.getQuery(), f));
+    // skip omission of special fields;
+    const specialFields = ['organization'];
+
+    const arrays = await forEachAsync(aggregateFields, async (f) =>
+      aggregateCount(model, query.getQuery(), f, specialFields.includes(f))
+    );
     aggs = [].concat.apply([], arrays);
   }
 
