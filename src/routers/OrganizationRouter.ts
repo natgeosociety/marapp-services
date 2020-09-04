@@ -237,7 +237,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
           await authzService.deleteGroupMembers(groupId, removeUserIds);
         }
       }
-      const description = name.trim() ? name.trim() : group?.description;
+      const description = name && name.trim() ? name.trim() : group?.description;
       const updated = await authzService.updateGroup(id, group.name, description);
 
       const data = {
