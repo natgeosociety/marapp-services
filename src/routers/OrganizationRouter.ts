@@ -230,10 +230,12 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         const addUserIds = ownerIds.filter((userId) => !memberIds.includes(userId));
         const removeUserIds = memberIds.filter((userId) => !ownerIds.includes(userId));
 
-        await Promise.all([
-          authzService.addGroupMembers(groupId, addUserIds),
-          authzService.deleteGroupMembers(groupId, removeUserIds),
-        ]);
+        if (addUserIds.length) {
+          await authzService.addGroupMembers(groupId, addUserIds);
+        }
+        if (removeUserIds.length) {
+          await authzService.deleteGroupMembers(groupId, removeUserIds);
+        }
       }
       const description = name.trim() ? name.trim() : group?.description;
       const updated = await authzService.updateGroup(id, group.name, description);
