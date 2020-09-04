@@ -206,40 +206,37 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const id = req.params.id;
       const include = queryParamGroup(<string>req.query.include);
 
-      requireReqBodyKeys(req, ['name', 'owners']);
       const { name, owners } = req.body;
-
-      if (!Array.isArray(owners)) {
-        throw new ParameterRequiredError('Invalid type for field: owners', 400);
-      }
 
       const group = await authzService.getGroup(id);
       if (!group) {
         throw new RecordNotFound(`Could not retrieve document.`, 404);
       }
 
-      const ownerIds = await forEachAsync(owners, async (email: any) => {
-        const user = await authMgmtService.getUserByEmail(email);
-        logger.debug(`resolved owner ${user.user_id} for email: ${email}`);
-        return user.user_id;
-      });
-
-      const nestedGroups = await authzService.getNestedGroups(id, ['OWNER']);
-      const memberIds = get(nestedGroups[0], 'members', []);
-
-      const ownersOperations = [
-        ...ownerIds.filter((userId) => !memberIds.includes(userId)).map((userId) => ({ operation: 'add', userId })),
-        ...memberIds.filter((userId) => !ownerIds.includes(userId)).map((userId) => ({ operation: 'remove', userId })),
-      ];
-
-      await forEachAsync(ownersOperations, async (item: any) => {
-        if (item.operation === 'add') {
-          return authzService.addGroupMembers(nestedGroups[0]._id, [item.userId]);
-        } else if (item.operation === 'remove') {
-          return authzService.deleteGroupMembers(nestedGroups[0]._id, [item.userId]);
+      if (owners) {
+        if (!Array.isArray(owners)) {
+          throw new ParameterRequiredError('Invalid type for field: owners', 400);
         }
-      });
-      const updated = await authzService.updateGroup(id, group.name, name);
+        const ownerIds = await forEachAsync(owners, async (email: any) => {
+          const user = await authMgmtService.getUserByEmail(email);
+          logger.debug(`resolved owner ${user.user_id} for email: ${email}`);
+          return user.user_id;
+        });
+
+        const nestedGroups = await authzService.getNestedGroups(id, ['OWNER']);
+        const memberIds = get(nestedGroups[0], 'members', []);
+        const groupId = nestedGroups[0]._id;
+
+        const addUserIds = ownerIds.filter((userId) => !memberIds.includes(userId));
+        const removeUserIds = memberIds.filter((userId) => !ownerIds.includes(userId));
+
+        await Promise.all([
+          authzService.addGroupMembers(groupId, addUserIds),
+          authzService.deleteGroupMembers(groupId, removeUserIds),
+        ]);
+      }
+      const description = name.trim() ? name.trim() : group?.description;
+      const updated = await authzService.updateGroup(id, group.name, description);
 
       const data = {
         id: updated?._id,
