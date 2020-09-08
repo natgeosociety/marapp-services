@@ -47,7 +47,10 @@ const getRouter = (basePath: string = '/', routePath: string = '/organizations')
   const path = urljoin(basePath, routePath);
 
   const parser = new MongooseQueryParser();
-  const queryFilters: MongooseQueryFilter[] = [];
+  const queryFilters: MongooseQueryFilter[] = [
+    { key: 'published', op: '==', value: String(true) },
+    { key: '*.published', op: '==', value: String(true) },
+  ];
 
   router.get(
     `${path}/stats`,
@@ -60,7 +63,8 @@ const getRouter = (basePath: string = '/', routePath: string = '/organizations')
           forEachAsync([LocationModel, LayerModel], async (model) =>
             countByQuery(
               model,
-              parser.parse(null, { predefined: [{ key: 'organization', op: '==', value: group }] }).filter
+              parser.parse(null, { predefined: queryFilters.concat([{ key: 'organization', op: '==', value: group }]) })
+                .filter
             )
           ).then(([locations, layers]) => ({ name: group, locations, layers }))
         )
