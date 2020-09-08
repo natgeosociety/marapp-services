@@ -3771,6 +3771,43 @@
         ]
       }
     },
+    "/organizations/stats": {
+      "get": {
+        "tags": ["organizations"],
+        "summary": "Get organizations stats",
+        "description": "",
+        "operationId": "getOrganizationStats",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "group",
+            "description": "Primary group name. Required when multiple primary groups included in the token.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [],
+            "Bearer": []
+          }
+        ]
+      }
+    },
     "/management/organizations": {
       "get": {
         "tags": ["organizations-management"],

@@ -43,6 +43,45 @@ import { queryParamGroup, requireReqBodyKeys } from '.';
 
 const logger = getLogger();
 
+const getRouter = (basePath: string = '/', routePath: string = '/organizations') => {
+  const router: Router = Router();
+  const path = urljoin(basePath, routePath);
+
+  const parser = new MongooseQueryParser();
+  const queryFilters: MongooseQueryFilter[] = [
+    { key: 'published', op: '==', value: String(true) },
+    { key: '*.published', op: '==', value: String(true) },
+  ];
+
+  router.get(
+    `${path}/stats`,
+    guard.enforcePrimaryGroup(false, true),
+    AuthzGuards.readLocationsGuard,
+    AuthzGuards.readLayersGuard,
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const data = await Promise.all(
+        req.groups.map((group) =>
+          forEachAsync([LocationModel, LayerModel], async (model) =>
+            countByQuery(
+              model,
+              parser.parse(null, { predefined: queryFilters.concat([{ key: 'organization', op: '==', value: group }]) })
+                .filter
+            )
+          ).then(([locations, layers]) => ({ name: group, locations, layers }))
+        )
+      );
+
+      const code = 200;
+      const response = createStatsSerializer().serialize(data);
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
+
+  return router;
+};
+
 const getAdminRouter = (basePath: string = '/', routePath: string = '/management/organizations') => {
   const router: Router = Router();
   const path = urljoin(basePath, routePath);
@@ -341,4 +380,4 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
   return router;
 };
 
-export default { getAdminRouter };
+export default { getRouter, getAdminRouter };
