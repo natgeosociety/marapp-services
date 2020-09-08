@@ -43,6 +43,7 @@ export const InvalidParameterError = makeError('InvalidParameterError', ExposedE
 export const UserNotFoundError = makeError('UserNotFoundError', ExposedError);
 export const NotImplementedError = makeError('NotImplementedError', ExposedError);
 export const TileGenerationError = makeError('TileGenerationError', ExposedError);
+export const PasswordStrengthError = makeError('PasswordStrengthError', ExposedError);
 
 export class ValidationError extends ExposedError {
   public errors: ErrorObject[];

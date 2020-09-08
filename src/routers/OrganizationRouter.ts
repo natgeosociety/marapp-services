@@ -26,19 +26,20 @@ import { DEFAULT_CONTENT_TYPE } from '../config';
 import { ParameterRequiredError, RecordNotFound } from '../errors';
 import { MongooseQueryFilter, MongooseQueryParser } from '../helpers/mongoose';
 import { PaginationHelper } from '../helpers/paginator';
-import { forEachAsync, requireReqBodyKeys } from '../helpers/util';
+import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
 import { AuthzGuards, AuthzRequest, guard } from '../middlewares/authz-guards';
 import { CollectionModel, DashboardModel, LayerModel, LocationModel, WidgetModel } from '../models';
 import { countByQuery } from '../models/utils';
 import { createSerializer } from '../serializers/OrganizationSerializer';
 import { createSerializer as createStatsSerializer } from '../serializers/StatsSerializer';
+import { createSerializer as createStatusSerializer } from '../serializers/StatusSerializer';
 import { AuthzServiceSpec } from '../services/auth0-authz';
 import { AuthManagementService } from '../services/auth0-management';
 import { MembershipService } from '../services/membership-service';
-import { ResponseMeta, SuccessResponse } from '../types/response';
+import { ResponseMeta } from '../types/response';
 
-import { queryParamGroup } from '.';
+import { queryParamGroup, requireReqBodyKeys } from '.';
 
 const logger = getLogger();
 
@@ -330,7 +331,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const success = await membershipService.deleteOrganization(group._id);
 
       const code = 200;
-      const response: SuccessResponse = { code, data: { success } };
+      const response = createStatusSerializer().serialize({ success });
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);

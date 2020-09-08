@@ -19,7 +19,7 @@
 
 import { Response, Router } from 'express';
 import asyncHandler from 'express-async-handler';
-import { get } from 'lodash';
+import { get, set } from 'lodash';
 import urljoin from 'url-join';
 
 import { DEFAULT_CONTENT_TYPE } from '../config';
@@ -29,14 +29,186 @@ import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
 import { AuthzGuards, AuthzRequest, guard } from '../middlewares/authz-guards';
 import { createSerializer as createGroupSerializer } from '../serializers/GroupRoleSerializer';
+import { createSerializer as createStatusSerializer } from '../serializers/StatusSerializer';
 import { createSerializer as createUserSerializer } from '../serializers/UserSerializer';
 import { AuthzServiceSpec } from '../services/auth0-authz';
 import { AuthManagementService } from '../services/auth0-management';
-import { ResponseMeta, SuccessResponse } from '../types/response';
+import { ResponseMeta } from '../types/response';
 
-import { queryParamGroup } from './index';
+import { queryParamGroup, requireReqBodyKeys, requireReqParamKeys } from '.';
 
 const logger = getLogger();
+
+const getProfileRouter = (basePath: string = '/', routePath: string = '/users/profile') => {
+  const router: Router = Router();
+  const path = urljoin(basePath, routePath);
+
+  router.get(
+    path,
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const authzService: AuthzServiceSpec = req.app.locals.authzService;
+      const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
+
+      const include = queryParamGroup(<string>req.query.include);
+
+      const user = await authMgmtService.getUser(req.identity.sub);
+      const userId = get(user, 'user_id');
+
+      const data = {
+        id: user?.email,
+        email: user?.email,
+        name: user?.name, // deprecated;
+        firstName: user?.given_name,
+        lastName: user?.family_name,
+        pendingEmail: user?.user_metadata?.pendingUserEmail,
+      };
+
+      if (include.includes('groups')) {
+        const groupMembership = await authzService.calculateGroupMemberships(userId);
+        set(data, 'groups', []);
+      }
+
+      const code = 200;
+      const response = createUserSerializer(include).serialize(data);
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
+
+  router.put(
+    path,
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const authzService: AuthzServiceSpec = req.app.locals.authzService;
+      const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
+
+      const include = queryParamGroup(<string>req.query.include);
+      const { firstName, lastName } = req.body;
+
+      const user = await authMgmtService.getUser(req.identity.sub);
+      const userId = get(user, 'user_id');
+
+      const update = {
+        given_name: firstName && firstName.trim() ? firstName.trim() : user?.given_name,
+        family_name: lastName && lastName.trim() ? lastName.trim() : user?.family_name,
+      };
+      const userUpdated = await authMgmtService.updateUser(userId, update);
+
+      const data = {
+        id: userUpdated?.email,
+        email: userUpdated?.email,
+        name: userUpdated?.name, // deprecated;
+        firstName: userUpdated?.given_name,
+        lastName: userUpdated?.family_name,
+        pendingEmail: user?.user_metadata?.pendingUserEmail,
+      };
+
+      if (include.includes('groups')) {
+        const groupMembership = await authzService.calculateGroupMemberships(userId);
+        set(data, 'groups', []);
+      }
+
+      const code = 200;
+      const response = createUserSerializer(include).serialize(data);
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
+
+  router.post(
+    `${path}/change-email`,
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
+
+      const include = queryParamGroup(<string>req.query.include);
+
+      requireReqBodyKeys(req, ['email']);
+      const { email } = req.body;
+
+      const user = await authMgmtService.emailChangeRequest(req.identity.sub, email);
+
+      const data = {
+        id: user?.email,
+        email: user?.email,
+        name: user?.name, // deprecated;
+        firstName: user?.given_name,
+        lastName: user?.family_name,
+        pendingEmail: user?.user_metadata?.pendingUserEmail,
+      };
+
+      const code = 200;
+      const response = createUserSerializer(include).serialize(data);
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
+
+  router.delete(
+    `${path}/change-email`,
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
+
+      const include = queryParamGroup(<string>req.query.include);
+      const user = await authMgmtService.emailChangeCancelRequest(req.identity.sub);
+
+      const data = {
+        id: user?.email,
+        email: user?.email,
+        name: user?.name, // deprecated;
+        firstName: user?.given_name,
+        lastName: user?.family_name,
+        pendingEmail: user?.user_metadata?.pendingUserEmail,
+      };
+
+      const code = 200;
+      const response = createUserSerializer(include).serialize(data);
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
+
+  router.get(
+    `${path}/change-email`,
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
+
+      requireReqParamKeys(req, ['accessToken']);
+      const accessToken = <string>req.query.accessToken;
+      const tempUserInfo = await authMgmtService.getUserInfo(accessToken);
+
+      const success = await authMgmtService.emailChangeConfirmationHook(req.identity.sub, tempUserInfo.sub);
+
+      const code = 200;
+      const response = createStatusSerializer().serialize({ success });
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
+
+  router.post(
+    `${path}/change-password`,
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
+
+      requireReqBodyKeys(req, ['currentPassword', 'newPassword']);
+      const { currentPassword, newPassword } = req.body;
+
+      const success = await authMgmtService.passwordChange(req.identity.sub, currentPassword, newPassword);
+
+      const code = 200;
+      const response = createStatusSerializer().serialize({ success });
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
+
+  return router;
+};
 
 const getAdminRouter = (basePath: string = '/', routePath: string = '/management/users') => {
   const router: Router = Router();
@@ -215,13 +387,11 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const groupId = authzService.findPrimaryGroupId(groupMembership, req.groups[0]); // enforce a single primary group;
 
       const triesToUpdateAnOwner = await authzService.isGroupOwner(userId, groupId);
-
       if (triesToUpdateAnOwner) {
         throw new UnauthorizedError('You cannot update an owner.', 403);
       }
 
       const triesToUpdateAnAdmin = await authzService.isGroupAdmin(userId, groupId);
-
       const isOwner = await authzService.isGroupOwner(req.identity.sub, groupId);
 
       if (triesToUpdateAnAdmin && !isOwner) {
@@ -229,9 +399,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       }
 
       const groups = get(body, 'groups', []);
-
       const nestedGroups = await authzService.getNestedGroups(groupId, [], isOwner ? ['OWNER'] : ['OWNER', 'ADMIN']);
-
       const available = nestedGroups.map((group: any) => get(group, '_id'));
 
       if (Array.isArray(groups) && !groups.every((r) => available.includes(r))) {
@@ -252,7 +420,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const success = !!responses;
 
       const code = 200;
-      const response: SuccessResponse = { code, data: { success } };
+      const response = createStatusSerializer().serialize({ success });
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);
@@ -280,13 +448,11 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const groupId = authzService.findPrimaryGroupId(groupMembership, req.groups[0]); // enforce a single primary group;
 
       const triesToDeleteAnOwner = await authzService.isGroupOwner(userId, groupId);
-
       if (triesToDeleteAnOwner) {
         throw new UnauthorizedError('You cannot delete an owner.', 403);
       }
 
       const triesToDeleteAnAdmin = await authzService.isGroupAdmin(userId, groupId);
-
       const isOwner = await authzService.isGroupOwner(req.identity.sub, groupId);
 
       if (triesToDeleteAnAdmin && !isOwner) {
@@ -305,7 +471,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const success = !!responses;
 
       const code = 200;
-      const response: SuccessResponse = { code, data: { success } };
+      const response = createStatusSerializer().serialize({ success });
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);
@@ -315,4 +481,4 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
   return router;
 };
 
-export default { getAdminRouter };
+export default { getProfileRouter, getAdminRouter };

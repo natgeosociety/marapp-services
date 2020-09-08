@@ -1,19 +1,19 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es6",
+    "target": "es2017",
     "lib": [
       "ES2019.Array"
     ],
     "moduleResolution": "node",
     "outDir": "dist",
     "baseUrl": ".",
-    "sourceMap": true,
     "esModuleInterop": true,
     "noImplicitAny": false,
     "resolveJsonModule": true,
     "downlevelIteration": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "allowJs": true
   },
   "include": [
     "src/**/*",

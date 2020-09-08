@@ -80,44 +80,10 @@ export const validateKeys = <T, K extends keyof T>(
 export const forEachAsync = async (records: any[], callback: (i: any) => Promise<any>) =>
   Promise.all(records.map((i) => callback(i)));
 
-/**
- * Validates query parameter keys on request object.
- *
- * Field requiredParamKeys can accept nested values for keys,* eg: 'firstObject.secondObject.someKey'
- *
- * @param req
- * @param requiredParamKeys
- */
-export const requireReqParams = (req: Request, requiredParamKeys: string[]) => {
-  const missingParamKeys = requiredParamKeys.filter((key) => isEmpty(get(req.query, key)));
-  if (missingParamKeys.length) {
-    const errors: ErrorObject[] = missingParamKeys.map((key) => ({
-      code: 400,
-      source: { parameter: key },
-      title: 'ValidationError',
-      detail: 'Missing required parameter.',
-    }));
-    throw new ValidationError(errors, 400);
-  }
-};
+export const convertHrtime = (hrtime) => {
+  const nanoseconds = hrtime[0] * 1e9 + hrtime[1];
+  const milliseconds = nanoseconds / 1e6;
+  const seconds = nanoseconds / 1e9;
 
-/**
- * Validates object keys on request body.
- *
- * Field requiredParamKeys can accept nested values for keys,* eg: 'firstObject.secondObject.someKey'
- *
- * @param req
- * @param requiredParamKeys
- */
-export const requireReqBodyKeys = (req: Request, requiredParamKeys: string[]) => {
-  const missingParamKeys = requiredParamKeys.filter((key) => isEmpty(get(req.body, key)));
-  if (missingParamKeys.length) {
-    const errors: ErrorObject[] = missingParamKeys.map((key) => ({
-      code: 400,
-      source: { pointer: '/body/' + key },
-      title: 'ValidationError',
-      detail: 'Missing required parameter.',
-    }));
-    throw new ValidationError(errors, 400);
-  }
+  return { seconds, milliseconds, nanoseconds };
 };

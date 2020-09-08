@@ -17,62 +17,248 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { ManagementClient } from 'auth0';
-import makeError from 'make-error';
+import { AuthenticationClient, CreateUserData, ManagementClient, UpdateUserData, User, UserMetadata } from 'auth0';
+import { get } from 'lodash';
 
-import { AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET, AUTH0_DOMAIN } from '../config/auth0';
-import { UserNotFoundError } from '../errors';
+import { AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET, AUTH0_DOMAIN, AUTH0_REALM } from '../config/auth0';
+import { AlreadyExistsError, PasswordStrengthError, UnauthorizedError, UserNotFoundError } from '../errors';
 import { getLogger } from '../logging';
-
-export const Auth0Error = makeError('Auth0Error');
 
 const logger = getLogger();
 
 export interface AuthManagementService {
-  getUserByEmail(email: string);
-  createUser(email: string);
+  getUser(userId: string): Promise<User>;
+  getUserByEmail(email: string, raiseError?: boolean): Promise<User>;
+  createPasswordlessUser(userData: Partial<CreateUserData>): Promise<User>;
+  getUserInfo(accessToken: string): Promise<any>;
+  updateUser(userId: string, userData: UpdateUserData): Promise<User>;
+  updateUserMetadata(userId: string, userMetadata: UserMetadata): Promise<User>;
+  deleteUser(userId: string): Promise<void>;
+  emailChangeRequest(userId: string, newEmail: string): Promise<User>;
+  emailChangeCancelRequest(userId: string): Promise<User>;
+  emailChangeConfirmationHook(userId: string, tempUserId: string): Promise<boolean>;
+  passwordChange(userId: string, currentPassword: string, newPassword: string): Promise<boolean>;
 }
 
 export class Auth0ManagementService implements AuthManagementService {
-  constructor(private client: ManagementClient) {}
+  mgmtClient: ManagementClient;
+  authClient: AuthenticationClient;
 
-  async getUserByEmail(email: string) {
-    const users = await this.client.getUsersByEmail(email);
+  constructor(
+    clientId: string = AUTH0_CLIENT_ID,
+    clientSecret: string = AUTH0_CLIENT_SECRET,
+    domain: string = AUTH0_DOMAIN
+  ) {
+    const options = { clientId, clientSecret, domain };
+    this.mgmtClient = new ManagementClient(options);
+    this.authClient = new AuthenticationClient(options);
+  }
+
+  async getUser(userId: string): Promise<User> {
+    return this.mgmtClient.getUser({ id: userId });
+  }
+
+  async getUserByEmail(email: string, raiseError: boolean = true): Promise<User> {
+    const users = await this.mgmtClient.getUsersByEmail(email);
     if (users && users.length) {
       if (users.length > 1) {
+        logger.error(users);
         throw new UserNotFoundError(`Multiple users found for email: ${email}`, 400);
       }
       return users[0];
     } else {
-      throw new UserNotFoundError(`User not found for email: ${email}`, 404);
+      if (raiseError) {
+        throw new UserNotFoundError(`User not found for email: ${email}`, 404);
+      }
     }
   }
 
-  async createUser(email: string) {
-    throw new Error('not implemented');
+  async createPasswordlessUser(userData: Partial<CreateUserData>): Promise<User> {
+    return this.mgmtClient.createUser({ ...userData, connection: 'email' });
   }
-}
 
-/**
- * Auth0 Authorization Extension API client library.
- */
-export const initAuthMgmtClient = (): Promise<ManagementClient> => {
-  return new Promise((resolve, reject) => {
-    logger.info('Initializing the Auth0 Management client');
+  async getUserInfo(accessToken: string): Promise<any> {
+    return this.authClient.getProfile(accessToken);
+  }
 
-    try {
-      const managementClient = new ManagementClient({
-        clientId: AUTH0_CLIENT_ID,
-        clientSecret: AUTH0_CLIENT_SECRET,
-        domain: AUTH0_DOMAIN,
-        scope: 'read:users update:users',
+  async updateUserMetadata(userId: string, userMetadata: UserMetadata): Promise<User> {
+    return this.mgmtClient.updateUserMetadata({ id: userId }, userMetadata);
+  }
+
+  async updateUser(userId: string, userData: UpdateUserData): Promise<User> {
+    return this.mgmtClient.updateUser({ id: userId }, userData);
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    return this.mgmtClient.deleteUser({ id: userId });
+  }
+
+  /**
+   * Issues an email change request.
+   * A confirmation email will be sent to the newEmail with an accessToken for
+   * the newly created passwordless user.
+   * @param userId
+   * @param newEmail
+   */
+  async emailChangeRequest(userId: string, newEmail: string): Promise<User> {
+    let user = await this.getUser(userId);
+    if (user.email === newEmail) return user;
+
+    let tempUser = await this.getUserByEmail(newEmail, false);
+    const pendingUserId = user?.user_metadata?.pendingUserId;
+
+    // new email change request, removing temporary passwordless user;
+    if ((pendingUserId && !tempUser) || (pendingUserId && tempUser && pendingUserId !== tempUser.user_id)) {
+      const pendingUserEmail = user?.user_metadata?.pendingUserEmail;
+      logger.debug(`removing temporary passwordless user: ${pendingUserEmail}`);
+
+      await this.deleteUser(pendingUserId);
+    }
+
+    if (!tempUser) {
+      const tempUserMeta = {
+        originalUserId: user?.user_id,
+        originalUserEmail: user?.email,
+        email: newEmail,
+        createdAt: new Date(),
+      };
+      tempUser = await this.createPasswordlessUser({
+        email: newEmail,
+        user_metadata: tempUserMeta,
       });
-      logger.warn('Auth0 Management client initialized successfully');
 
-      resolve(managementClient);
+      const userMeta = {
+        pendingUserId: tempUser?.user_id,
+        pendingUserEmail: tempUser?.email,
+      };
+      user = await this.updateUserMetadata(user.user_id, userMeta);
+    } else {
+      logger.debug(`re-send email change confirmation for: ${tempUser.email}`);
+
+      await this.authClient.requestMagicLink({ email: tempUser.email, authParams: {} });
+    }
+
+    const isValid = this.checkCustomClaims(tempUser, user);
+    if (!isValid) {
+      throw new AlreadyExistsError('Email address is already registered.', 400);
+    }
+    return user;
+  }
+
+  /**
+   * Cancels the email change request.
+   * Invalidates the confirmation email by removing the passwordless user.
+   * @param userId
+   */
+  async emailChangeCancelRequest(userId: string): Promise<User> {
+    let user = await this.getUser(userId);
+
+    const pendingUserId = user?.user_metadata?.pendingUserId;
+    const pendingUserEmail = user?.user_metadata?.pendingUserEmail;
+
+    // cancel email change request, removing temporary passwordless user;
+    if (pendingUserId) {
+      logger.debug(`removing temporary passwordless user: ${pendingUserEmail}`);
+
+      await this.deleteUser(pendingUserId);
+
+      // update the user metadata on the original user;
+      const userMeta = { ...user.user_metadata, pendingUserId: null, pendingUserEmail: null };
+
+      user = await this.updateUser(user.user_id, { user_metadata: userMeta });
+    }
+    return user;
+  }
+
+  /**
+   * Email change request confirmation hook.
+   * Requires both the initial user and the authorized temporary (passwordless)
+   * user to successfully confirm & update the email.
+   * @param userId
+   * @param tempUserId
+   */
+  async emailChangeConfirmationHook(userId: string, tempUserId: string): Promise<boolean> {
+    const user = await this.getUser(userId);
+    const tempUser = await this.getUser(tempUserId);
+
+    const isValid = this.checkCustomClaims(tempUser, user);
+    if (!isValid) {
+      throw new UnauthorizedError('Invalid email change request.', 401);
+    }
+    let success = true;
+    try {
+      const newUserEmail = tempUser?.email;
+      const userMeta = { ...user.user_metadata, pendingUserId: null, pendingUserEmail: null };
+
+      // update the email address on the original user;
+      await this.updateUser(user.user_id, { email: newUserEmail, user_metadata: userMeta });
+
+      // delete the temporary passwordless user account;
+      await this.deleteUser(tempUser.user_id);
     } catch (err) {
       logger.error(err);
-      throw new Auth0Error(`Auth0 connection error. Failed to authenticate with client: ${AUTH0_CLIENT_ID}`);
+      success = false;
     }
-  });
-};
+    return success;
+  }
+
+  /**
+   * Checks whether the original user and the newly created (passwordless) user are
+   * logically linked.
+   * If the custom claims do not match, the workflow must be stopped, and treated as an attack
+   * (or wrong email) as the new email address may be already used by someone else.
+   * @param tempUser
+   * @param originalUser
+   * @private
+   */
+  private checkCustomClaims(tempUser: User, originalUser: User): boolean {
+    const originalUserId = get(tempUser, 'user_metadata.originalUserId');
+    const originalUserEmail = get(tempUser, 'user_metadata.originalUserEmail');
+
+    const pendingUserId = get(originalUser, 'user_metadata.pendingUserId');
+    const pendingUserEmail = get(originalUser, 'user_metadata.pendingUserEmail');
+
+    return (
+      tempUser.user_id === pendingUserId &&
+      tempUser.email === pendingUserEmail &&
+      originalUser.user_id === originalUserId &&
+      originalUser.email === originalUserEmail
+    );
+  }
+
+  async passwordChange(userId: string, currentPassword: string, newPassword: string): Promise<boolean> {
+    const user = await this.getUser(userId);
+
+    let success = true;
+    await new Promise((resolve, reject) => {
+      this.authClient.passwordGrant(
+        { username: user.email, password: currentPassword, realm: AUTH0_REALM },
+        (err: any) => {
+          if (err) {
+            success = false;
+            if (err?.statusCode === 403) {
+              reject(new UnauthorizedError('The current password is incorrect.', 401));
+            }
+            logger.error(err);
+            reject(err);
+          }
+          resolve();
+        }
+      );
+    });
+    await new Promise((resolve, reject) => {
+      this.mgmtClient.updateUser({ id: userId }, { password: newPassword }, (err: any) => {
+        if (err) {
+          success = false;
+          if (err?.statusCode === 400) {
+            reject(new PasswordStrengthError('Password is too weak.', 400));
+          }
+          logger.error(err);
+          reject(err);
+        }
+        resolve();
+      });
+    });
+    return success;
+  }
+}

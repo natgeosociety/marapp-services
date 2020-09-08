@@ -17,23 +17,22 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { AuthorizationClient } from '@natgeosociety/auth0-authorization';
-import { ManagementClient } from 'auth0';
 import { Handler } from 'aws-lambda';
 import { ErrorRequestHandler, Express, RequestHandler } from 'express';
 import { Connection } from 'mongoose';
+import { hrtime } from 'process';
 import { RedisClient } from 'redis';
 import serverlessHttp from 'serverless-http';
 
 import { MONGODB_URI, REDIS_URI } from '../config';
 import { createMongoConnection } from '../helpers/mongoose';
 import { createRedisConnection } from '../helpers/redis';
-import { forEachAsync } from '../helpers/util';
+import { convertHrtime, forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
 import { expressFactory } from '../middlewares';
 import { apiKey, jwtError, jwtRSA } from '../middlewares/jwt';
-import { Auth0AuthzService, initAuthzClient } from '../services/auth0-authz';
-import { Auth0ManagementService, initAuthMgmtClient } from '../services/auth0-management';
+import { Auth0AuthzService } from '../services/auth0-authz';
+import { Auth0ManagementService } from '../services/auth0-management';
 import { RedisCacheService } from '../services/cache-service';
 import { initEarthEngine } from '../services/earthengine';
 
@@ -45,8 +44,6 @@ const logger = getLogger();
 interface SharedContext {
   mongoConn?: Promise<Connection>;
   redisClient?: Promise<RedisClient>;
-  authzClient?: Promise<AuthorizationClient>;
-  authMgmtClient?: Promise<ManagementClient>;
   ee?: Promise<void>;
 }
 
@@ -69,6 +66,8 @@ class ExpressFactory {
   }
 
   async initializeContext() {
+    let start = hrtime();
+
     if (!sharedContext) {
       logger.info('initializing shared context');
 
@@ -76,8 +75,6 @@ class ExpressFactory {
       sharedContext = {
         mongoConn: createMongoConnection(MONGODB_URI),
         redisClient: createRedisConnection(REDIS_URI),
-        authzClient: initAuthzClient(),
-        authMgmtClient: initAuthMgmtClient(),
         ee: initEarthEngine(),
       };
     }
@@ -90,10 +87,13 @@ class ExpressFactory {
     // configure clients & services;
     this.app.locals.redisClient = await sharedContext.redisClient;
     this.app.locals.cacheService = new RedisCacheService(await sharedContext.redisClient);
-    this.app.locals.authzService = new Auth0AuthzService(await sharedContext.authzClient);
-    this.app.locals.authManagementService = new Auth0ManagementService(await sharedContext.authMgmtClient);
+    this.app.locals.authzService = new Auth0AuthzService();
+    this.app.locals.authManagementService = new Auth0ManagementService();
 
-    logger.debug('shared context initialized');
+    const end = hrtime(start);
+    const { milliseconds } = convertHrtime(end);
+
+    logger.debug(`shared context initialized in: ${milliseconds}ms`);
   }
 }
 

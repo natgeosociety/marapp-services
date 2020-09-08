@@ -22,8 +22,8 @@
 import * as chalk from 'chalk';
 import * as yargs from 'yargs';
 
-import { Auth0AuthzService, initAuthzClient } from '../src/services/auth0-authz';
-import { Auth0ManagementService, initAuthMgmtClient } from '../src/services/auth0-management';
+import { Auth0AuthzService } from '../src/services/auth0-authz';
+import { Auth0ManagementService } from '../src/services/auth0-management';
 import { MembershipService } from '../src/services/membership-service';
 
 const argv = yargs.options({
@@ -36,11 +36,8 @@ const argv = yargs.options({
 }).argv;
 
 const main = async (): Promise<void> => {
-  const authMgmtClient = await initAuthMgmtClient();
-  const authMgmtService = new Auth0ManagementService(authMgmtClient);
-
-  const authzClient = await initAuthzClient();
-  const authzService = new Auth0AuthzService(authzClient);
+  const authzService = new Auth0AuthzService();
+  const authMgmtService = new Auth0ManagementService();
 
   const membershipService = new MembershipService(authzService);
 
