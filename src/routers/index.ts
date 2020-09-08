@@ -17,6 +17,12 @@
   specific language governing permissions and limitations under the License.
 */
 
+import { Request } from 'express';
+import { get, isEmpty } from 'lodash';
+
+import { ValidationError } from '../errors';
+import { ErrorObject } from '../types/response';
+
 /**
  * Comma separated query param values to array.
  * @param queryParam
@@ -54,4 +60,47 @@ export const removePrefixKey = (prefixKey: string, key: string, ignorePrefixChar
     return [matcher[1], matcher[3]].join('');
   }
   return key;
+};
+
+/**
+ * Validates query parameter keys on request object.
+ *
+ * Field requiredParamKeys can accept nested values for keys,
+ * eg: 'firstObject.secondObject.someKey'
+ *
+ * @param req
+ * @param requiredParamKeys
+ */
+export const requireReqParamKeys = (req: Request, requiredParamKeys: string[]) => {
+  const missingParamKeys = requiredParamKeys.filter((key) => isEmpty(get(req.query, key)));
+  if (missingParamKeys.length) {
+    const errors: ErrorObject[] = missingParamKeys.map((key) => ({
+      code: 400,
+      source: { parameter: key },
+      title: 'ValidationError',
+      detail: 'Missing required parameter.',
+    }));
+    throw new ValidationError(errors, 400);
+  }
+};
+
+/**
+ * Validates object keys on request body.
+ *
+ * Field requiredParamKeys can accept nested values for keys,* eg: 'firstObject.secondObject.someKey'
+ *
+ * @param req
+ * @param requiredParamKeys
+ */
+export const requireReqBodyKeys = (req: Request, requiredParamKeys: string[]) => {
+  const missingParamKeys = requiredParamKeys.filter((key) => isEmpty(get(req.body, key)));
+  if (missingParamKeys.length) {
+    const errors: ErrorObject[] = missingParamKeys.map((key) => ({
+      code: 400,
+      source: { pointer: '/body/' + key },
+      title: 'ValidationError',
+      detail: 'Missing required parameter.',
+    }));
+    throw new ValidationError(errors, 400);
+  }
 };

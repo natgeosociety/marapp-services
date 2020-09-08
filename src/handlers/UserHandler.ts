@@ -27,4 +27,6 @@ import { authenticated } from '.';
 
 const logger = getLogger();
 
+export const profileHandler: Handler = authenticated(UserRouter.getProfileRouter(API_BASE));
+
 export const managementHandler: Handler = authenticated(UserRouter.getAdminRouter(API_BASE));

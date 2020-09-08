@@ -26,7 +26,7 @@ import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
 import { AuthzRequest } from '../middlewares/authz-guards';
 import { CollectionModel, DashboardModel, LayerModel, LocationModel, WidgetModel } from '../models';
-import { SuccessResponse } from '../types/response';
+import { createSerializer as createStatusSerializer } from '../serializers/StatusSerializer';
 
 const logger = getLogger();
 
@@ -43,8 +43,7 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/operations
       await forEachAsync(models, async (model) => model.esSync());
 
       const code = 200;
-      const success = true;
-      const response: SuccessResponse = { code, data: { success } };
+      const response = createStatusSerializer().serialize({ success: true });
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);

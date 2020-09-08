@@ -31,8 +31,9 @@ import { AuthzGuards, AuthzRequest, guard } from '../middlewares/authz-guards';
 import { WidgetModel } from '../models';
 import { getAll, getById, remove, save, update } from '../models/utils';
 import { createSerializer as createSlugSerializer } from '../serializers/SlugSerializer';
+import { createSerializer as createStatusSerializer } from '../serializers/StatusSerializer';
 import { createSerializer } from '../serializers/WidgetSerializer';
-import { ResponseMeta, SuccessResponse } from '../types/response';
+import { ResponseMeta } from '../types/response';
 
 import { queryParamGroup } from '.';
 
@@ -297,7 +298,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const success = await remove(WidgetModel, doc);
 
       const code = 200;
-      const response: SuccessResponse = { code, data: { success } };
+      const response = createStatusSerializer().serialize({ success });
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);

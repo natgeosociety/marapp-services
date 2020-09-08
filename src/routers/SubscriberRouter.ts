@@ -27,7 +27,7 @@ import { getLogger } from '../logging';
 import { handleSNSMessage, SubscriptionError } from '../middlewares/subscriber';
 import { Metric, MetricModel } from '../models';
 import { save } from '../models/utils';
-import { SuccessResponse } from '../types/response';
+import { createSerializer as createStatusSerializer } from '../serializers/StatusSerializer';
 
 const logger = getLogger();
 
@@ -60,10 +60,10 @@ const getRouter = (basePath: string = '/', routePath: string = '/management/subs
         success = false;
       }
 
-      const statusCode = 200;
-      const body: SuccessResponse = { code: statusCode, data: { success } };
+      const code = 200;
+      const response = createStatusSerializer().serialize({ success });
 
-      res.status(statusCode).json(body);
+      res.status(code).json(response);
     })
   );
 

@@ -33,6 +33,7 @@ import { AuthzGuards, AuthzRequest, guard } from '../middlewares/authz-guards';
 import { LocationModel, MetricModel } from '../models';
 import { exists, getAll, getById, getOne, remove, removeById } from '../models/utils';
 import { createSerializer } from '../serializers/MetricSerializer';
+import { createSerializer as createStatusSerializer } from '../serializers/StatusSerializer';
 import { OperationTypeEnum, publishSNSMessage, SNSMessage } from '../services/sns';
 import { ResponseMeta, SuccessResponse } from '../types/response';
 
@@ -252,7 +253,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       }
 
       const code = 200;
-      const response: SuccessResponse = { code, data: { success: true } };
+      const response = createStatusSerializer().serialize({ success: true });
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);
@@ -285,7 +286,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const success = await remove(MetricModel, doc);
 
       const code = 200;
-      const response: SuccessResponse = { code, data: { success } };
+      const response = createStatusSerializer().serialize({ success });
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);

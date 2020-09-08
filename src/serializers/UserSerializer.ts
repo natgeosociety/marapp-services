@@ -21,7 +21,7 @@ import { Serializer, SerializerOptions } from 'jsonapi-serializer';
 
 import { PaginationLinks } from '.';
 
-export const USER_ATTRIBUTES: string[] = ['id', 'email', 'name', 'groups'];
+export const USER_ATTRIBUTES: string[] = ['id', 'email', 'name', 'groups', 'firstName', 'lastName', 'pendingEmail'];
 export const GROUP_ATTRIBUTES: string[] = ['id', 'name', 'description', 'roles'];
 export const ROLE_ATTRIBUTES: string[] = ['id', 'name', 'description'];
 

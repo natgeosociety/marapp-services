@@ -17,11 +17,26 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { requireEnv } from '../helpers/util';
+import { Serializer, SerializerOptions } from 'jsonapi-serializer';
 
-export const AUTH0_CLIENT_ID = requireEnv('AUTH0_CLIENT_ID');
-export const AUTH0_CLIENT_SECRET = requireEnv('AUTH0_CLIENT_SECRET');
-export const AUTH0_DOMAIN = requireEnv('AUTH0_DOMAIN');
-export const AUTH0_EXTENSION_URL = requireEnv('AUTH0_EXTENSION_URL');
-export const AUTH0_APPLICATION_CLIENT_ID = requireEnv('AUTH0_APPLICATION_CLIENT_ID');
-export const AUTH0_REALM = requireEnv('AUTH0_REALM', 'Username-Password-Authentication');
+import { PaginationLinks } from '.';
+
+export const STATUS_ATTRIBUTES: string[] = ['success'];
+
+export const createSerializer = (
+  include: string[] = [],
+  pagination: PaginationLinks = {},
+  meta: any = {},
+  opts: SerializerOptions = {}
+): Serializer => {
+  return new Serializer('status', {
+    attributes: STATUS_ATTRIBUTES,
+    keyForAttribute: (attribute: any) => {
+      return attribute;
+    },
+    pluralizeType: false,
+    topLevelLinks: pagination,
+    meta: meta,
+    ...opts,
+  } as any);
+};
