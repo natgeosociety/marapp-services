@@ -61,7 +61,7 @@ module.exports = {
     ],
   },
   plugins: [
-    new ForkTsCheckerWebpackPlugin(),
+    // new ForkTsCheckerWebpackPlugin(),
     new CopyWebpackPlugin({
       patterns: [
         { from: 'src/*/**.json' }
