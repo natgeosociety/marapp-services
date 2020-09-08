@@ -63,6 +63,10 @@
       "description": "User management"
     },
     {
+      "name": "organizations",
+      "description": "Organization public"
+    },
+    {
       "name": "organizations-management",
       "description": "Organization management"
     },
@@ -3774,9 +3778,9 @@
     "/organizations/stats": {
       "get": {
         "tags": ["organizations"],
-        "summary": "Get organizations stats",
+        "summary": "Get organization public stats",
         "description": "",
-        "operationId": "getOrganizationStats",
+        "operationId": "getOrganizationPublicStats",
         "parameters": [
           {
             "in": "query",
