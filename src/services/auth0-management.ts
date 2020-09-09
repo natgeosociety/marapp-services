@@ -107,15 +107,23 @@ export class Auth0ManagementService implements AuthManagementService {
     let tempUser = await this.getUserByEmail(newEmail, false);
     const pendingUserId = user?.user_metadata?.pendingUserId;
 
-    // new email change request, removing temporary passwordless user;
-    if ((pendingUserId && !tempUser) || (pendingUserId && tempUser && pendingUserId !== tempUser.user_id)) {
-      const pendingUserEmail = user?.user_metadata?.pendingUserEmail;
-      logger.debug(`removing temporary passwordless user: ${pendingUserEmail}`);
+    if (tempUser) {
+      const isValid = this.checkCustomClaims(tempUser, user);
+      if (!isValid) {
+        throw new AlreadyExistsError('Email address is already registered.', 400);
+      }
+      logger.debug(`re-send email change confirmation for: ${tempUser.email}`);
 
-      await this.deleteUser(pendingUserId);
-    }
+      await this.authClient.requestMagicLink({ email: tempUser.email, authParams: {} });
+    } else {
+      // new change request, removing old temporary user;
+      if (pendingUserId) {
+        const pendingUserEmail = user?.user_metadata?.pendingUserEmail;
+        logger.debug(`removing temporary passwordless user: ${pendingUserEmail}`);
 
-    if (!tempUser) {
+        await this.deleteUser(pendingUserId);
+      }
+
       const tempUserMeta = {
         originalUserId: user?.user_id,
         originalUserEmail: user?.email,
@@ -132,15 +140,6 @@ export class Auth0ManagementService implements AuthManagementService {
         pendingUserEmail: tempUser?.email,
       };
       user = await this.updateUserMetadata(user.user_id, userMeta);
-    } else {
-      logger.debug(`re-send email change confirmation for: ${tempUser.email}`);
-
-      await this.authClient.requestMagicLink({ email: tempUser.email, authParams: {} });
-    }
-
-    const isValid = this.checkCustomClaims(tempUser, user);
-    if (!isValid) {
-      throw new AlreadyExistsError('Email address is already registered.', 400);
     }
     return user;
   }
