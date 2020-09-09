@@ -20,7 +20,8 @@
 import { Request } from 'express';
 import { get, isEmpty } from 'lodash';
 
-import { ValidationError } from '../errors';
+import { InvalidParameterError, ValidationError } from '../errors';
+import { isEmail } from '../helpers/util';
 import { ErrorObject } from '../types/response';
 
 /**
@@ -103,4 +104,15 @@ export const requireReqBodyKeys = (req: Request, requiredParamKeys: string[]) =>
     }));
     throw new ValidationError(errors, 400);
   }
+};
+
+/**
+ * Email address validation.
+ * @param email
+ */
+export const validateEmail = (email: string): string => {
+  if (!isEmail(email)) {
+    throw new InvalidParameterError('Invalid format for parameter: email', 400);
+  }
+  return email;
 };

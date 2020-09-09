@@ -19,12 +19,11 @@
 
 import { Response, Router } from 'express';
 import asyncHandler from 'express-async-handler';
-import isEmail from 'isemail';
 import { get, set } from 'lodash';
 import urljoin from 'url-join';
 
 import { DEFAULT_CONTENT_TYPE } from '../config';
-import { InvalidParameterError, NotImplementedError, RecordNotFound, UnauthorizedError } from '../errors';
+import { NotImplementedError, RecordNotFound, UnauthorizedError } from '../errors';
 import { PaginationHelper } from '../helpers/paginator';
 import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
@@ -36,7 +35,7 @@ import { AuthzServiceSpec } from '../services/auth0-authz';
 import { AuthManagementService } from '../services/auth0-management';
 import { ResponseMeta } from '../types/response';
 
-import { queryParamGroup, requireReqBodyKeys, requireReqParamKeys } from '.';
+import { queryParamGroup, requireReqBodyKeys, requireReqParamKeys, validateEmail } from '.';
 
 const logger = getLogger();
 
@@ -127,9 +126,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
       requireReqBodyKeys(req, ['email']);
       const { email } = req.body;
 
-      if (!isEmail.validate(email)) {
-        throw new InvalidParameterError('Invalid format for parameter: email', 400);
-      }
+      validateEmail(email);
       const user = await authMgmtService.emailChangeRequest(req.identity.sub, email);
 
       const data = {
@@ -320,9 +317,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const email = req.params.email;
       const include = queryParamGroup(<string>req.query.include);
 
-      if (!isEmail.validate(email)) {
-        throw new InvalidParameterError('Invalid format for parameter: email', 400);
-      }
+      validateEmail(email);
       const user = await authMgmtService.getUserByEmail(email);
       const userId = get(user, 'user_id');
 
@@ -363,9 +358,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       requireReqBodyKeys(req, ['email']);
       const { email } = req.body;
 
-      if (!isEmail.validate(email)) {
-        throw new InvalidParameterError('Invalid format for parameter: email', 400);
-      }
+      validateEmail(email);
       throw new NotImplementedError('Not Implemented.', 501);
 
       const code = 200;
@@ -387,9 +380,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const email = req.params.email;
       const body = req.body;
 
-      if (!isEmail.validate(email)) {
-        throw new InvalidParameterError('Invalid format for parameter: email', 400);
-      }
+      validateEmail(email);
       const user = await authMgmtService.getUserByEmail(email);
       const userId = get(user, 'user_id');
 
@@ -451,9 +442,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
       const email = req.params.email;
 
-      if (!isEmail.validate(email)) {
-        throw new InvalidParameterError(`Invalid format for parameter: email`, 400);
-      }
+      validateEmail(email);
       const user = await authMgmtService.getUserByEmail(email);
       const userId = get(user, 'user_id');
 

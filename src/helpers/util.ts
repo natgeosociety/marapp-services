@@ -17,11 +17,10 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { Request } from 'express';
-import { get, isEmpty } from 'lodash';
+import { get } from 'lodash';
+import trim from 'trim';
 
-import { ParameterRequiredError, ValidationError } from '../errors';
-import { ErrorObject } from '../types/response';
+import { ParameterRequiredError } from '../errors';
 
 /**
  * Ensure required ENV variables are set during deployment.
@@ -86,4 +85,12 @@ export const convertHrtime = (hrtime) => {
   const seconds = nanoseconds / 1e9;
 
   return { seconds, milliseconds, nanoseconds };
+};
+
+// Email Regex (RFC 5322 Official Standard). See: https://emailregex.com/
+const emailRegExp = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
+export const isEmail = (str): boolean => {
+  const result = emailRegExp.exec(trim(str.toLowerCase()));
+  return !!result && result[0] !== null;
 };
