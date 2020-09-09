@@ -48,10 +48,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/organizations')
   const path = urljoin(basePath, routePath);
 
   const parser = new MongooseQueryParser();
-  const queryFilters: MongooseQueryFilter[] = [
-    { key: 'published', op: '==', value: String(true) },
-    { key: '*.published', op: '==', value: String(true) },
-  ];
+  const queryFilters: MongooseQueryFilter[] = [{ key: 'published', op: '==', value: String(true) }];
 
   router.get(
     `${path}/stats`,
@@ -59,12 +56,23 @@ const getRouter = (basePath: string = '/', routePath: string = '/organizations')
     AuthzGuards.readLocationsGuard,
     AuthzGuards.readLayersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const items = [
+        { model: LocationModel, query: queryFilters },
+        {
+          model: LayerModel,
+          query: queryFilters.concat([
+            { key: '*.published', op: '==', value: String(true) },
+            { key: 'primary', op: '==', value: String(true) },
+          ]),
+        },
+      ];
+
       const data = await Promise.all(
         req.groups.map((group) =>
-          forEachAsync([LocationModel, LayerModel], async (model) =>
+          forEachAsync(items, async (item) =>
             countByQuery(
-              model,
-              parser.parse(null, { predefined: queryFilters.concat([{ key: 'organization', op: '==', value: group }]) })
+              item.model,
+              parser.parse(null, { predefined: item.query.concat([{ key: 'organization', op: '==', value: group }]) })
                 .filter
             )
           ).then(([locations, layers]) => ({ name: group, locations, layers }))
