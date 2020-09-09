@@ -27,7 +27,6 @@ module.exports = {
   context: __dirname,
   mode: serverlessWebpack.lib.webpack.isLocal ? 'development' : 'production',
   entry: serverlessWebpack.lib.entries,
-  devtool: serverlessWebpack.lib.webpack.isLocal ? 'cheap-module-eval-source-map' : 'source-map',
   resolve: {
     extensions: ['.js', '.jsx', '.json', '.ts', '.tsx'],
     symlinks: false,
@@ -61,7 +60,7 @@ module.exports = {
     ],
   },
   plugins: [
-    // new ForkTsCheckerWebpackPlugin(),
+    new ForkTsCheckerWebpackPlugin(),
     new CopyWebpackPlugin({
       patterns: [
         { from: 'src/*/**.json' }
