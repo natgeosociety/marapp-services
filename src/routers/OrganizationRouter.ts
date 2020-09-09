@@ -59,12 +59,20 @@ const getRouter = (basePath: string = '/', routePath: string = '/organizations')
     AuthzGuards.readLocationsGuard,
     AuthzGuards.readLayersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const items = [
+        { model: LocationModel, query: queryFilters },
+        {
+          model: LayerModel,
+          query: queryFilters.concat([{ key: 'primary', op: '==', value: String(true) }]),
+        },
+      ];
+
       const data = await Promise.all(
         req.groups.map((group) =>
-          forEachAsync([LocationModel, LayerModel], async (model) =>
+          forEachAsync(items, async (item) =>
             countByQuery(
-              model,
-              parser.parse(null, { predefined: queryFilters.concat([{ key: 'organization', op: '==', value: group }]) })
+              item.model,
+              parser.parse(null, { predefined: item.query.concat([{ key: 'organization', op: '==', value: group }]) })
                 .filter
             )
           ).then(([locations, layers]) => ({ name: group, locations, layers }))
