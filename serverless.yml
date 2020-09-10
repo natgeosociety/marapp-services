@@ -3,10 +3,11 @@ service:
 
 plugins:
   - serverless-dotenv-plugin
-  - serverless-plugin-typescript
+  - serverless-webpack
   - serverless-offline
   - serverless-localstack
   - serverless-prune-plugin
+  - serverless-plugin-split-stacks
 
 provider:
   name: aws
@@ -64,6 +65,9 @@ custom:
     snsWorkerResultTopicArn: { "Fn::Join": [":", ["arn:aws:sns:${self:provider.region}", { "Ref": "AWS::AccountId" }, "${self:custom.stageEnvironment.snsWorkerResultTopic}" ] ]  }
 
   # Plugins configuration
+  webpack:
+    webpackConfig: 'webpack.config.js'
+    includeModules: true # enable auto-packing of external modules
   serverless-offline:
     httpPort: 4000
     useChildProcesses: true
@@ -76,7 +80,7 @@ custom:
     number: 3
 
 package:
-  # individually: true
+  individually: true
   include:
     - src/**/*.json
 
@@ -213,6 +217,17 @@ functions:
           path: services/api/v1/management/dashboards/{any+}
           method: any
           cors: true
+  users-profile:
+    handler: src/handlers/UserHandler.profileHandler
+    events:
+      - http:
+          path: services/api/v1/users/profile
+          method: any
+          cors: true
+      - http:
+          path: services/api/v1/users/profile/{any+}
+          method: any
+          cors: true
   users-management:
     handler: src/handlers/UserHandler.managementHandler
     events:
@@ -222,6 +237,17 @@ functions:
           cors: true
       - http:
           path: services/api/v1/management/users/{any+}
+          method: any
+          cors: true
+  organizations:
+    handler: src/handlers/OrganizationHandler.openHandler
+    events:
+      - http:
+          path: services/api/v1/organizations
+          method: any
+          cors: true
+      - http:
+          path: services/api/v1/organizations/{any+}
           method: any
           cors: true
   organizations-management:

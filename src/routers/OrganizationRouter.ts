@@ -26,21 +26,69 @@ import { DEFAULT_CONTENT_TYPE } from '../config';
 import { ParameterRequiredError, RecordNotFound } from '../errors';
 import { MongooseQueryFilter, MongooseQueryParser } from '../helpers/mongoose';
 import { PaginationHelper } from '../helpers/paginator';
-import { forEachAsync, validateKeys } from '../helpers/util';
+import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
 import { AuthzGuards, AuthzRequest, guard } from '../middlewares/authz-guards';
 import { CollectionModel, DashboardModel, LayerModel, LocationModel, WidgetModel } from '../models';
 import { countByQuery } from '../models/utils';
 import { createSerializer } from '../serializers/OrganizationSerializer';
 import { createSerializer as createStatsSerializer } from '../serializers/StatsSerializer';
+import { createSerializer as createStatusSerializer } from '../serializers/StatusSerializer';
 import { AuthzServiceSpec } from '../services/auth0-authz';
 import { AuthManagementService } from '../services/auth0-management';
 import { MembershipService } from '../services/membership-service';
-import { ResponseMeta, SuccessResponse } from '../types/response';
+import { ResponseMeta } from '../types/response';
 
-import { queryParamGroup } from '.';
+import { queryParamGroup, requireReqBodyKeys } from '.';
 
 const logger = getLogger();
+
+const getRouter = (basePath: string = '/', routePath: string = '/organizations') => {
+  const router: Router = Router();
+  const path = urljoin(basePath, routePath);
+
+  const parser = new MongooseQueryParser();
+  const queryFilters: MongooseQueryFilter[] = [
+    { key: 'published', op: '==', value: String(true) },
+    { key: '*.published', op: '==', value: String(true) },
+  ];
+
+  router.get(
+    `${path}/stats`,
+    guard.enforcePrimaryGroup(false, true),
+    AuthzGuards.readLocationsGuard,
+    AuthzGuards.readLayersGuard,
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const items = [
+        { model: LocationModel, query: queryFilters },
+        {
+          model: LayerModel,
+          query: queryFilters.concat([{ key: 'primary', op: '==', value: String(true) }]),
+        },
+      ];
+
+      const data = await Promise.all(
+        req.groups.map((group) =>
+          forEachAsync(items, async (item) =>
+            countByQuery(
+              item.model,
+              parser.parse(null, { predefined: item.query.concat([{ key: 'organization', op: '==', value: group }]) })
+                .filter
+            )
+          ).then(([locations, layers]) => ({ name: group, locations, layers }))
+        )
+      );
+
+      const code = 200;
+      const response = createStatsSerializer().serialize(data);
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
+
+  return router;
+};
 
 const getAdminRouter = (basePath: string = '/', routePath: string = '/management/organizations') => {
   const router: Router = Router();
@@ -55,6 +103,8 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
     AuthzGuards.readStatsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
+
+      const include = queryParamGroup(<string>req.query.include);
 
       const predefined = queryFilters.concat([{ key: 'organization', op: 'in', value: req.groups }]);
       const queryOptions = parser.parse(null, { predefined });
@@ -72,15 +122,22 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
       const data = {
         id: group?._id,
-        name: group?.name,
         slug: group?.name,
-        description: group?.description,
+        name: group?.description,
         locations,
         collections,
         layers,
         widgets,
         dashboards,
       };
+      if (include.includes('owners')) {
+        const owners = await authzService.getGroupOwners(group._id);
+        set(
+          data,
+          'owners',
+          owners.map((owner) => owner?.email)
+        );
+      }
 
       const code = 200;
       const response = createStatsSerializer().serialize(data);
@@ -111,8 +168,8 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const groups = await forEachAsync(nested, async (group) => {
         const entry = {
           id: group?._id,
-          name: group?.name,
-          description: group?.description,
+          slug: group?.name,
+          name: group?.description,
         };
         if (include.includes('owners')) {
           const owners = await authzService.getGroupOwners(group._id);
@@ -165,64 +222,22 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         throw new RecordNotFound(`Could not retrieve document.`, 404);
       }
 
-      const owners = await authzService.getGroupOwners(id);
       const data = {
-        ...group,
-        id: group._id,
-        owners: owners.map((owner) => owner.email),
+        id: group?._id,
+        slug: group?.name,
+        name: group?.description,
       };
+      if (include.includes('owners')) {
+        const owners = await authzService.getGroupOwners(group._id);
+        set(
+          data,
+          'owners',
+          owners.map((owner) => owner?.email)
+        );
+      }
 
       const code = 200;
       const response = createSerializer(include).serialize(data);
-
-      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
-      res.status(code).send(response);
-    })
-  );
-
-  router.post(
-    path,
-    AuthzGuards.writeOrganizationsGuard,
-    asyncHandler(async (req: AuthzRequest, res: Response) => {
-      const authzService: AuthzServiceSpec = req.app.locals.authzService;
-      const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
-
-      validateKeys(req.body, ['name', 'description', 'owners']);
-      const { name, description, owners } = req.body;
-
-      const groupName = name.trim();
-      const groupDescription = description.trim();
-
-      if (!groupName) {
-        throw new ParameterRequiredError('Invalid name.', 400);
-      }
-      if (!groupDescription) {
-        throw new ParameterRequiredError('Invalid description.', 400);
-      }
-      if (!Array.isArray(owners)) {
-        throw new ParameterRequiredError('Invalid owners.', 400);
-      }
-
-      const ownerIds = await forEachAsync(owners, async (email) => {
-        const user = await authMgmtService.getUserByEmail(email);
-        logger.debug(`resolved owner ${user.user_id} for email: ${email}`);
-
-        return user.user_id;
-      });
-
-      const membershipService = new MembershipService(authzService);
-
-      const group = await membershipService.createOrganization(groupName, groupDescription, ownerIds);
-      const groupOwners = await authzService.getGroupOwners(group._id);
-
-      const data = {
-        ...group,
-        id: group._id,
-        owners: groupOwners.map((owner) => owner.email),
-      };
-
-      const code = 200;
-      const response = createSerializer().serialize(data);
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);
@@ -237,50 +252,109 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
       const id = req.params.id;
+      const include = queryParamGroup(<string>req.query.include);
 
-      validateKeys(req.body, ['description', 'owners']);
-      const { description, owners } = req.body;
-
-      const groupDescription = description.trim();
-
-      if (!groupDescription) {
-        throw new ParameterRequiredError('Invalid description.', 400);
-      }
-      if (!Array.isArray(owners)) {
-        throw new ParameterRequiredError('Invalid owners.', 400);
-      }
+      const { name, owners } = req.body;
 
       const group = await authzService.getGroup(id);
       if (!group) {
         throw new RecordNotFound(`Could not retrieve document.`, 404);
       }
 
-      const ownerIds = await forEachAsync(owners, async (email: any) => {
+      if (owners) {
+        if (!Array.isArray(owners)) {
+          throw new ParameterRequiredError('Invalid type for field: owners', 400);
+        }
+        const ownerIds = await forEachAsync(owners, async (email: any) => {
+          const user = await authMgmtService.getUserByEmail(email);
+          logger.debug(`resolved owner ${user.user_id} for email: ${email}`);
+          return user.user_id;
+        });
+
+        const nestedGroups = await authzService.getNestedGroups(id, ['OWNER']);
+        const memberIds = get(nestedGroups[0], 'members', []);
+        const groupId = nestedGroups[0]._id;
+
+        const addUserIds = ownerIds.filter((userId) => !memberIds.includes(userId));
+        const removeUserIds = memberIds.filter((userId) => !ownerIds.includes(userId));
+
+        if (addUserIds.length) {
+          await authzService.addGroupMembers(groupId, addUserIds);
+        }
+        if (removeUserIds.length) {
+          await authzService.deleteGroupMembers(groupId, removeUserIds);
+        }
+      }
+      const description = name && name.trim() ? name.trim() : group?.description;
+      const updated = await authzService.updateGroup(id, group.name, description);
+
+      const data = {
+        id: updated?._id,
+        slug: updated?.name,
+        name: updated?.description,
+      };
+      if (include.includes('owners')) {
+        const owners = await authzService.getGroupOwners(updated._id);
+        set(
+          data,
+          'owners',
+          owners.map((owner) => owner?.email)
+        );
+      }
+
+      const code = 200;
+      const response = createSerializer().serialize(data);
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
+
+  router.post(
+    path,
+    AuthzGuards.writeOrganizationsGuard,
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const authzService: AuthzServiceSpec = req.app.locals.authzService;
+      const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
+
+      const membershipService = new MembershipService(authzService);
+
+      const include = queryParamGroup(<string>req.query.include);
+
+      requireReqBodyKeys(req, ['slug', 'name', 'owners']);
+      const { slug, name, owners } = req.body;
+
+      if (!Array.isArray(owners)) {
+        throw new ParameterRequiredError('Invalid type for field: owners', 400);
+      }
+      if (!membershipService.enforceOrganizationName(slug)) {
+        throw new ParameterRequiredError('Invalid format for field: slug', 400);
+      }
+
+      const ownerIds = await forEachAsync(owners, async (email) => {
         const user = await authMgmtService.getUserByEmail(email);
         logger.debug(`resolved owner ${user.user_id} for email: ${email}`);
-
         return user.user_id;
       });
 
-      const nestedGroups = await authzService.getNestedGroups(id, ['OWNER']);
-      const memberIds = get(nestedGroups[0], 'members', []);
+      const group = await membershipService.createOrganization(slug, name, ownerIds);
 
-      const ownersOperations = [
-        ...ownerIds.filter((userId) => !memberIds.includes(userId)).map((userId) => ({ operation: 'add', userId })),
-        ...memberIds.filter((userId) => !ownerIds.includes(userId)).map((userId) => ({ operation: 'remove', userId })),
-      ];
-
-      await forEachAsync(ownersOperations, async (item: any) => {
-        if (item.operation === 'add') {
-          return authzService.addGroupMembers(nestedGroups[0]._id, [item.userId]);
-        } else if (item.operation === 'remove') {
-          return authzService.deleteGroupMembers(nestedGroups[0]._id, [item.userId]);
-        }
-      });
-      const updated = await authzService.updateGroup(id, group.name, groupDescription);
+      const data = {
+        id: group?._id,
+        slug: group?.name,
+        name: group?.description,
+      };
+      if (include.includes('owners')) {
+        const owners = await authzService.getGroupOwners(group._id);
+        set(
+          data,
+          'owners',
+          owners.map((owner) => owner?.email)
+        );
+      }
 
       const code = 200;
-      const response = createSerializer().serialize(updated);
+      const response = createSerializer().serialize(data);
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);
@@ -304,7 +378,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const success = await membershipService.deleteOrganization(group._id);
 
       const code = 200;
-      const response: SuccessResponse = { code, data: { success } };
+      const response = createStatusSerializer().serialize({ success });
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);
@@ -314,4 +388,4 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
   return router;
 };
 
-export default { getAdminRouter };
+export default { getRouter, getAdminRouter };

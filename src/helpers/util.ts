@@ -18,6 +18,7 @@
 */
 
 import { get } from 'lodash';
+import trim from 'trim';
 
 import { ParameterRequiredError } from '../errors';
 
@@ -77,3 +78,19 @@ export const validateKeys = <T, K extends keyof T>(
  */
 export const forEachAsync = async (records: any[], callback: (i: any) => Promise<any>) =>
   Promise.all(records.map((i) => callback(i)));
+
+export const convertHrtime = (hrtime) => {
+  const nanoseconds = hrtime[0] * 1e9 + hrtime[1];
+  const milliseconds = nanoseconds / 1e6;
+  const seconds = nanoseconds / 1e9;
+
+  return { seconds, milliseconds, nanoseconds };
+};
+
+// Email Regex (RFC 5322 Official Standard). See: https://emailregex.com/
+const emailRegExp = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
+export const isEmail = (str): boolean => {
+  const result = emailRegExp.exec(trim(str.toLowerCase()));
+  return !!result && result[0] !== null;
+};

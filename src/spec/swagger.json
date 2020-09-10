@@ -63,12 +63,20 @@
       "description": "User management"
     },
     {
+      "name": "organizations",
+      "description": "Organization public"
+    },
+    {
       "name": "organizations-management",
       "description": "Organization management"
     },
     {
       "name": "tile-map",
       "description": "Tile map service"
+    },
+    {
+      "name": "profile",
+      "description": "User profile"
     }
   ],
   "paths": {
@@ -3248,6 +3256,234 @@
         ]
       }
     },
+    "/users/profile": {
+      "get": {
+        "tags": ["profile"],
+        "summary": "Get current user's profile",
+        "description": "",
+        "operationId": "getUserProfile",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "put": {
+        "tags": ["profile"],
+        "summary": "Update current user's profile",
+        "description": "",
+        "operationId": "updateUserProfile",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "description": "",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UserProfile"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/users/profile/change-email": {
+      "post": {
+        "tags": ["profile"],
+        "summary": "Change current user's email",
+        "description": "",
+        "operationId": "changeUserEmail",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "description": "",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UserEmail"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": ["profile"],
+        "summary": "Cancel current user's email change request",
+        "description": "",
+        "operationId": "cancelUserEmailChange",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "get": {
+        "tags": ["profile"],
+        "summary": "Change current user's email confirmation hook",
+        "operationId": "changeUserEmailCallback",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "accessToken",
+            "description": "Change request access token.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/users/profile/change-password": {
+      "post": {
+        "tags": ["profile"],
+        "summary": "Change current user's password",
+        "operationId": "changeUserPassword",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UserPassword"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
     "/management/users": {
       "get": {
         "tags": ["users-management"],
@@ -3539,6 +3775,43 @@
         ]
       }
     },
+    "/organizations/stats": {
+      "get": {
+        "tags": ["organizations"],
+        "summary": "Get organization public stats",
+        "description": "",
+        "operationId": "getOrganizationPublicStats",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "group",
+            "description": "Primary group name. Required when multiple primary groups included in the token.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [],
+            "Bearer": []
+          }
+        ]
+      }
+    },
     "/management/organizations": {
       "get": {
         "tags": ["organizations-management"],
@@ -3597,6 +3870,13 @@
         "description": "",
         "operationId": "addOrganization",
         "parameters": [
+          {
+            "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          },
           {
             "in": "body",
             "name": "body",
@@ -3686,6 +3966,13 @@
             "type": "string"
           },
           {
+            "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          },
+          {
             "in": "body",
             "name": "body",
             "description": "",
@@ -3759,6 +4046,13 @@
         "description": "",
         "operationId": "getOrganizationStats",
         "parameters": [
+          {
+            "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          },
           {
             "in": "query",
             "name": "group",
@@ -4072,13 +4366,52 @@
         "name": "User"
       }
     },
+    "UserProfile": {
+      "type": "object",
+      "properties": {
+        "firstName": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        }
+      },
+      "xml": {
+        "name": "UserProfile"
+      }
+    },
+    "UserEmail": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        }
+      },
+      "xml": {
+        "name": "UserEmail"
+      }
+    },
+    "UserPassword": {
+      "type": "object",
+      "properties": {
+        "currentPassword": {
+          "type": "string"
+        },
+        "newPassword": {
+          "type": "string"
+        }
+      },
+      "xml": {
+        "name": "UserEmail"
+      }
+    },
     "Organization": {
       "type": "object",
       "properties": {
-        "name": {
+        "slug": {
           "type": "string"
         },
-        "description": {
+        "name": {
           "type": "string"
         },
         "owners": {

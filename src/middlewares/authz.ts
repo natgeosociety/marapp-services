@@ -58,6 +58,7 @@ export class AuthzGuard {
 
     if (isString(required)) {
       scopes = [[required]];
+      // @ts-ignore
     } else if (isArray(required) && required.every(isString)) {
       scopes = [<string[]>required];
     } else {

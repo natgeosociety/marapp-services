@@ -32,7 +32,8 @@ import { DashboardModel } from '../models';
 import { getAll, getById, remove, save, update } from '../models/utils';
 import { createSerializer } from '../serializers/DashboardSerializer';
 import { createSerializer as createSlugSerializer } from '../serializers/SlugSerializer';
-import { ResponseMeta, SuccessResponse } from '../types/response';
+import { createSerializer as createStatusSerializer } from '../serializers/StatusSerializer';
+import { ResponseMeta } from '../types/response';
 
 import { queryParamGroup } from '.';
 
@@ -297,7 +298,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const success = await remove(DashboardModel, doc);
 
       const code = 200;
-      const response: SuccessResponse = { code, data: { success } };
+      const response = createStatusSerializer().serialize({ success });
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);
