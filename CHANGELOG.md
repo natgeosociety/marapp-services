@@ -1,3 +1,35 @@
+# [1.2.0](https://github.com/natgeosociety/marapp-services/compare/v1.1.1...v1.2.0) (2020-09-10)
+
+
+### Bug Fixes
+
+* change name conflict in swagger ([efb7e10](https://github.com/natgeosociety/marapp-services/commit/efb7e10b61be383a5336847826f751c91d51505b))
+* change separator for SuperAdmin role ([13cc155](https://github.com/natgeosociety/marapp-services/commit/13cc1559205d8e0b51b36d1d2c11569a8a0b4eef))
+* condition for already registered emails ([a2edf34](https://github.com/natgeosociety/marapp-services/commit/a2edf34814b78b5996f810fa71d8781d6f5f7104))
+* disable fork-ts-checker-webpack-plugin on webpack build ([0d33b89](https://github.com/natgeosociety/marapp-services/commit/0d33b897daf58b8407f66e776479c5c02c9c9d68))
+* handle email validation ([a51c69a](https://github.com/natgeosociety/marapp-services/commit/a51c69ab2af7e4f571bc824791ffa8ad8627a140))
+* handle empty add/remove user operation ([1235d44](https://github.com/natgeosociety/marapp-services/commit/1235d44a7598652607513ce84b467dcb69bbab7b))
+* handle optional parameters on organization PUT request ([e3c35b5](https://github.com/natgeosociety/marapp-services/commit/e3c35b5db76157c0cd2f5c9a25aef38b594f77a3))
+* omit of special fields (organization) on filter ([d376078](https://github.com/natgeosociety/marapp-services/commit/d376078839a2a39d7c9c8d78f503bb1a9c6f9555))
+* optional parameter validation on organization PUT request ([b9d9ef4](https://github.com/natgeosociety/marapp-services/commit/b9d9ef4e06ba9724e168a16c989f8e225e5b784a))
+* org stats count published only ([32f626a](https://github.com/natgeosociety/marapp-services/commit/32f626a406f17b0a8937f005f35def0382afe346))
+* org stats query (layers) ([d488bcf](https://github.com/natgeosociety/marapp-services/commit/d488bcf2bfd658e5c26ee0a54425dd428ef25372))
+* replace email validation logic ([3b74e54](https://github.com/natgeosociety/marapp-services/commit/3b74e540f6bd75c81718be62af3ec5a72920c8dd))
+
+
+### Features
+
+* **profile:** support for profile-management [EP-2508] ([e418018](https://github.com/natgeosociety/marapp-services/commit/e4180180289cb10afc339e3fcc58ed6131703fe0))
+* add support for filtering layers by organization [EP-2125] ([48ce266](https://github.com/natgeosociety/marapp-services/commit/48ce266ccede2c3a62e639804b287e5660beae32))
+* add support for filtering locations by organization [EP-2125] ([56f5410](https://github.com/natgeosociety/marapp-services/commit/56f541098d620819f667c6b9470f71cb45876365))
+* change organization data fields, enforce org URL friendly slug ([a314f46](https://github.com/natgeosociety/marapp-services/commit/a314f46ca1b9fdf6a99000ba4ed8fdb51db603f0))
+* org stats (locations / layers) [EP-2087] ([e1b098c](https://github.com/natgeosociety/marapp-services/commit/e1b098cd3de31965c062181eee30b00614a449de))
+
+
+### Reverts
+
+* support for filtering locations & layers by organization [EP-2125] ([0fec992](https://github.com/natgeosociety/marapp-services/commit/0fec992f6fd1d2c9ddb8b8a808322a8aa5371d2e))
+
 ## [1.1.1](https://github.com/natgeosociety/marapp-services/compare/v1.1.0...v1.1.1) (2020-08-28)
 
 
