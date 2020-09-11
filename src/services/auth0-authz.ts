@@ -22,6 +22,7 @@ import { get, set } from 'lodash';
 import makeError from 'make-error';
 
 import { AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET, AUTH0_DOMAIN, AUTH0_EXTENSION_URL } from '../config/auth0';
+import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
 
 export const Auth0Error = makeError('Auth0Error');
@@ -73,6 +74,7 @@ export interface AuthzServiceSpec {
   findPrimaryGroupId(groupMembership: any[], primaryGroupName: string);
   addGroupMembers(groupId: string, userIds: string[]);
   deleteGroupMembers(groupId: string, userIds: string[]);
+  getMemberGroups(userId: string, primaryGroups: string[]);
 }
 
 export class Auth0AuthzService implements AuthzServiceSpec {
@@ -238,6 +240,24 @@ export class Auth0AuthzService implements AuthzServiceSpec {
 
   async deleteGroup(groupId: string) {
     return this.authzClient.deleteGroup({ groupId });
+  }
+
+  async getMemberGroups(userId: string, primaryGroups: string[]) {
+    let groups = [];
+    try {
+      const members = await this.calculateGroupMemberships(userId);
+      const primaryGroupIds = primaryGroups.map((g) => this.findPrimaryGroupId(<any>members, g));
+
+      const nestedGroups = await forEachAsync(primaryGroupIds, async (groupId) => this.getNestedGroups(groupId));
+      const flatten = [].concat.apply([], nestedGroups);
+      const nestedGroupRoles = await forEachAsync(flatten, async (group: any) => this.getNestedGroupRoles(group._id));
+
+      const groupRoles = this.mapNestedGroupRoles(nestedGroupRoles);
+      groups = groupRoles.filter((groupRole: any) => get(groupRole, 'members', []).includes(userId));
+    } catch (err) {
+      logger.error(`Could not resolve member groups for: ${userId}`);
+    }
+    return groups;
   }
 
   mapNestedGroupRoles(nestedGroupRoles: any[]) {

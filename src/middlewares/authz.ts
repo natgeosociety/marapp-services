@@ -197,6 +197,29 @@ export class AuthzGuard {
     };
   }
 
+  public includeGroups(): Handler {
+    return (req: Request, res: Response, next: NextFunction) => {
+      const identity = get(req, this.options.reqIdentityKey);
+      if (!identity) {
+        return next(new UnauthorizedError('Permission denied. Anonymous access not allowed.', 401));
+      }
+
+      let tokenGroups: string | string[] = get(identity, this.options.jwtGroupKey);
+      if (isString(tokenGroups)) {
+        tokenGroups = tokenGroups.split(' ');
+      } else if (!Array.isArray(tokenGroups)) {
+        return next(new UnauthorizedError('Permission denied. Invalid groups included in token.', 403));
+      }
+
+      const primaryGroups = this.removeNestedGroups(tokenGroups);
+      logger.debug(`token primary groups: ${primaryGroups.join(', ')}`);
+
+      set(req, this.options.reqGroupKey, primaryGroups);
+
+      next();
+    };
+  }
+
   /**
    * Remove nested groups (children) from groups.
    * Nested groups are prefixed with the group label.
