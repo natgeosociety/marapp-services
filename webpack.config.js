@@ -40,8 +40,8 @@ module.exports = {
   externals: [
     {
       formidable: 'commonjs formidable',
-      'swagger-ui-express': 'commonjs swagger-ui-express'
-    }
+      'swagger-ui-express': 'commonjs swagger-ui-express',
+    },
   ],
   module: {
     rules: [
@@ -51,7 +51,7 @@ module.exports = {
         use: [
           {
             loader: 'babel-loader',
-          }
+          },
         ],
         exclude: [
           [
@@ -68,9 +68,7 @@ module.exports = {
   plugins: [
     new ForkTsCheckerWebpackPlugin(),
     new CopyWebpackPlugin({
-      patterns: [
-        { from: 'src/*/**.json' }
-      ]
-    })
+      patterns: [{ from: 'src/*/**.json' }],
+    }),
   ],
 };
