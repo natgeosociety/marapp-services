@@ -17,6 +17,8 @@
   specific language governing permissions and limitations under the License.
 */
 
+require('mongoose-geojson-schema'); // required by mongoose;
+
 import { isEmpty } from 'lodash';
 import { Document, model, Model, Schema } from 'mongoose';
 import mongooseIdValidator from 'mongoose-id-validator';

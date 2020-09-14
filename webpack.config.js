@@ -19,7 +19,6 @@
 
 const path = require('path');
 const serverlessWebpack = require('serverless-webpack');
-const nodeExternals = require('webpack-node-externals');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
@@ -38,13 +37,22 @@ module.exports = {
     filename: '[name].js',
   },
   target: 'node',
-  externals: [nodeExternals()],
+  externals: [
+    {
+      formidable: 'commonjs formidable',
+      'swagger-ui-express': 'commonjs swagger-ui-express',
+    },
+  ],
   module: {
     rules: [
       {
         // Include ts, tsx, js, and jsx files.
         test: /\.(ts|js)x?$/,
-        loader: 'ts-loader',
+        use: [
+          {
+            loader: 'babel-loader',
+          },
+        ],
         exclude: [
           [
             path.resolve(__dirname, 'node_modules'),
@@ -52,19 +60,15 @@ module.exports = {
             path.resolve(__dirname, '.webpack'),
           ],
         ],
-        options: {
-          transpileOnly: true,
-          experimentalWatchApi: true,
-        },
       },
     ],
+    // suppress "Critical dependency: the request of a dependency is an expression"
+    exprContextCritical: false,
   },
   plugins: [
-    // new ForkTsCheckerWebpackPlugin(),
+    new ForkTsCheckerWebpackPlugin(),
     new CopyWebpackPlugin({
-      patterns: [
-        { from: 'src/*/**.json' }
-      ]
-    })
+      patterns: [{ from: 'src/*/**.json' }],
+    }),
   ],
 };
