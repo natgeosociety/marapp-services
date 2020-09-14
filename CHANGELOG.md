@@ -1,3 +1,11 @@
+# [1.3.0](https://github.com/natgeosociety/marapp-services/compare/v1.2.0...v1.3.0) (2020-09-14)
+
+
+### Features
+
+* include membership groups on user-profile ([56e1460](https://github.com/natgeosociety/marapp-services/commit/56e14601abc0fd5e2bf6fbd1008064bd68831152))
+* reduce lambda bundle by using babel-loader ([5a9d745](https://github.com/natgeosociety/marapp-services/commit/5a9d745b0c888d87fc6f6b1155bf50a108bcef5b))
+
 # [1.2.0](https://github.com/natgeosociety/marapp-services/compare/v1.1.1...v1.2.0) (2020-09-10)
 
 
