@@ -3595,17 +3595,17 @@
         "operationId": "getUserByEmail",
         "parameters": [
           {
-            "in": "query",
-            "name": "include",
-            "description": "Comma separated relationship paths.",
-            "required": false,
-            "type": "string"
-          },
-          {
             "name": "email",
             "in": "path",
             "description": "User email.",
             "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
             "type": "string"
           },
           {

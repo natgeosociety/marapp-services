@@ -45,6 +45,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
   router.get(
     path,
+    guard.includeGroups(),
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
@@ -64,8 +65,8 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
       };
 
       if (include.includes('groups')) {
-        const groupMembership = await authzService.calculateGroupMemberships(userId);
-        set(data, 'groups', []);
+        const groups = await authzService.getMemberGroups(userId, req.groups);
+        set(data, 'groups', groups);
       }
 
       const code = 200;
@@ -78,6 +79,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
   router.put(
     path,
+    guard.includeGroups(),
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
@@ -104,8 +106,8 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
       };
 
       if (include.includes('groups')) {
-        const groupMembership = await authzService.calculateGroupMemberships(userId);
-        set(data, 'groups', []);
+        const groups = await authzService.getMemberGroups(userId, req.groups);
+        set(data, 'groups', groups);
       }
 
       const code = 200;
@@ -321,16 +323,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const user = await authMgmtService.getUserByEmail(email);
       const userId = get(user, 'user_id');
 
-      const groupMembership = await authzService.calculateGroupMemberships(req.identity.sub);
-      const groupId = authzService.findPrimaryGroupId(groupMembership, req.groups[0]); // enforce a single primary group;
-
-      const nestedGroups = await authzService.getNestedGroups(groupId);
-      const nestedGroupRoles = await forEachAsync(nestedGroups, async (group: any) => {
-        return authzService.getNestedGroupRoles(group._id);
-      });
-
-      const groupRoles = authzService.mapNestedGroupRoles(nestedGroupRoles);
-      const groups = groupRoles.filter((groupRole: any) => get(groupRole, 'members', []).includes(userId));
+      const groups = await authzService.getMemberGroups(userId, [req.groups[0]]); // enforce a single primary group;
 
       const data = {
         id: get(user, 'email'),

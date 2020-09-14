@@ -67,7 +67,8 @@ custom:
   # Plugins configuration
   webpack:
     webpackConfig: 'webpack.config.js'
-    includeModules: true # enable auto-packing of external modules
+    includeModules: true               # enable auto-packing of external modules
+    serializedCompile: true            # enable serial build
   serverless-offline:
     httpPort: 4000
     useChildProcesses: true
