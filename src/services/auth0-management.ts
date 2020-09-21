@@ -38,6 +38,7 @@ export interface AuthManagementService {
   emailChangeCancelRequest(userId: string): Promise<User>;
   emailChangeConfirmationHook(userId: string, tempUserId: string): Promise<boolean>;
   passwordChange(userId: string, currentPassword: string, newPassword: string): Promise<boolean>;
+  passwordChangeRequest(userId: string): Promise<boolean>;
 }
 
 export class Auth0ManagementService implements AuthManagementService {
@@ -258,6 +259,19 @@ export class Auth0ManagementService implements AuthManagementService {
         resolve();
       });
     });
+    return success;
+  }
+
+  async passwordChangeRequest(userId: string): Promise<boolean> {
+    const user = await this.getUser(userId);
+
+    let success = true;
+    try {
+      await this.authClient.requestChangePasswordEmail({ email: user.email, connection: AUTH0_REALM });
+    } catch (err) {
+      logger.error(err);
+      success = false;
+    }
     return success;
   }
 }

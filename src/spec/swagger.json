@@ -3452,17 +3452,7 @@
         "tags": ["profile"],
         "summary": "Change current user's password",
         "operationId": "changeUserPassword",
-        "parameters": [
-          {
-            "in": "body",
-            "name": "body",
-            "description": "",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UserPassword"
-            }
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "OK"
@@ -4384,20 +4374,6 @@
       "type": "object",
       "properties": {
         "email": {
-          "type": "string"
-        }
-      },
-      "xml": {
-        "name": "UserEmail"
-      }
-    },
-    "UserPassword": {
-      "type": "object",
-      "properties": {
-        "currentPassword": {
-          "type": "string"
-        },
-        "newPassword": {
           "type": "string"
         }
       },

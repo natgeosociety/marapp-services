@@ -197,10 +197,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
-      requireReqBodyKeys(req, ['currentPassword', 'newPassword']);
-      const { currentPassword, newPassword } = req.body;
-
-      const success = await authMgmtService.passwordChange(req.identity.sub, currentPassword, newPassword);
+      const success = await authMgmtService.passwordChangeRequest(req.identity.sub);
 
       const code = 200;
       const response = createStatusSerializer().serialize({ success });
