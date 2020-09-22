@@ -1,3 +1,12 @@
+# [1.4.0](https://github.com/natgeosociety/marapp-services/compare/v1.3.0...v1.4.0) (2020-09-22)
+
+
+### Features
+
+* **invite:** handle user invitation ([9794e12](https://github.com/natgeosociety/marapp-services/commit/9794e121ee6a96eefd0bbc50de703961a34469d9))
+* add admin filter options to API response [EP-2889] ([24dc95f](https://github.com/natgeosociety/marapp-services/commit/24dc95f9e78c8d4606d989b2f71f34b93e38a10a))
+* replace password change with password change request via email ([48d52d4](https://github.com/natgeosociety/marapp-services/commit/48d52d4db8b3bd304c3befa069a3f8e46c0e2d74))
+
 # [1.3.0](https://github.com/natgeosociety/marapp-services/compare/v1.2.0...v1.3.0) (2020-09-14)
 
 
