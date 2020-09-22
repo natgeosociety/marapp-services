@@ -61,9 +61,9 @@ const getRouter = (basePath: string = '/', routePath: string = '/widgets') => {
       const queryOptions = parser.parse(req.query, { predefined }, ['search']);
 
       const searchResult = await WidgetModel.esSearchOnlyIds(search, { organization: req.groups, published: true });
-      const searchIds = Object.keys(searchResult);
+      const searchIds = search ? Object.keys(searchResult) : null;
 
-      const { docs, total, cursor, aggs } = await getAll(WidgetModel, queryOptions, search ? searchIds : null);
+      const { docs, total, cursor, aggs } = await getAll(WidgetModel, queryOptions, searchIds);
 
       const paginator = new PaginationHelper({
         sizeTotal: total,
@@ -148,9 +148,9 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const queryOptions = parser.parse(req.query, { predefined }, ['search']);
 
       const searchResult = await WidgetModel.esSearchOnlyIds(search, { organization: req.groups });
-      const searchIds = Object.keys(searchResult);
+      const searchIds = search ? Object.keys(searchResult) : null;
 
-      const { docs, total, cursor, aggs } = await getAll(WidgetModel, queryOptions, search ? searchIds : null);
+      const { docs, total, cursor, aggs } = await getAll(WidgetModel, queryOptions, searchIds, ['metrics']);
 
       const paginator = new PaginationHelper({
         sizeTotal: total,

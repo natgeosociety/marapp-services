@@ -23,7 +23,7 @@ import { get, set } from 'lodash';
 import urljoin from 'url-join';
 
 import { DEFAULT_CONTENT_TYPE } from '../config';
-import { NotImplementedError, RecordNotFound, UnauthorizedError } from '../errors';
+import { AlreadyExistsError, RecordNotFound, UnauthorizedError } from '../errors';
 import { PaginationHelper } from '../helpers/paginator';
 import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
@@ -197,10 +197,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
-      requireReqBodyKeys(req, ['currentPassword', 'newPassword']);
-      const { currentPassword, newPassword } = req.body;
-
-      const success = await authMgmtService.passwordChange(req.identity.sub, currentPassword, newPassword);
+      const success = await authMgmtService.passwordChangeRequest(req.identity.sub);
 
       const code = 200;
       const response = createStatusSerializer().serialize({ success });
@@ -348,14 +345,57 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
-      requireReqBodyKeys(req, ['email']);
-      const { email } = req.body;
+      const include = queryParamGroup(<string>req.query.include);
+
+      requireReqBodyKeys(req, ['email', 'groups']);
+      const { email, groups } = req.body;
 
       validateEmail(email);
-      throw new NotImplementedError('Not Implemented.', 501);
+      const user = await authMgmtService.getUserByEmail(email, false);
+      if (user) {
+        throw new AlreadyExistsError('Email address is already registered.', 400);
+      }
+
+      const groupMembership = await authzService.calculateGroupMemberships(req.identity.sub);
+      const groupId = authzService.findPrimaryGroupId(groupMembership, req.groups[0]); // enforce a single primary group;
+
+      const isOwner = await authzService.isGroupOwner(req.identity.sub, groupId);
+
+      const nestedGroups = await authzService.getNestedGroups(groupId, [], isOwner ? ['OWNER'] : ['OWNER', 'ADMIN']);
+      const available = nestedGroups.map((group: any) => get(group, '_id'));
+
+      if (Array.isArray(groups) && !groups.every((r) => available.includes(r))) {
+        throw new RecordNotFound('Invalid group specified.', 404);
+      }
+
+      const newUser = await authMgmtService.createUserInvite(email);
+      const newUserId = get(newUser, 'user_id');
+
+      await forEachAsync(nestedGroups, async (group: any) => {
+        const groupId = get(group, '_id');
+        const members = get(group, 'members', []);
+
+        if (!members.includes(newUserId) && groups.includes(groupId)) {
+          return authzService.addGroupMembers(groupId, [newUserId]); // add to group;
+        }
+      });
+
+      const data = {
+        id: newUser?.email,
+        email: newUser?.email,
+        name: newUser?.name, // deprecated;
+        firstName: newUser?.given_name,
+        lastName: newUser?.family_name,
+        pendingEmail: newUser?.user_metadata?.pendingUserEmail,
+      };
+
+      if (include.includes('groups')) {
+        const groups = await authzService.getMemberGroups(newUserId, req.groups);
+        set(data, 'groups', groups);
+      }
 
       const code = 200;
-      const response = {};
+      const response = createUserSerializer(include).serialize(data);
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);

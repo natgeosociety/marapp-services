@@ -17,7 +17,16 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { AuthenticationClient, CreateUserData, ManagementClient, UpdateUserData, User, UserMetadata } from 'auth0';
+import {
+  AuthenticationClient,
+  CreateUserData,
+  ManagementClient,
+  UpdateUserData,
+  User,
+  UserData,
+  UserMetadata,
+} from 'auth0';
+import generatePassword from 'generate-password';
 import { get } from 'lodash';
 
 import { AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET, AUTH0_DOMAIN, AUTH0_REALM } from '../config/auth0';
@@ -29,6 +38,7 @@ const logger = getLogger();
 export interface AuthManagementService {
   getUser(userId: string): Promise<User>;
   getUserByEmail(email: string, raiseError?: boolean): Promise<User>;
+  createUser(userData: Partial<UserData>): Promise<User>;
   createPasswordlessUser(userData: Partial<CreateUserData>): Promise<User>;
   getUserInfo(accessToken: string): Promise<any>;
   updateUser(userId: string, userData: UpdateUserData): Promise<User>;
@@ -38,6 +48,9 @@ export interface AuthManagementService {
   emailChangeCancelRequest(userId: string): Promise<User>;
   emailChangeConfirmationHook(userId: string, tempUserId: string): Promise<boolean>;
   passwordChange(userId: string, currentPassword: string, newPassword: string): Promise<boolean>;
+  passwordChangeRequest(userId: string): Promise<boolean>;
+  passwordChangeTicket(userId: string, redirectURL: string, TTL?: number): Promise<string>;
+  createUserInvite(email: string): Promise<User>;
 }
 
 export class Auth0ManagementService implements AuthManagementService {
@@ -73,8 +86,29 @@ export class Auth0ManagementService implements AuthManagementService {
     }
   }
 
+  async createUser(userData: Partial<CreateUserData>): Promise<User> {
+    return this.mgmtClient.createUser({ ...userData, connection: AUTH0_REALM });
+  }
+
   async createPasswordlessUser(userData: Partial<CreateUserData>): Promise<User> {
     return this.mgmtClient.createUser({ ...userData, connection: 'email' });
+  }
+
+  /**
+   * Creates the user accounts then invites users to complete the signup process
+   * by creating passwords for those accounts.
+   * A user invitation is basically a change password link repurposed as an invitation.
+   * @param email
+   */
+  async createUserInvite(email: string): Promise<User> {
+    const password = generatePassword.generate({ length: 15, numbers: true, symbols: true });
+
+    const newUser = await this.createUser({ email, password, email_verified: true });
+    const newUserId = get(newUser, 'user_id');
+
+    await this.passwordChangeRequest(newUserId);
+
+    return newUser;
   }
 
   async getUserInfo(accessToken: string): Promise<any> {
@@ -259,5 +293,39 @@ export class Auth0ManagementService implements AuthManagementService {
       });
     });
     return success;
+  }
+
+  /**
+   * Request a change password email using a database or active directory service.
+   * @param userId
+   */
+  async passwordChangeRequest(userId: string): Promise<boolean> {
+    const user = await this.getUser(userId);
+
+    let success = true;
+    try {
+      await this.authClient.requestChangePasswordEmail({ email: user.email, connection: AUTH0_REALM });
+    } catch (err) {
+      logger.error(err);
+      success = false;
+    }
+    return success;
+  }
+
+  /**
+   * Create a new password change ticket.
+   * Does not send an email to the user.
+   * @param userId
+   * @param redirectURL
+   * @param TTL
+   */
+  async passwordChangeTicket(userId: string, redirectURL: string, TTL: number = 3600): Promise<string> {
+    const { ticket } = await this.mgmtClient.createPasswordChangeTicket({
+      user_id: userId,
+      result_url: redirectURL,
+      ttl_sec: TTL,
+      mark_email_as_verified: true,
+    });
+    return ticket;
   }
 }
