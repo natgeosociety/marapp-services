@@ -93,6 +93,12 @@ export class Auth0ManagementService implements AuthManagementService {
     return this.mgmtClient.createUser({ ...userData, connection: 'email' });
   }
 
+  /**
+   * Creates the user accounts then invites users to complete the signup process
+   * by creating passwords for those accounts.
+   * A user invitation is basically a change password link repurposed as an invitation.
+   * @param email
+   */
   async createUserInvite(email: string): Promise<User> {
     const password = generatePassword.generate({ length: 15, numbers: true, symbols: true });
 
