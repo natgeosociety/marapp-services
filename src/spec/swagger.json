@@ -3544,9 +3544,53 @@
       },
       "post": {
         "tags": ["users-management"],
-        "summary": "Add users",
+        "summary": "Add a new user",
         "description": "",
-        "operationId": "addUsers",
+        "operationId": "addUser",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          {
+            "in": "query",
+            "name": "group",
+            "description": "Primary group name. Required when multiple primary groups included in the token.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [],
+            "Bearer": []
+          }
+        ]
+      },
+      "put": {
+        "tags": ["users-management"],
+        "summary": "Update users by email",
+        "description": "",
+        "operationId": "updateUsers",
         "parameters": [
           {
             "in": "body",

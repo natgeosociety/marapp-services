@@ -348,6 +348,28 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
+      requireReqBodyKeys(req, ['email']);
+      const { email } = req.body;
+
+      validateEmail(email);
+      throw new NotImplementedError('Not Implemented.', 501);
+
+      const code = 200;
+      const response = {};
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
+
+  router.put(
+    path,
+    guard.enforcePrimaryGroup(true),
+    AuthzGuards.writeUsersGuard,
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const authzService: AuthzServiceSpec = req.app.locals.authzService;
+      const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
+
       const emails = get(req.body, 'emails', []);
       const groups = get(req.body, 'groups', []);
 
