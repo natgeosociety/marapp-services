@@ -348,14 +348,78 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
-      requireReqBodyKeys(req, ['email']);
-      const { email } = req.body;
+      const emails = get(req.body, 'emails', []);
+      const groups = get(req.body, 'groups', []);
 
-      validateEmail(email);
-      throw new NotImplementedError('Not Implemented.', 501);
+      const result: {
+        [email: string]: {
+          success: boolean;
+          error?: string;
+        };
+      } = {};
+
+      await forEachAsync(emails, async (email: string) => {
+        try {
+          validateEmail(email);
+
+          const user = await authMgmtService.getUserByEmail(email);
+          const userId = get(user, 'user_id');
+
+          if (req.identity.sub === userId) {
+            throw new UnauthorizedError('You cannot update your own user.', 403);
+          }
+
+          const groupMembership = await authzService.calculateGroupMemberships(req.identity.sub);
+          const groupId = authzService.findPrimaryGroupId(groupMembership, req.groups[0]); // enforce a single primary group;
+
+          const triesToUpdateAnOwner = await authzService.isGroupOwner(userId, groupId);
+          if (triesToUpdateAnOwner) {
+            throw new UnauthorizedError('You cannot update an owner.', 403);
+          }
+
+          const triesToUpdateAnAdmin = await authzService.isGroupAdmin(userId, groupId);
+          const isOwner = await authzService.isGroupOwner(req.identity.sub, groupId);
+
+          if (triesToUpdateAnAdmin && !isOwner) {
+            throw new UnauthorizedError('You cannot update an admin.', 403);
+          }
+
+          const nestedGroups = await authzService.getNestedGroups(
+            groupId,
+            [],
+            isOwner ? ['OWNER'] : ['OWNER', 'ADMIN']
+          );
+          const available = nestedGroups.map((group: any) => get(group, '_id'));
+
+          if (!groups.every((r) => available.includes(r))) {
+            throw new RecordNotFound('Invalid group specified.', 404);
+          }
+
+          await forEachAsync(nestedGroups, async (group: any) => {
+            const groupId = get(group, '_id');
+            const members = get(group, 'members', []);
+
+            if (!members.includes(userId) && groups.includes(groupId)) {
+              return authzService.addGroupMembers(groupId, [userId]); // add to group;
+            }
+            if (members.includes(userId) && !groups.includes(groupId)) {
+              return authzService.deleteGroupMembers(groupId, [userId]); // remove from group;
+            }
+          });
+
+          result[email] = {
+            success: true,
+          };
+        } catch (err) {
+          result[email] = {
+            success: false,
+            error: err.message,
+          };
+        }
+      });
 
       const code = 200;
-      const response = {};
+      const response = result;
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);

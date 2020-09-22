@@ -3544,9 +3544,9 @@
       },
       "post": {
         "tags": ["users-management"],
-        "summary": "Add a new user",
+        "summary": "Add users",
         "description": "",
-        "operationId": "addUser",
+        "operationId": "addUsers",
         "parameters": [
           {
             "in": "body",
@@ -3554,7 +3554,21 @@
             "description": "",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/User"
+              "type": "object",
+              "properties": {
+                "emails": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "groups": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
             }
           },
           {
