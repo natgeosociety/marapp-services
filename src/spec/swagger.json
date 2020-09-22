@@ -4345,6 +4345,9 @@
     "User": {
       "type": "object",
       "properties": {
+        "email": {
+          "type": "string"
+        },
         "groups": {
           "type": "array",
           "items": {

@@ -17,7 +17,16 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { AuthenticationClient, CreateUserData, ManagementClient, UpdateUserData, User, UserMetadata } from 'auth0';
+import {
+  AuthenticationClient,
+  CreateUserData,
+  ManagementClient,
+  UpdateUserData,
+  User,
+  UserData,
+  UserMetadata,
+} from 'auth0';
+import generatePassword from 'generate-password';
 import { get } from 'lodash';
 
 import { AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET, AUTH0_DOMAIN, AUTH0_REALM } from '../config/auth0';
@@ -29,6 +38,7 @@ const logger = getLogger();
 export interface AuthManagementService {
   getUser(userId: string): Promise<User>;
   getUserByEmail(email: string, raiseError?: boolean): Promise<User>;
+  createUser(userData: Partial<UserData>): Promise<User>;
   createPasswordlessUser(userData: Partial<CreateUserData>): Promise<User>;
   getUserInfo(accessToken: string): Promise<any>;
   updateUser(userId: string, userData: UpdateUserData): Promise<User>;
@@ -39,6 +49,7 @@ export interface AuthManagementService {
   emailChangeConfirmationHook(userId: string, tempUserId: string): Promise<boolean>;
   passwordChange(userId: string, currentPassword: string, newPassword: string): Promise<boolean>;
   passwordChangeRequest(userId: string): Promise<boolean>;
+  createUserInvite(email: string): Promise<User>;
 }
 
 export class Auth0ManagementService implements AuthManagementService {
@@ -74,8 +85,23 @@ export class Auth0ManagementService implements AuthManagementService {
     }
   }
 
+  async createUser(userData: Partial<CreateUserData>): Promise<User> {
+    return this.mgmtClient.createUser({ ...userData, connection: AUTH0_REALM });
+  }
+
   async createPasswordlessUser(userData: Partial<CreateUserData>): Promise<User> {
     return this.mgmtClient.createUser({ ...userData, connection: 'email' });
+  }
+
+  async createUserInvite(email: string): Promise<User> {
+    const password = generatePassword.generate({ length: 15, numbers: true, symbols: true });
+
+    const newUser = await this.createUser({ email, password, email_verified: true });
+    const newUserId = get(newUser, 'user_id');
+
+    await this.passwordChangeRequest(newUserId);
+
+    return newUser;
   }
 
   async getUserInfo(accessToken: string): Promise<any> {
