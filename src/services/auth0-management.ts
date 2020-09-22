@@ -49,6 +49,7 @@ export interface AuthManagementService {
   emailChangeConfirmationHook(userId: string, tempUserId: string): Promise<boolean>;
   passwordChange(userId: string, currentPassword: string, newPassword: string): Promise<boolean>;
   passwordChangeRequest(userId: string): Promise<boolean>;
+  passwordChangeTicket(userId: string, redirectURL: string, TTL?: number): Promise<string>;
   createUserInvite(email: string): Promise<User>;
 }
 
@@ -294,6 +295,10 @@ export class Auth0ManagementService implements AuthManagementService {
     return success;
   }
 
+  /**
+   * Request a change password email using a database or active directory service.
+   * @param userId
+   */
   async passwordChangeRequest(userId: string): Promise<boolean> {
     const user = await this.getUser(userId);
 
@@ -305,5 +310,22 @@ export class Auth0ManagementService implements AuthManagementService {
       success = false;
     }
     return success;
+  }
+
+  /**
+   * Create a new password change ticket.
+   * Does not send an email to the user.
+   * @param userId
+   * @param redirectURL
+   * @param TTL
+   */
+  async passwordChangeTicket(userId: string, redirectURL: string, TTL: number = 3600): Promise<string> {
+    const { ticket } = await this.mgmtClient.createPasswordChangeTicket({
+      user_id: userId,
+      result_url: redirectURL,
+      ttl_sec: TTL,
+      mark_email_as_verified: true,
+    });
+    return ticket;
   }
 }
