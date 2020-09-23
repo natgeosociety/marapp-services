@@ -31,7 +31,7 @@ const logger = getLogger();
  * Initialize the EE library.
  * Authenticate using a service account.
  */
-export const initEarthEngine = async (): Promise<void> => {
+export const initEarthEngine = async (): Promise<boolean> => {
   const credentials = JSON.parse(GOOGLE_SERVICE_ACCOUNT);
 
   return new Promise(async (resolve, reject) => {
@@ -39,7 +39,7 @@ export const initEarthEngine = async (): Promise<void> => {
 
     const onInitSuccess = () => {
       logger.warn('Successfully initialized the EE client library.');
-      resolve();
+      resolve(true);
     };
     const onInitError = (err) => {
       logger.error(err);
