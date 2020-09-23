@@ -27,6 +27,7 @@ import { Layer, MetricModel } from '.';
 import { schemaOptions } from './middlewares';
 import esPlugin, { IESPlugin } from './plugins/elasticsearch';
 import slugifyPlugin, { ISlugifyPlugin } from './plugins/slugify';
+import { getDistinctValues } from './utils';
 import {
   hasUniqueValuesValidator,
   isArrayEmptyValidator,
@@ -129,6 +130,13 @@ WidgetSchema.index({ name: 1 });
 
 // Slugify plugin;
 WidgetSchema.plugin(slugifyPlugin, { uniqueField: 'slug', separator: '-' });
+
+// Dynamic enum options resolver;
+WidgetSchema.statics.enumOptionsResolver = function () {
+  return {
+    metrics: () => getDistinctValues(MetricModel, 'slug'),
+  };
+};
 
 /**
  * Pre-save middleware, handles versioning.

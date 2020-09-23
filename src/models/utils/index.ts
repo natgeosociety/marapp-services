@@ -18,7 +18,7 @@
 */
 
 import { eachDeep } from 'deepdash/standalone';
-import { get, isEmpty, isNil, omit, set } from 'lodash';
+import { get, isEmpty, isFunction, isNil, omit, set } from 'lodash';
 import { Document, Model, Query } from 'mongoose';
 
 import { DocumentError, ExposedError, RecordNotFound, ValidationError } from '../../errors';
@@ -295,6 +295,16 @@ export const aggregateCount = async <T extends Document, L extends keyof T>(
     .exec();
 
   const options = get(model.schema.path(field), 'options.enum', []);
+  const optionsResolver = get(model, 'enumOptionsResolver');
+
+  // dynamic enum options resolver;
+  if (optionsResolver && isFunction(optionsResolver)) {
+    const fieldResolverFn = get(optionsResolver(), field);
+    if (fieldResolverFn && isFunction(fieldResolverFn)) {
+      const distinct = await fieldResolverFn();
+      options.push(...distinct);
+    }
+  }
 
   if (options && options.length) {
     // add the missing values with count 0;
