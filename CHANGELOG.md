@@ -1,3 +1,15 @@
+# [1.5.0](https://github.com/natgeosociety/marapp-services/compare/v1.4.0...v1.5.0) (2020-09-24)
+
+
+### Bug Fixes
+
+* Handle dynamic enum options on widgets [EP-2916] ([0a2f49d](https://github.com/natgeosociety/marapp-services/commit/0a2f49d07d82c655bf61605a8f0faf36406b4445))
+
+
+### Features
+
+* add multiple users to an org [EP-2216] ([6e61023](https://github.com/natgeosociety/marapp-services/commit/6e610239e7e1619784bafbccc4b618f1ca6a1e98))
+
 # [1.4.0](https://github.com/natgeosociety/marapp-services/compare/v1.3.0...v1.4.0) (2020-09-22)
 
 
