@@ -403,6 +403,105 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
   );
 
   router.put(
+    path,
+    guard.enforcePrimaryGroup(true),
+    AuthzGuards.writeUsersGuard,
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const authzService: AuthzServiceSpec = req.app.locals.authzService;
+      const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
+
+      const emails = get(req.body, 'emails', []);
+      const groups = get(req.body, 'groups', []);
+
+      const groupMembership = await authzService.calculateGroupMemberships(req.identity.sub);
+      const groupId = authzService.findPrimaryGroupId(groupMembership, req.groups[0]); // enforce a single primary group;
+
+      const isOwner = await authzService.isGroupOwner(req.identity.sub, groupId);
+
+      const nestedGroups = await authzService.getNestedGroups(groupId, [], isOwner ? ['OWNER'] : ['OWNER', 'ADMIN']);
+      const available = nestedGroups.map((group: any) => get(group, '_id'));
+
+      if (!groups.every((r) => available.includes(r))) {
+        throw new RecordNotFound('Invalid group specified.', 404);
+      }
+
+      const tempResult: {
+        email: string;
+        success?: boolean;
+        error?: string;
+      }[] = [];
+
+      const users = await forEachAsync(emails, async (email: string) => {
+        try {
+          validateEmail(email);
+          const user = await authMgmtService.getUserByEmail(email);
+          const userId = get(user, 'user_id');
+
+          if (req.identity.sub === userId) {
+            throw new UnauthorizedError('You cannot update your own user.', 403);
+          }
+
+          const triesToUpdateAnOwner = await authzService.isGroupOwner(userId, groupId);
+          if (triesToUpdateAnOwner) {
+            throw new UnauthorizedError('You cannot update an owner.', 403);
+          }
+
+          const triesToUpdateAnAdmin = await authzService.isGroupAdmin(userId, groupId);
+          if (triesToUpdateAnAdmin && !isOwner) {
+            throw new UnauthorizedError('You cannot update an admin.', 403);
+          }
+
+          tempResult.push({
+            email: user.email,
+          });
+
+          return { email, userId };
+        } catch (err) {
+          tempResult.push({
+            email: email,
+            error: err.message,
+          });
+        }
+      });
+
+      if (tempResult.some((item) => !!item.error)) {
+        return res.header('Content-Type', DEFAULT_CONTENT_TYPE).status(200).send(tempResult);
+      }
+
+      const result = [];
+
+      await forEachAsync(users, async (user) => {
+        try {
+          await forEachAsync(nestedGroups, async (group: any) => {
+            const groupId = get(group, '_id');
+            const members = get(group, 'members', []);
+
+            if (!members.includes(user.userId) && groups.includes(groupId)) {
+              return authzService.addGroupMembers(groupId, [user.userId]); // add to group;
+            }
+            if (members.includes(user.userId) && !groups.includes(groupId)) {
+              return authzService.deleteGroupMembers(groupId, [user.userId]); // remove from group;
+            }
+          });
+
+          result.push({
+            email: user.email,
+            success: true,
+          });
+        } catch (err) {
+          result.push({
+            email: user.email,
+            success: false,
+            error: err.message,
+          });
+        }
+      });
+
+      res.header('Content-Type', DEFAULT_CONTENT_TYPE).status(200).send(result);
+    })
+  );
+
+  router.put(
     `${path}/:email`,
     guard.enforcePrimaryGroup(true),
     AuthzGuards.writeUsersGuard,
