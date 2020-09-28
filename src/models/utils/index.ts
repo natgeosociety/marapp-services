@@ -371,7 +371,7 @@ export const getAll = async <T extends Document, L extends keyof T>(
     total = await countQuery.countDocuments();
 
     // create a cursor based on the last record;
-    if (paginationCursor !== null && docs.length) {
+    if (paginationCursor !== null && total > 0 && docs.length) {
       const [first, last] = [docs[0], docs[docs.length - 1]];
       nextCursor = encodePaginationCursor<T>(last._id, mongooseOptions.sort, last);
 
