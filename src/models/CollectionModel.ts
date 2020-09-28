@@ -107,7 +107,7 @@ CollectionSchema.plugin(esPlugin, {
         },
         autocomplete_search_analyzer: {
           type: 'custom',
-          tokenizer: 'lowercase',
+          tokenizer: 'standard',
           filter: ['asciifolding'],
         },
       },
