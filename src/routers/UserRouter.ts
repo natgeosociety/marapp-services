@@ -441,9 +441,9 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
             throw new UnauthorizedError('You cannot update your own user.', 403);
           }
 
-          const [triesToUpdateAnOwner, triesToUpdateAnAdmin] = await forEachAsync(
-            [() => authzService.isGroupAdmin(userId, groupId), () => authzService.isGroupOwner(userId, groupId)],
-            async (f) => f()
+          const [triesToUpdateAnAdmin, triesToUpdateAnOwner] = await forEachAsync(
+            [authzService.isGroupAdmin(userId, groupId), authzService.isGroupOwner(userId, groupId)],
+            (fn) => fn
           );
 
           if (triesToUpdateAnOwner) {
@@ -482,10 +482,10 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
         return forEachAsync(
           [
-            toAdd.length > 0 ? () => authzService.addGroupMembers(groupId, toAdd) : null,
-            toRemove.length > 0 ? () => authzService.deleteGroupMembers(groupId, toRemove) : null,
+            toAdd.length > 0 ? authzService.addGroupMembers(groupId, toAdd) : null,
+            toRemove.length > 0 ? authzService.deleteGroupMembers(groupId, toRemove) : null,
           ].filter((f) => f !== null),
-          async (f) => f()
+          (fn) => fn
         );
       });
 
