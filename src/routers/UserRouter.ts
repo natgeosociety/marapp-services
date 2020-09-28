@@ -425,7 +425,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         throw new RecordNotFound('Invalid group specified.', 404);
       }
 
-      const tempResult: {
+      const result: {
         email: string;
         success?: boolean;
         error?: string;
@@ -441,61 +441,55 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
             throw new UnauthorizedError('You cannot update your own user.', 403);
           }
 
-          const triesToUpdateAnOwner = await authzService.isGroupOwner(userId, groupId);
+          const [triesToUpdateAnAdmin, triesToUpdateAnOwner] = await forEachAsync(
+            [authzService.isGroupAdmin(userId, groupId), authzService.isGroupOwner(userId, groupId)],
+            (fn) => fn
+          );
+
           if (triesToUpdateAnOwner) {
             throw new UnauthorizedError('You cannot update an owner.', 403);
           }
 
-          const triesToUpdateAnAdmin = await authzService.isGroupAdmin(userId, groupId);
           if (triesToUpdateAnAdmin && !isOwner) {
             throw new UnauthorizedError('You cannot update an admin.', 403);
           }
 
-          tempResult.push({
+          result.push({
             email: user.email,
           });
 
           return { email, userId };
         } catch (err) {
-          tempResult.push({
+          result.push({
             email: email,
             error: err.message,
           });
         }
       });
 
-      if (tempResult.some((item) => !!item.error)) {
-        return res.header('Content-Type', DEFAULT_CONTENT_TYPE).status(200).send(tempResult);
+      if (result.some((item) => !!item.error)) {
+        return res.header('Content-Type', DEFAULT_CONTENT_TYPE).status(200).send(result);
       }
 
-      const result = [];
+      const usersIds = users.map((user) => user.userId);
 
-      await forEachAsync(users, async (user) => {
-        try {
-          await forEachAsync(nestedGroups, async (group: any) => {
-            const groupId = get(group, '_id');
-            const members = get(group, 'members', []);
+      await forEachAsync(nestedGroups, async (group: any) => {
+        const groupId = get(group, '_id');
+        const members = get(group, 'members', []);
 
-            if (!members.includes(user.userId) && groups.includes(groupId)) {
-              return authzService.addGroupMembers(groupId, [user.userId]); // add to group;
-            }
-            if (members.includes(user.userId) && !groups.includes(groupId)) {
-              return authzService.deleteGroupMembers(groupId, [user.userId]); // remove from group;
-            }
-          });
+        const toAdd = usersIds.filter((userId) => !members.includes(userId) && groups.includes(groupId));
+        const toRemove = usersIds.filter((userId) => members.includes(userId) && !groups.includes(groupId));
 
-          result.push({
-            email: user.email,
-            success: true,
-          });
-        } catch (err) {
-          result.push({
-            email: user.email,
-            success: false,
-            error: err.message,
-          });
-        }
+        return forEachAsync(
+          [
+            toAdd.length > 0 ? authzService.addGroupMembers(groupId, toAdd) : null,
+            toRemove.length > 0 ? authzService.deleteGroupMembers(groupId, toRemove) : null,
+          ].filter((f) => f !== null),
+          (fn) => fn
+        );
       });
+
+      result.forEach((item) => (item.success = true));
 
       res.header('Content-Type', DEFAULT_CONTENT_TYPE).status(200).send(result);
     })
