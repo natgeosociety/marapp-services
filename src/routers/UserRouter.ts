@@ -365,7 +365,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const available = nestedGroups.map((group: any) => get(group, '_id'));
 
       if (Array.isArray(groups) && !groups.every((r) => available.includes(r))) {
-        throw new RecordNotFound('Invalid group specified.', 404);
+        throw new RecordNotFound('Invalid groups specified.', 404);
       }
 
       const newUser = await authMgmtService.createUserInvite(email);
@@ -410,28 +410,24 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
-      const emails = get(req.body, 'emails', []);
-      const groups = get(req.body, 'groups', []);
+      const emails: string[] = get(req.body, 'emails', []);
+      const groups: string[] = get(req.body, 'groups', []);
 
       const groupMembership = await authzService.calculateGroupMemberships(req.identity.sub);
       const groupId = authzService.findPrimaryGroupId(groupMembership, req.groups[0]); // enforce a single primary group;
 
       const isOwner = await authzService.isGroupOwner(req.identity.sub, groupId);
-
       const nestedGroups = await authzService.getNestedGroups(groupId, [], isOwner ? ['OWNER'] : ['OWNER', 'ADMIN']);
       const available = nestedGroups.map((group: any) => get(group, '_id'));
 
       if (!groups.every((r) => available.includes(r))) {
-        throw new RecordNotFound('Invalid group specified.', 404);
+        throw new RecordNotFound('Invalid groups specified.', 404);
       }
 
-      const result: {
-        email: string;
-        success?: boolean;
-        error?: string;
-      }[] = [];
+      const response: { email: string; success?: boolean; error?: string }[] = [];
+      const uniqueEmails = new Set(emails);
 
-      const users = await forEachAsync(emails, async (email: string) => {
+      const userIds = await forEachAsync([...uniqueEmails], async (email: string) => {
         try {
           validateEmail(email);
           const user = await authMgmtService.getUserByEmail(email);
@@ -441,57 +437,53 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
             throw new UnauthorizedError('You cannot update your own user.', 403);
           }
 
-          const [triesToUpdateAnAdmin, triesToUpdateAnOwner] = await forEachAsync(
-            [authzService.isGroupAdmin(userId, groupId), authzService.isGroupOwner(userId, groupId)],
-            (fn) => fn
-          );
-
+          const [triesToUpdateAnAdmin, triesToUpdateAnOwner] = await Promise.all([
+            authzService.isGroupAdmin(userId, groupId),
+            authzService.isGroupOwner(userId, groupId),
+          ]);
           if (triesToUpdateAnOwner) {
             throw new UnauthorizedError('You cannot update an owner.', 403);
           }
-
           if (triesToUpdateAnAdmin && !isOwner) {
             throw new UnauthorizedError('You cannot update an admin.', 403);
           }
 
-          result.push({
-            email: user.email,
-          });
+          response.push({ email: user.email });
 
-          return { email, userId };
+          return userId;
         } catch (err) {
-          result.push({
-            email: email,
-            error: err.message,
-          });
+          response.push({ email: email, error: err.message });
         }
       });
 
-      if (result.some((item) => !!item.error)) {
-        return res.header('Content-Type', DEFAULT_CONTENT_TYPE).status(200).send(result);
+      if (response.some((item) => !!item.error)) {
+        const code = 200;
+        res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+        return res.status(code).send(response);
       }
-
-      const usersIds = users.map((user) => user.userId);
 
       await forEachAsync(nestedGroups, async (group: any) => {
         const groupId = get(group, '_id');
         const members = get(group, 'members', []);
 
-        const toAdd = usersIds.filter((userId) => !members.includes(userId) && groups.includes(groupId));
-        const toRemove = usersIds.filter((userId) => members.includes(userId) && !groups.includes(groupId));
+        const toAdd = userIds.filter((userId) => !members.includes(userId) && groups.includes(groupId));
+        const toRemove = userIds.filter((userId) => members.includes(userId) && !groups.includes(groupId));
 
-        return forEachAsync(
-          [
-            toAdd.length > 0 ? authzService.addGroupMembers(groupId, toAdd) : null,
-            toRemove.length > 0 ? authzService.deleteGroupMembers(groupId, toRemove) : null,
-          ].filter((f) => f !== null),
-          (fn) => fn
-        );
+        const tasks = [];
+        if (toAdd.length) {
+          tasks.push(authzService.addGroupMembers(groupId, toAdd)); // add to group;
+        }
+        if (toRemove.length) {
+          tasks.push(authzService.deleteGroupMembers(groupId, toRemove)); // remove from group;
+        }
+        return Promise.all(tasks);
       });
 
-      result.forEach((item) => (item.success = true));
+      const code = 200;
+      response.forEach((item) => (item.success = true));
 
-      res.header('Content-Type', DEFAULT_CONTENT_TYPE).status(200).send(result);
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
     })
   );
 
@@ -503,8 +495,8 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
-      const email = req.params.email;
-      const body = req.body;
+      const email: string = req.params.email;
+      const groups: string[] = get(req.body, 'groups', []);
 
       validateEmail(email);
       const user = await authMgmtService.getUserByEmail(email);
@@ -517,24 +509,23 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const groupMembership = await authzService.calculateGroupMemberships(req.identity.sub);
       const groupId = authzService.findPrimaryGroupId(groupMembership, req.groups[0]); // enforce a single primary group;
 
-      const triesToUpdateAnOwner = await authzService.isGroupOwner(userId, groupId);
+      const [triesToUpdateAnOwner, triesToUpdateAnAdmin, isOwner] = await Promise.all([
+        authzService.isGroupOwner(userId, groupId),
+        authzService.isGroupAdmin(userId, groupId),
+        authzService.isGroupOwner(req.identity.sub, groupId),
+      ]);
       if (triesToUpdateAnOwner) {
         throw new UnauthorizedError('You cannot update an owner.', 403);
       }
-
-      const triesToUpdateAnAdmin = await authzService.isGroupAdmin(userId, groupId);
-      const isOwner = await authzService.isGroupOwner(req.identity.sub, groupId);
-
       if (triesToUpdateAnAdmin && !isOwner) {
         throw new UnauthorizedError('You cannot update an admin.', 403);
       }
 
-      const groups = get(body, 'groups', []);
       const nestedGroups = await authzService.getNestedGroups(groupId, [], isOwner ? ['OWNER'] : ['OWNER', 'ADMIN']);
       const available = nestedGroups.map((group: any) => get(group, '_id'));
 
       if (Array.isArray(groups) && !groups.every((r) => available.includes(r))) {
-        throw new RecordNotFound('Invalid group specified.', 404);
+        throw new RecordNotFound('Invalid groups specified.', 404);
       }
 
       const responses = await forEachAsync(nestedGroups, async (group: any) => {
@@ -579,14 +570,14 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const groupMembership = await authzService.calculateGroupMemberships(req.identity.sub);
       const groupId = authzService.findPrimaryGroupId(groupMembership, req.groups[0]); // enforce a single primary group;
 
-      const triesToDeleteAnOwner = await authzService.isGroupOwner(userId, groupId);
+      const [triesToDeleteAnOwner, triesToDeleteAnAdmin, isOwner] = await Promise.all([
+        authzService.isGroupOwner(userId, groupId),
+        authzService.isGroupAdmin(userId, groupId),
+        authzService.isGroupOwner(req.identity.sub, groupId),
+      ]);
       if (triesToDeleteAnOwner) {
         throw new UnauthorizedError('You cannot delete an owner.', 403);
       }
-
-      const triesToDeleteAnAdmin = await authzService.isGroupAdmin(userId, groupId);
-      const isOwner = await authzService.isGroupOwner(req.identity.sub, groupId);
-
       if (triesToDeleteAnAdmin && !isOwner) {
         throw new UnauthorizedError('You need to be an owner to delete an admin', 403);
       }
@@ -595,6 +586,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
       const responses = await forEachAsync(nestedGroups, async (group: any) => {
         const members = get(group, 'members', []);
+
         if (members.includes(userId)) {
           const groupId = get(group, '_id');
           return authzService.deleteGroupMembers(groupId, [userId]);

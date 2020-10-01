@@ -131,7 +131,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         dashboards,
       };
       if (include.includes('owners')) {
-        const owners = await authzService.getGroupOwners(group._id);
+        const owners = <any>await authzService.getGroupOwners(group._id);
         set(
           data,
           'owners',
@@ -172,7 +172,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
           name: group?.description,
         };
         if (include.includes('owners')) {
-          const owners = await authzService.getGroupOwners(group._id);
+          const owners = <any>await authzService.getGroupOwners(group._id);
           set(
             entry,
             'owners',
@@ -228,7 +228,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         name: group?.description,
       };
       if (include.includes('owners')) {
-        const owners = await authzService.getGroupOwners(group._id);
+        const owners = <any>await authzService.getGroupOwners(group._id);
         set(
           data,
           'owners',
@@ -294,7 +294,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         name: updated?.description,
       };
       if (include.includes('owners')) {
-        const owners = await authzService.getGroupOwners(updated._id);
+        const owners = <any>await authzService.getGroupOwners(updated._id);
         set(
           data,
           'owners',
@@ -345,7 +345,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         name: group?.description,
       };
       if (include.includes('owners')) {
-        const owners = await authzService.getGroupOwners(group._id);
+        const owners = <any>await authzService.getGroupOwners(group._id);
         set(
           data,
           'owners',
