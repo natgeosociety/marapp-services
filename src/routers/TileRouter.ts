@@ -101,7 +101,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/tiles') => {
           logger.debug(`tile key exists ${layerId}/${z}/${x}/${y}/: ${storageUrl}`);
         }
 
-        res.redirect(storageUrl);
+        res.redirect(301, storageUrl);
       } catch (err) {
         logger.error(err);
 
