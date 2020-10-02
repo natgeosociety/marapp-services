@@ -57,8 +57,8 @@ const getRouter = (basePath: string = '/', routePath: string = '/tiles') => {
         throw new InvalidParameterError(`X coordinate must be between 0-${zoomGrid} (2^zoom − 1)`, 400);
       }
       const y = Number(req.params.y); // Y goes from 0 to 2^zoom − 1
-      if (!inRange(x, 0, zoomGrid + 1)) {
-        throw new InvalidParameterError(`X coordinate must be between 0-${zoomGrid} (2^zoom − 1)`, 400);
+      if (!inRange(y, 0, zoomGrid + 1)) {
+        throw new InvalidParameterError(`Y coordinate must be between 0-${zoomGrid} (2^zoom − 1)`, 400);
       }
 
       const layer = await getById(LayerModel, layerId, {}, ['slug']);
