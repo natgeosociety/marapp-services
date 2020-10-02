@@ -93,12 +93,12 @@ const getRouter = (basePath: string = '/', routePath: string = '/tiles') => {
           throw new TileGenerationError(`Could not generate map tile for asset.`, 400);
         }
         const tileUrl = ee.data.getTileUrl(rawMap, x, y, z);
-        let storageUrl = await existsMapTile(layerId, rawMap.mapid, z, x, y);
+        let storageUrl = await existsMapTile(layer.id, rawMap.mapid, z, x, y);
 
         if (!storageUrl) {
-          storageUrl = await uploadMapTile(tileUrl, layerId, rawMap.mapid, z, x, y);
+          storageUrl = await uploadMapTile(tileUrl, layer.id, rawMap.mapid, z, x, y);
         } else {
-          logger.debug(`tile key exists ${layerId}/${z}/${x}/${y}/: ${storageUrl}`);
+          logger.debug(`tile key exists ${layer.id}/${z}/${x}/${y}/: ${storageUrl}`);
         }
 
         res.redirect(301, storageUrl);
