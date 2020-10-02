@@ -313,7 +313,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
-      const email = req.params.email;
+      const email = req.params.email.trim();
       const include = queryParamGroup(<string>req.query.include);
 
       validateEmail(email);
@@ -348,6 +348,9 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const include = queryParamGroup(<string>req.query.include);
 
       requireReqBodyKeys(req, ['email', 'groups']);
+
+      req.body.email = req.body.email.trim();
+
       const { email, groups } = req.body;
 
       validateEmail(email);
@@ -410,7 +413,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
-      const emails: string[] = get(req.body, 'emails', []);
+      const emails: string[] = get(req.body, 'emails', []).map((email) => email.trim());
       const groups: string[] = get(req.body, 'groups', []);
 
       const groupMembership = await authzService.calculateGroupMemberships(req.identity.sub);
@@ -495,7 +498,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
-      const email: string = req.params.email;
+      const email: string = req.params.email.trim();
       const groups: string[] = get(req.body, 'groups', []);
 
       validateEmail(email);
@@ -557,7 +560,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
-      const email = req.params.email;
+      const email = req.params.email.trim();
 
       validateEmail(email);
       const user = await authMgmtService.getUserByEmail(email);
