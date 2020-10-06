@@ -18,6 +18,7 @@
 */
 
 import { Response, Router } from 'express';
+import { param, query, body } from 'express-validator';
 import asyncHandler from 'express-async-handler';
 import { get, set } from 'lodash';
 import urljoin from 'url-join';
@@ -39,7 +40,7 @@ import { AuthManagementService } from '../services/auth0-management';
 import { MembershipService } from '../services/membership-service';
 import { ResponseMeta } from '../types/response';
 
-import { queryParamGroup, requireReqBodyKeys } from '.';
+import { queryParamGroup, validate } from '.';
 
 const logger = getLogger();
 
@@ -55,6 +56,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/organizations')
 
   router.get(
     `${path}/stats`,
+    validate([query('group').isString().trim()]),
     guard.enforcePrimaryGroup(false, true),
     AuthzGuards.readLocationsGuard,
     AuthzGuards.readLayersGuard,
@@ -99,6 +101,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.get(
     `${path}/stats`,
+    validate([query('include').optional().isString().trim(), query('group').isString().trim()]),
     guard.enforcePrimaryGroup(true),
     AuthzGuards.readStatsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -149,6 +152,11 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.get(
     path,
+    validate([
+      query('include').optional().isString().trim(),
+      query('page[number]').optional().isInt({ min: 0 }),
+      query('page[size]').optional().isInt({ min: 0 }),
+    ]),
     AuthzGuards.readOrganizationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
@@ -210,6 +218,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.get(
     `${path}/:id`,
+    validate([param('id').isString().trim().notEmpty(), query('include').optional().isString().trim()]),
     AuthzGuards.readOrganizationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
@@ -246,6 +255,14 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.put(
     `${path}/:id`,
+    validate([
+      param('id').isString().trim().notEmpty(),
+      body('slug').optional().isString().trim().notEmpty(),
+      body('name').optional().isString().trim().notEmpty(),
+      body('owners').optional().isArray(),
+      body('owners.*').optional().trim().isEmail(),
+      query('include').optional().isString().trim(),
+    ]),
     AuthzGuards.writeOrganizationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
@@ -262,9 +279,6 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       }
 
       if (owners) {
-        if (!Array.isArray(owners)) {
-          throw new ParameterRequiredError('Invalid type for field: owners', 400);
-        }
         const ownerIds = await forEachAsync(owners, async (email: any) => {
           const user = await authMgmtService.getUserByEmail(email);
           logger.debug(`resolved owner ${user.user_id} for email: ${email}`);
@@ -312,6 +326,13 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.post(
     path,
+    validate([
+      body('slug').isString().trim().notEmpty(),
+      body('name').isString().trim().notEmpty(),
+      body('owners').isArray(),
+      body('owners.*').trim().isEmail(),
+      query('include').optional().isString().trim(),
+    ]),
     AuthzGuards.writeOrganizationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
@@ -321,12 +342,8 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
       const include = queryParamGroup(<string>req.query.include);
 
-      requireReqBodyKeys(req, ['slug', 'name', 'owners']);
       const { slug, name, owners } = req.body;
 
-      if (!Array.isArray(owners)) {
-        throw new ParameterRequiredError('Invalid type for field: owners', 400);
-      }
       if (!membershipService.enforceOrganizationName(slug)) {
         throw new ParameterRequiredError('Invalid format for field: slug', 400);
       }
@@ -363,6 +380,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.delete(
     `${path}/:id`,
+    validate([param('id').isString().trim().notEmpty()]),
     AuthzGuards.writeOrganizationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;

@@ -18,6 +18,7 @@
 */
 
 import { Response, Router } from 'express';
+import { param, query, body } from 'express-validator';
 import asyncHandler from 'express-async-handler';
 import { merge } from 'lodash';
 import urljoin from 'url-join';
@@ -35,7 +36,7 @@ import { createSerializer as createSlugSerializer } from '../serializers/SlugSer
 import { createSerializer as createStatusSerializer } from '../serializers/StatusSerializer';
 import { ResponseMeta } from '../types/response';
 
-import { queryParamGroup } from '.';
+import { queryParamGroup, validate } from '.';
 
 const logger = getLogger();
 
@@ -51,6 +52,17 @@ const getRouter = (basePath: string = '/', routePath: string = '/layers') => {
 
   router.get(
     path,
+    validate([
+      query('search').optional().isString().trim(),
+      query('filter').optional().isString().trim(),
+      query('include').optional().isString().trim(),
+      query('select').optional().isString().trim(),
+      query('sort').optional().isString().trim(),
+      query('page[number]').optional().isInt({ min: 0 }),
+      query('page[size]').optional().isInt({ min: 0 }),
+      query('page[cursor]').optional().isString().trim(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(false, true),
     AuthzGuards.readLayersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -104,6 +116,13 @@ const getRouter = (basePath: string = '/', routePath: string = '/layers') => {
 
   router.get(
     `${path}/:id`,
+    validate([
+      param('id').isString(),
+      query('include').optional().isString().trim(),
+      query('select').optional().isString().trim(),
+      query('sort').optional().isString().trim(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(false, true),
     AuthzGuards.readLayersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -138,6 +157,17 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.get(
     path,
+    validate([
+      query('search').optional().isString().trim(),
+      query('filter').optional().isString().trim(),
+      query('include').optional().isString().trim(),
+      query('select').optional().isString().trim(),
+      query('sort').optional().isString().trim(),
+      query('page[number]').optional().isInt({ min: 0 }),
+      query('page[size]').optional().isInt({ min: 0 }),
+      query('page[cursor]').optional().isString().trim(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(),
     AuthzGuards.readLayersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -195,6 +225,11 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.get(
     `${path}/slug`,
+    validate([
+      query('keyword').isString().trim().notEmpty(),
+      query('type').trim().isIn(['counter', 'shortid']),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(true),
     AuthzGuards.readLocationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -218,6 +253,13 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.get(
     `${path}/:id`,
+    validate([
+      param('id').isString().trim().notEmpty(),
+      query('include').optional().isString().trim(),
+      query('select').optional().isString().trim(),
+      query('sort').optional().isString().trim(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(),
     AuthzGuards.readLayersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -242,6 +284,21 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.post(
     path,
+    validate([
+      body('slug').isString().trim().notEmpty(),
+      body('name').isString().trim().notEmpty(),
+      body('description').isString().trim().notEmpty(),
+      body('type').isString().trim().notEmpty(),
+      body('provider').isString().trim().notEmpty(),
+      body('category').isArray(),
+      body('category.*').isString().trim().notEmpty(),
+      body('config').trim().isJSON(),
+      body('published').isBoolean(),
+      body('organization').isString().trim().notEmpty(),
+      body('references').isArray(),
+      body('references.*').isString().trim().notEmpty(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(true),
     AuthzGuards.writeLayersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -260,6 +317,22 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.put(
     `${path}/:id`,
+    validate([
+      param('id').isString().trim().notEmpty(),
+      body('slug').optional().isString().trim().notEmpty(),
+      body('name').optional().isString().trim().notEmpty(),
+      body('description').optional().isString().trim().notEmpty(),
+      body('type').optional().isString().trim().notEmpty(),
+      body('provider').optional().isString().trim().notEmpty(),
+      body('category').optional().isArray(),
+      body('category.*').optional().isString().trim().notEmpty(),
+      body('config').optional().trim().isJSON(),
+      body('published').optional().isBoolean(),
+      body('organization').optional().isString().trim().notEmpty(),
+      body('references').optional().isArray(),
+      body('references.*').optional().isString().trim().notEmpty(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(true),
     AuthzGuards.writeLayersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -287,6 +360,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.delete(
     `${path}/:id`,
+    validate([param('id').isString().trim().notEmpty(), query('group').optional().isString().trim()]),
     guard.enforcePrimaryGroup(),
     AuthzGuards.writeLayersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
