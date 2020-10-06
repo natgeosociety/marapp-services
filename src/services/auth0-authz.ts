@@ -46,7 +46,7 @@ export interface AuthzServiceSpec {
   deleteNestedGroups(groupId: string, nestedGroupIds: string[]);
   addGroupRoles(groupId: string, roleIds: string[]);
   deleteGroup(groupId: string);
-  getPermission();
+  getPermissions();
   createPermission(name: string, description: string, applicationId: string, applicationType?: string);
   deletePermission(permissionId: string);
   getRole(roleId: string);
@@ -162,7 +162,7 @@ export class Auth0AuthzService implements AuthzServiceSpec {
     return this.authzClient.addGroupRoles({ groupId, roleIds });
   }
 
-  async getPermission() {
+  async getPermissions() {
     return this.authzClient.getPermissions();
   }
 

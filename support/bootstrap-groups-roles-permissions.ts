@@ -19,20 +19,23 @@
   specific language governing permissions and limitations under the License.
 */
 
-import * as chalk from 'chalk';
-import * as yargs from 'yargs';
+import chalk from 'chalk';
+import yargs from 'yargs';
 
 import { Auth0AuthzService } from '../src/services/auth0-authz';
 import { Auth0ManagementService } from '../src/services/auth0-management';
 import { MembershipService } from '../src/services/membership-service';
+import { forEachAsync } from '../src/helpers/util';
 
 const argv = yargs.options({
   createGroup: { type: 'string' },
-  updateGroupsConfig: { type: 'boolean', default: false },
+  ownerEmail: { type: 'string' },
   getAllGroups: { type: 'boolean', default: false },
   getAllPermissions: { type: 'boolean', default: false },
   getAllRoles: { type: 'boolean', default: false },
-  ownerEmail: { type: 'string' },
+  deletePermissions: { type: 'array', default: [] },
+  deleteRoles: { type: 'array', default: [] },
+  updateGroupsConfig: { type: 'boolean', default: false },
 }).argv;
 
 const main = async (): Promise<void> => {
@@ -46,20 +49,35 @@ const main = async (): Promise<void> => {
     console.log(chalk.yellow(JSON.stringify(groups, null, 2)));
   }
   if (argv.getAllPermissions) {
-    const permissions = await authzService.getPermission();
+    const permissions = await authzService.getPermissions();
     console.log(chalk.yellow(JSON.stringify(permissions, null, 2)));
   }
   if (argv.getAllRoles) {
     const roles = await authzService.getRoles();
     console.log(chalk.yellow(JSON.stringify(roles, null, 2)));
   }
-  if (argv.createGroup && argv.createGroup.trim() && argv.ownerEmail && argv.ownerEmail.trim()) {
+
+  if (argv.createGroup) {
+    if (!argv.ownerEmail) {
+      throw Error(`No owner specified via --ownerEmail`);
+    }
     const user = await authMgmtService.getUserByEmail(argv.ownerEmail);
     if (!user) {
-      throw Error(`No user found for the provided owner: ${argv.ownerEmail}`);
+      throw Error(`No user found for email: ${argv.ownerEmail}`);
     }
-    await membershipService.createOrganization(argv.createGroup.trim(), argv.createGroup.trim(), [user.user_id]);
+    const name = argv.createGroup.trim();
+    await membershipService.createOrganization(name, name, [user.user_id]);
   }
+
+  if (argv.deleteRoles && argv.deleteRoles.length) {
+    console.log(chalk.yellow(`removing ${argv.deleteRoles.length} roles: ${argv.deleteRoles}`));
+    await forEachAsync(argv.deleteRoles, (roleId) => authzService.deleteRole(roleId));
+  }
+  if (argv.deletePermissions && argv.deletePermissions.length) {
+    console.log(chalk.yellow(`removing ${argv.deletePermissions.length} permissions: ${argv.deletePermissions}`));
+    await forEachAsync(argv.deletePermissions, (permId) => authzService.deletePermission(permId));
+  }
+
   if (argv.updateGroupsConfig) {
     await membershipService.updateOrganizationConfig();
   }

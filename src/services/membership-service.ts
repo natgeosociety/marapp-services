@@ -20,7 +20,7 @@
 import { get } from 'lodash';
 
 import { AUTH0_APPLICATION_CLIENT_ID } from '../config/auth0';
-import { AlreadyExistsError } from '../errors';
+import { AlreadyExistsError, RecordNotFound } from '../errors';
 import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
 import { ScopesEnum } from '../middlewares/authz-guards';
@@ -71,48 +71,25 @@ type PermissionType = { name: string; readScopes: ScopesEnum[]; writeScopes: Sco
 const ROLES: { [key in RoleEnum]?: PermissionType } = {
   [RoleEnum.OWNER]: {
     name: RoleEnum.OWNER,
-    readScopes: [ScopesEnum.ReadAll],
-    writeScopes: [ScopesEnum.WriteAll],
+    readScopes: [ScopesEnum.ReadAll, ScopesEnum.ReadUsers],
+    writeScopes: [ScopesEnum.WriteAll, ScopesEnum.WriteUsers],
     description: 'Complete power over the assets managed by an organization.',
   },
   [RoleEnum.ADMIN]: {
     name: RoleEnum.ADMIN,
-    readScopes: [ScopesEnum.ReadAll],
-    writeScopes: [ScopesEnum.WriteAll],
+    readScopes: [ScopesEnum.ReadAll, ScopesEnum.ReadUsers],
+    writeScopes: [ScopesEnum.WriteAll, ScopesEnum.WriteUsers],
     description: 'Power over the assets managed by an organization.',
   },
   [RoleEnum.EDITOR]: {
     name: RoleEnum.EDITOR,
-    readScopes: [
-      ScopesEnum.ReadLocations,
-      ScopesEnum.ReadMetrics,
-      ScopesEnum.ReadCollections,
-      ScopesEnum.ReadLayers,
-      ScopesEnum.ReadWidgets,
-      ScopesEnum.ReadDashboards,
-      ScopesEnum.ReadStats,
-    ],
-    writeScopes: [
-      ScopesEnum.WriteLocations,
-      ScopesEnum.WriteMetrics,
-      ScopesEnum.WriteCollections,
-      ScopesEnum.WriteLayers,
-      ScopesEnum.WriteWidgets,
-      ScopesEnum.WriteDashboards,
-    ],
+    readScopes: [ScopesEnum.ReadAll],
+    writeScopes: [ScopesEnum.WriteAll],
     description: 'Full content permission across the entire organization.',
   },
   [RoleEnum.VIEWER]: {
     name: RoleEnum.VIEWER,
-    readScopes: [
-      ScopesEnum.ReadLocations,
-      ScopesEnum.ReadMetrics,
-      ScopesEnum.ReadCollections,
-      ScopesEnum.ReadLayers,
-      ScopesEnum.ReadWidgets,
-      ScopesEnum.ReadDashboards,
-      ScopesEnum.ReadStats,
-    ],
+    readScopes: [ScopesEnum.ReadAll],
     writeScopes: [],
     description: 'Can view content managed by the organization.',
   },
@@ -224,53 +201,51 @@ export class MembershipService implements MembershipServiceSpec {
   /**
    * Deletes all resources required by an organization: groups, nested groups, roles and permissions.
    * @param groupId: primary group ID
+   * @param applicationId:
    */
-  async deleteOrganization(groupId: string): Promise<boolean> {
+  async deleteOrganization(groupId: string, applicationId: string = AUTH0_APPLICATION_CLIENT_ID): Promise<boolean> {
+    const group = await this.authzService.getGroup(groupId);
+    if (!group) {
+      throw new RecordNotFound(`Could not retrieve document.`, 404);
+    }
+
+    const nestedGroups = await this.authzService.getNestedGroups(group?._id);
+    const nestedGroupIds = nestedGroups.map((ng) => ng._id);
+
+    if (!nestedGroupIds.length) {
+      throw new Error(`No nested groups found for: ${group?._id}`);
+    }
+
+    const [roles, permissions] = await Promise.all([this.authzService.getRoles(), this.authzService.getPermissions()]);
+
     let success = true;
     try {
-      const nestedGroups = await this.authzService.getNestedGroups(groupId);
-      const nestedGroupIds = nestedGroups.map((ng) => ng._id);
-
-      if (!nestedGroupIds.length) {
-        throw new Error(`No nested groups found for: ${groupId}`);
-      }
-
-      logger.debug(`detaching nested groups: ${nestedGroupIds.join(', ')}`);
-      await this.authzService.deleteNestedGroups(groupId, nestedGroupIds);
-
-      const roleIds = [];
-      const permissionIds = [];
+      logger.debug(`[deleteOrganization] detaching nested groups: ${nestedGroupIds.join(', ')}`);
+      await this.authzService.deleteNestedGroups(group?._id, nestedGroupIds);
 
       // remove nested groups;
-      await forEachAsync(nestedGroupIds, async (nestedGroupId) => {
-        const groupRoles = await this.authzService.getNestedGroupRoles(nestedGroupId);
-
-        groupRoles.forEach((groupRole) => {
-          const roleId = get(groupRole, 'role._id');
-          const permissions = get(groupRole, 'role.permissions', []);
-
-          roleIds.push(roleId);
-          permissionIds.push(...permissions);
-        });
-
-        logger.debug(`removing nested group: ${nestedGroupId}`);
-        await this.authzService.deleteGroup(nestedGroupId);
+      await forEachAsync(nestedGroupIds, async (groupId) => {
+        logger.debug(`[deleteOrganization] removing nested group: ${groupId}`);
+        return this.authzService.deleteGroup(groupId);
       });
 
       // remove roles;
-      await forEachAsync(roleIds, async (roleId) => {
-        logger.debug(`removing role: ${roleId}`);
-        await this.authzService.deleteRole(roleId);
+      const groupRoles = this.filterByGroupName(group.name, roles.roles, applicationId);
+      await forEachAsync(groupRoles, async (role) => {
+        logger.debug(`[deleteOrganization] removing role: ${role?._id} - ${role.name}`);
+        return this.authzService.deleteRole(role?._id);
       });
 
-      // remove roles & permissions;
-      await forEachAsync(permissionIds, async (permId) => {
-        logger.debug(`removing permission: ${permId}`);
-        await this.authzService.deletePermission(permId);
+      // remove permissions;
+      const groupPermissions = this.filterByGroupName(group.name, permissions.permissions, applicationId);
+      await forEachAsync(groupPermissions, async (perm) => {
+        logger.debug(`[deleteOrganization] removing permission: ${perm?._id} - ${perm.name}`);
+        return this.authzService.deletePermission(perm?._id);
       });
 
       // delete main group;
-      await this.authzService.deleteGroup(groupId);
+      logger.debug(`[deleteOrganization] removing main group: ${group?._id}`);
+      await this.authzService.deleteGroup(group?._id);
     } catch (err) {
       logger.error(err);
       success = false;
@@ -333,7 +308,7 @@ export class MembershipService implements MembershipServiceSpec {
       const groupsMap = this.reduceByName<{ [key: string]: any }>(groups);
       const groupsMapPrimary = this.reduceByName<{ [key: string]: any }>(groups.filter((g) => 'nested' in g));
 
-      const { permissions } = await this.authzService.getPermission();
+      const { permissions } = await this.authzService.getPermissions();
       const permissionsMap = this.reduceByName<{ [key in ScopesEnum]?: any }>(permissions);
 
       const { roles } = await this.authzService.getRoles();
@@ -443,5 +418,13 @@ export class MembershipService implements MembershipServiceSpec {
       acc[record.name] = record;
       return acc;
     }, <T>{});
+  }
+
+  filterByGroupName<T extends { name: string; applicationId: string }>(
+    groupName: string,
+    records: T[],
+    applicationId: string
+  ) {
+    return records.filter((o: T) => groupName === o.name.split(':')[0] && applicationId === o.applicationId);
   }
 }
