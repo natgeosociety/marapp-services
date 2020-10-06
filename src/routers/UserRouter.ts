@@ -20,7 +20,7 @@
 import { Response, Router } from 'express';
 import { param, query, body } from 'express-validator';
 import asyncHandler from 'express-async-handler';
-import { get, set, compact } from 'lodash';
+import { get, set } from 'lodash';
 import urljoin from 'url-join';
 
 import { DEFAULT_CONTENT_TYPE } from '../config';
@@ -31,7 +31,10 @@ import { getLogger } from '../logging';
 import { AuthzGuards, AuthzRequest, guard } from '../middlewares/authz-guards';
 import { createSerializer as createGroupSerializer } from '../serializers/GroupRoleSerializer';
 import { createSerializer as createStatusSerializer } from '../serializers/StatusSerializer';
-import { createSerializer as createUserSerializer } from '../serializers/UserSerializer';
+import {
+  createSerializer as createUserSerializer,
+  createBulkSerializer as createUserBulkSerializer,
+} from '../serializers/UserSerializer';
 import { AuthzServiceSpec } from '../services/auth0-authz';
 import { AuthManagementService } from '../services/auth0-management';
 import { ResponseMeta } from '../types/response';
@@ -455,48 +458,46 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         throw new RecordNotFound('Invalid groups specified.', 404);
       }
 
-      const existingUserIds = [...new Set(nestedGroups.map((group) => get(group, 'members', [])).flat())];
+      const data: { email: string; error?: string; status?: number }[] = [];
 
-      const response: { email: string; success?: boolean; error?: string; skipped?: boolean }[] = [];
+      const existingUserIds = [...new Set(nestedGroups.map((group) => get(group, 'members', [])).flat())];
       const uniqueEmails = new Set(emails);
 
-      const userIds = compact(
-        await forEachAsync([...uniqueEmails], async (email: string) => {
-          try {
-            const user = await authMgmtService.getUserByEmail(email);
-            const userId = get(user, 'user_id');
+      const userIds = await forEachAsync([...uniqueEmails], async (email: string) => {
+        try {
+          const user = await authMgmtService.getUserByEmail(email);
+          const userId = get(user, 'user_id');
 
-            if (existingUserIds.includes(userId)) {
-              response.push({ email: user.email, skipped: true });
-              return;
-            }
-
-            if (req.identity.sub === userId) {
-              throw new UnauthorizedError('You cannot update your own user.', 403);
-            }
-
-            const [triesToUpdateAnAdmin, triesToUpdateAnOwner] = await Promise.all([
-              authzService.isGroupAdmin(userId, groupId),
-              authzService.isGroupOwner(userId, groupId),
-            ]);
-            if (triesToUpdateAnOwner) {
-              throw new UnauthorizedError('You cannot update an owner.', 403);
-            }
-            if (triesToUpdateAnAdmin && !isOwner) {
-              throw new UnauthorizedError('You cannot update an admin.', 403);
-            }
-
-            response.push({ email: user.email });
-
-            return userId;
-          } catch (err) {
-            response.push({ email: email, error: err.message });
+          if (existingUserIds.includes(userId)) {
+            throw new AlreadyExistsError('The user already exists.', 409); // 409 Conflict;
           }
-        })
-      );
+          if (req.identity.sub === userId) {
+            throw new UnauthorizedError('You cannot update your own user.', 403);
+          }
 
-      if (response.some((item) => !!item.error)) {
-        const code = 200;
+          const [triesToUpdateAnAdmin, triesToUpdateAnOwner] = await Promise.all([
+            authzService.isGroupAdmin(userId, groupId),
+            authzService.isGroupOwner(userId, groupId),
+          ]);
+          if (triesToUpdateAnOwner) {
+            throw new UnauthorizedError('You cannot update an owner.', 403);
+          }
+          if (triesToUpdateAnAdmin && !isOwner) {
+            throw new UnauthorizedError('You cannot update an admin.', 403);
+          }
+
+          data.push({ email: user.email, status: 200 });
+
+          return userId;
+        } catch (err) {
+          data.push({ email: email, error: err.message, status: err.code });
+        }
+      });
+
+      if (data.some((res) => ![200, 409].includes(res.status))) {
+        const code = 403;
+        const response = createUserBulkSerializer().serialize(data);
+
         res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
         return res.status(code).send(response);
       }
@@ -519,7 +520,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       });
 
       const code = 200;
-      response.forEach((item) => (item.success = true));
+      const response = createUserBulkSerializer().serialize(data);
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);
@@ -530,7 +531,6 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
     `${path}/:email`,
     validate([
       param('email').trim().isEmail(),
-      // body('email').trim().isEmail(),
       body('groups').isArray(),
       body('groups.*').isString().trim().notEmpty(),
       query('group').optional().isString().trim(),
