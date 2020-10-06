@@ -404,7 +404,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
     `${path}/:locationId/:metricId/action`,
     validate([
       param('locationId').isString().trim().notEmpty(),
-      param('metricId').isString().trim().notEmpty,
+      param('metricId').isString().trim().notEmpty(),
       query('operationType').trim().isIn(['calculate']),
       query('group').optional().isString().trim(),
     ]),
