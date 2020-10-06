@@ -19,6 +19,7 @@
 
 import ee from '@google/earthengine';
 import { Request, Response, Router } from 'express';
+import { param, query, body } from 'express-validator';
 import asyncHandler from 'express-async-handler';
 import cacheControl from 'express-cache-controller';
 import { get, inRange, isEmpty } from 'lodash';
@@ -31,6 +32,8 @@ import { LayerModel } from '../models';
 import { getById } from '../models/utils';
 import { existsMapTile, uploadMapTile } from '../services/storage-service';
 
+import { validate } from '.';
+
 const logger = getLogger();
 
 // The zoom parameter is an integer between 0 (zoomed out) and 12 (zoomed in).
@@ -42,24 +45,25 @@ const getRouter = (basePath: string = '/', routePath: string = '/tiles') => {
 
   router.use(
     `${path}/:layer/:z/:x/:y/`,
+    validate([
+      param('layer').isString().trim().notEmpty(),
+      param('z').trim().isInt({ min: 0, max: MAX_ZOOM_LEVEL }).toInt(),
+      param('x')
+        .trim()
+        .isInt({ min: 0, max: Math.pow(2, MAX_ZOOM_LEVEL) })
+        .toInt(),
+      param('y')
+        .trim()
+        .isInt({ min: 0, max: Math.pow(2, MAX_ZOOM_LEVEL) })
+        .toInt(),
+    ]),
     cacheControl({ maxAge: Number(API_MAP_TILES_TTL) }),
     asyncHandler(async (req: Request, res: Response) => {
       const layerId = req.params.layer;
 
       const z = Number(req.params.z);
-      if (!inRange(z, 0, MAX_ZOOM_LEVEL + 1)) {
-        throw new InvalidParameterError(`Zoom level must be between 0-${MAX_ZOOM_LEVEL}`, 400);
-      }
-      const zoomGrid = Math.pow(2, MAX_ZOOM_LEVEL) - 1;
-
       const x = Number(req.params.x); // X goes from 0 to 2^zoom − 1
-      if (!inRange(x, 0, zoomGrid + 1)) {
-        throw new InvalidParameterError(`X coordinate must be between 0-${zoomGrid} (2^zoom − 1)`, 400);
-      }
       const y = Number(req.params.y); // Y goes from 0 to 2^zoom − 1
-      if (!inRange(y, 0, zoomGrid + 1)) {
-        throw new InvalidParameterError(`Y coordinate must be between 0-${zoomGrid} (2^zoom − 1)`, 400);
-      }
 
       const layer = await getById(LayerModel, layerId, {}, ['slug']);
       if (!layer) {

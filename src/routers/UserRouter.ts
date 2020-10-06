@@ -18,6 +18,7 @@
 */
 
 import { Response, Router } from 'express';
+import { param, query, body } from 'express-validator';
 import asyncHandler from 'express-async-handler';
 import { get, set } from 'lodash';
 import urljoin from 'url-join';
@@ -35,7 +36,7 @@ import { AuthzServiceSpec } from '../services/auth0-authz';
 import { AuthManagementService } from '../services/auth0-management';
 import { ResponseMeta } from '../types/response';
 
-import { queryParamGroup, requireReqBodyKeys, requireReqParamKeys, validateEmail } from '.';
+import { queryParamGroup, validate } from '.';
 
 const logger = getLogger();
 
@@ -45,6 +46,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
   router.get(
     path,
+    validate([query('include').optional().isString().trim()]),
     guard.includeGroups(),
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
@@ -79,6 +81,11 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
   router.put(
     path,
+    validate([
+      query('include').optional().isString().trim(),
+      body('firstName').optional().isString().trim().notEmpty(),
+      body('lastName').optional().isString().trim().notEmpty(),
+    ]),
     guard.includeGroups(),
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
@@ -120,15 +127,14 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
   router.post(
     `${path}/change-email`,
+    validate([query('include').optional().isString().trim(), body('email').trim().isEmail()]),
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
       const include = queryParamGroup(<string>req.query.include);
 
-      requireReqBodyKeys(req, ['email']);
       const { email } = req.body;
 
-      validateEmail(email);
       const user = await authMgmtService.emailChangeRequest(req.identity.sub, email);
 
       const data = {
@@ -150,6 +156,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
   router.delete(
     `${path}/change-email`,
+    validate([query('include').optional().isString().trim()]),
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
@@ -175,10 +182,10 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
   router.get(
     `${path}/change-email`,
+    validate([query('accessToken').isString().trim().notEmpty()]),
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
-      requireReqParamKeys(req, ['accessToken']);
       const accessToken = <string>req.query.accessToken;
       const tempUserInfo = await authMgmtService.getUserInfo(accessToken);
 
@@ -194,6 +201,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
   router.post(
     `${path}/change-password`,
+    validate([query('include').optional().isString().trim(), body('email').trim().isEmail()]),
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
@@ -216,6 +224,12 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.get(
     path,
+    validate([
+      query('include').optional().isString().trim(),
+      query('page[number]').optional().isInt({ min: 0 }),
+      query('page[size]').optional().isInt({ min: 0 }),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(true),
     AuthzGuards.readUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -278,6 +292,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.get(
     `${path}/groups`,
+    validate([query('include').optional().isString().trim(), query('group').optional().isString().trim()]),
     guard.enforcePrimaryGroup(true),
     AuthzGuards.readUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -307,6 +322,11 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.get(
     `${path}/:email`,
+    validate([
+      param('email').trim().isEmail(),
+      query('include').optional().isString().trim(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(true),
     AuthzGuards.readUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -316,7 +336,6 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const email = req.params.email;
       const include = queryParamGroup(<string>req.query.include);
 
-      validateEmail(email);
       const user = await authMgmtService.getUserByEmail(email);
       const userId = get(user, 'user_id');
 
@@ -339,6 +358,13 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.post(
     path,
+    validate([
+      body('email').trim().isEmail(),
+      body('groups').isArray(),
+      body('groups.*').isString().trim().notEmpty(),
+      query('include').optional().isString().trim(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(true),
     AuthzGuards.writeUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -347,10 +373,8 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
       const include = queryParamGroup(<string>req.query.include);
 
-      requireReqBodyKeys(req, ['email', 'groups']);
       const { email, groups } = req.body;
 
-      validateEmail(email);
       const user = await authMgmtService.getUserByEmail(email, false);
       if (user) {
         throw new AlreadyExistsError('Email address is already registered.', 400);
@@ -404,6 +428,13 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.put(
     path,
+    validate([
+      body('emails').isArray(),
+      body('emails.*').trim().isEmail(),
+      body('groups').isArray(),
+      body('groups.*').isString().trim().notEmpty(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(true),
     AuthzGuards.writeUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -429,7 +460,6 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
       const userIds = await forEachAsync([...uniqueEmails], async (email: string) => {
         try {
-          validateEmail(email);
           const user = await authMgmtService.getUserByEmail(email);
           const userId = get(user, 'user_id');
 
@@ -489,6 +519,13 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.put(
     `${path}/:email`,
+    validate([
+      param('email').trim().isEmail(),
+      // body('email').trim().isEmail(),
+      body('groups').isArray(),
+      body('groups.*').isString().trim().notEmpty(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(true),
     AuthzGuards.writeUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -498,7 +535,6 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const email: string = req.params.email;
       const groups: string[] = get(req.body, 'groups', []);
 
-      validateEmail(email);
       const user = await authMgmtService.getUserByEmail(email);
       const userId = get(user, 'user_id');
 
@@ -551,6 +587,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.delete(
     `${path}/:email`,
+    validate([param('email').trim().isEmail(), query('group').optional().isString().trim()]),
     guard.enforcePrimaryGroup(true),
     AuthzGuards.writeUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -559,7 +596,6 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
       const email = req.params.email;
 
-      validateEmail(email);
       const user = await authMgmtService.getUserByEmail(email);
       const userId = get(user, 'user_id');
 

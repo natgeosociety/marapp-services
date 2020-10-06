@@ -18,6 +18,7 @@
 */
 
 import { Response, Router } from 'express';
+import { param, query, body } from 'express-validator';
 import asyncHandler from 'express-async-handler';
 import { merge } from 'lodash';
 import Redlock from 'redlock';
@@ -37,7 +38,7 @@ import { createSerializer as createStatusSerializer } from '../serializers/Statu
 import { OperationTypeEnum, publishSNSMessage, SNSMessage } from '../services/sns';
 import { ResponseMeta, SuccessResponse } from '../types/response';
 
-import { queryParamGroup } from '.';
+import { queryParamGroup, validate } from '.';
 
 const logger = getLogger();
 
@@ -50,6 +51,18 @@ const getRouter = (basePath: string = '/', routePath: string = '/metrics') => {
 
   router.get(
     `${path}/:locationId`,
+    validate([
+      param('locationId').isString().trim().notEmpty(),
+      query('search').optional().isString().trim(),
+      query('filter').optional().isString().trim(),
+      query('include').optional().isString().trim(),
+      query('select').optional().isString().trim(),
+      query('sort').optional().isString().trim(),
+      query('page[number]').optional().isInt({ min: 0 }),
+      query('page[size]').optional().isInt({ min: 0 }),
+      query('page[cursor]').optional().isString().trim(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(false, true),
     AuthzGuards.readMetricsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -102,6 +115,14 @@ const getRouter = (basePath: string = '/', routePath: string = '/metrics') => {
 
   router.get(
     `${path}/:locationId/:metricId/`,
+    validate([
+      param('locationId').isString().trim().notEmpty(),
+      param('metricId').isString().trim().notEmpty(),
+      query('include').optional().isString().trim(),
+      query('select').optional().isString().trim(),
+      query('sort').optional().isString().trim(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(false, true),
     AuthzGuards.readMetricsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -145,6 +166,17 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.get(
     `${path}/:locationId`,
+    validate([
+      param('locationId').isString().trim().notEmpty(),
+      query('filter').optional().isString().trim(),
+      query('include').optional().isString().trim(),
+      query('select').optional().isString().trim(),
+      query('sort').optional().isString().trim(),
+      query('page[number]').optional().isInt({ min: 0 }),
+      query('page[size]').optional().isInt({ min: 0 }),
+      query('page[cursor]').optional().isString().trim(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(),
     AuthzGuards.readMetricsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -197,6 +229,14 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.get(
     `${path}/:locationId/:metricId/`,
+    validate([
+      param('locationId').isString().trim().notEmpty(),
+      param('metricId').isString().trim().notEmpty(),
+      query('include').optional().isString().trim(),
+      query('select').optional().isString().trim(),
+      query('sort').optional().isString().trim(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(),
     AuthzGuards.readMetricsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -230,6 +270,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.delete(
     `${path}/:locationId/`,
+    validate([param('locationId').isString().trim().notEmpty(), query('group').optional().isString().trim()]),
     guard.enforcePrimaryGroup(),
     AuthzGuards.writeMetricsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -262,6 +303,11 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.delete(
     `${path}/:locationId/:metricId/`,
+    validate([
+      param('locationId').isString().trim().notEmpty(),
+      param('metricId').isString().trim().notEmpty(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(),
     AuthzGuards.writeMetricsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -295,6 +341,11 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.post(
     `${path}/:locationId/action`,
+    validate([
+      param('locationId').isString().trim().notEmpty(),
+      query('operationType').trim().isIn(['calculate']),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(),
     AuthzGuards.writeMetricsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -351,6 +402,12 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.post(
     `${path}/:locationId/:metricId/action`,
+    validate([
+      param('locationId').isString().trim().notEmpty(),
+      param('metricId').isString().trim().notEmpty,
+      query('operationType').trim().isIn(['calculate']),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(),
     AuthzGuards.writeMetricsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
