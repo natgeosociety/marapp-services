@@ -20,7 +20,7 @@
 import { Response, Router } from 'express';
 import { param, query, body } from 'express-validator';
 import asyncHandler from 'express-async-handler';
-import { get, set } from 'lodash';
+import { get, set, compact } from 'lodash';
 import urljoin from 'url-join';
 
 import { DEFAULT_CONTENT_TYPE } from '../config';
@@ -455,36 +455,45 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         throw new RecordNotFound('Invalid groups specified.', 404);
       }
 
-      const response: { email: string; success?: boolean; error?: string }[] = [];
+      const existingUserIds = [...new Set(nestedGroups.map((group) => get(group, 'members', [])).flat())];
+
+      const response: { email: string; success?: boolean; error?: string; skipped?: boolean }[] = [];
       const uniqueEmails = new Set(emails);
 
-      const userIds = await forEachAsync([...uniqueEmails], async (email: string) => {
-        try {
-          const user = await authMgmtService.getUserByEmail(email);
-          const userId = get(user, 'user_id');
+      const userIds = compact(
+        await forEachAsync([...uniqueEmails], async (email: string) => {
+          try {
+            const user = await authMgmtService.getUserByEmail(email);
+            const userId = get(user, 'user_id');
 
-          if (req.identity.sub === userId) {
-            throw new UnauthorizedError('You cannot update your own user.', 403);
+            if (existingUserIds.includes(userId)) {
+              response.push({ email: user.email, skipped: true });
+              return;
+            }
+
+            if (req.identity.sub === userId) {
+              throw new UnauthorizedError('You cannot update your own user.', 403);
+            }
+
+            const [triesToUpdateAnAdmin, triesToUpdateAnOwner] = await Promise.all([
+              authzService.isGroupAdmin(userId, groupId),
+              authzService.isGroupOwner(userId, groupId),
+            ]);
+            if (triesToUpdateAnOwner) {
+              throw new UnauthorizedError('You cannot update an owner.', 403);
+            }
+            if (triesToUpdateAnAdmin && !isOwner) {
+              throw new UnauthorizedError('You cannot update an admin.', 403);
+            }
+
+            response.push({ email: user.email });
+
+            return userId;
+          } catch (err) {
+            response.push({ email: email, error: err.message });
           }
-
-          const [triesToUpdateAnAdmin, triesToUpdateAnOwner] = await Promise.all([
-            authzService.isGroupAdmin(userId, groupId),
-            authzService.isGroupOwner(userId, groupId),
-          ]);
-          if (triesToUpdateAnOwner) {
-            throw new UnauthorizedError('You cannot update an owner.', 403);
-          }
-          if (triesToUpdateAnAdmin && !isOwner) {
-            throw new UnauthorizedError('You cannot update an admin.', 403);
-          }
-
-          response.push({ email: user.email });
-
-          return userId;
-        } catch (err) {
-          response.push({ email: email, error: err.message });
-        }
-      });
+        })
+      );
 
       if (response.some((item) => !!item.error)) {
         const code = 200;
