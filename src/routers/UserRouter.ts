@@ -495,7 +495,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       });
 
       if (data.some((res) => ![200, 409].includes(res.status))) {
-        const code = 403;
+        const code = 400;
         const response = createUserBulkSerializer().serialize(data);
 
         res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
