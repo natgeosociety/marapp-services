@@ -329,7 +329,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       body('config').optional().exists(),
       body('published').optional().isBoolean(),
       body('organization').optional().isString().trim(),
-      body('references').optional().isArray(),
+      body('references').optional({ nullable: true }).isArray(),
       body('references.*').optional().isString().trim().notEmpty(),
       query('group').optional().isString().trim(),
     ]),
