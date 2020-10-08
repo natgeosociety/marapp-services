@@ -124,8 +124,8 @@ LocationSchema.plugin(esPlugin, {
         },
         autocomplete_search_analyzer: {
           type: 'custom',
-          tokenizer: 'lowercase',
-          filter: ['asciifolding'],
+          tokenizer: 'standard',
+          filter: ['asciifolding', 'lowercase'],
         },
       },
       tokenizer: {

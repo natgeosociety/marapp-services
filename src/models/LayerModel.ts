@@ -126,11 +126,12 @@ LayerSchema.plugin(esPlugin, {
         },
         autocomplete_search_analyzer: {
           type: 'custom',
-          tokenizer: 'lowercase',
-          filter: ['asciifolding'],
+          tokenizer: 'standard',
+          filter: ['asciifolding', 'lowercase'],
         },
       },
       tokenizer: {
+        autocomplete_search_tokenizer: {},
         autocomplete_tokenizer: {
           type: 'edge_ngram',
           min_gram: 1,

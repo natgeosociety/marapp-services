@@ -39,4 +39,5 @@ export const schemaOptions: SchemaOptions = {
   },
   timestamps: true,
   minimize: false, // store empty objects;
+  collation: { locale: 'en_US', caseLevel: true, numericOrdering: true }, // case insensitive sorting, sort numeric substrings based on their numeric value;
 };

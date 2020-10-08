@@ -24,6 +24,7 @@ import { PaginationLinks } from '.';
 export const USER_ATTRIBUTES: string[] = ['id', 'email', 'name', 'groups', 'firstName', 'lastName', 'pendingEmail'];
 export const GROUP_ATTRIBUTES: string[] = ['id', 'name', 'description', 'roles'];
 export const ROLE_ATTRIBUTES: string[] = ['id', 'name', 'description'];
+export const USER_BULK_ATTRIBUTES: string[] = ['email', 'error', 'status'];
 
 export const createSerializer = (
   include: string[] = [],
@@ -57,6 +58,24 @@ export const createSerializer = (
       attributes: GROUP_ATTRIBUTES,
       pluralizeType: false,
     },
+    topLevelLinks: pagination,
+    meta: meta,
+    ...opts,
+  } as any);
+};
+
+export const createBulkSerializer = (
+  include: string[] = [],
+  pagination: PaginationLinks = {},
+  meta: any = {},
+  opts: SerializerOptions = {}
+): Serializer => {
+  return new Serializer('bulkUser', {
+    attributes: USER_BULK_ATTRIBUTES,
+    keyForAttribute: (attribute: any) => {
+      return attribute;
+    },
+    pluralizeType: false,
     topLevelLinks: pagination,
     meta: meta,
     ...opts,

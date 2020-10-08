@@ -18,6 +18,7 @@
 */
 
 import { Response, Router } from 'express';
+import { param, query, body } from 'express-validator';
 import asyncHandler from 'express-async-handler';
 import { merge } from 'lodash';
 import urljoin from 'url-join';
@@ -35,7 +36,7 @@ import { createSerializer as createSlugSerializer } from '../serializers/SlugSer
 import { createSerializer as createStatusSerializer } from '../serializers/StatusSerializer';
 import { ResponseMeta } from '../types/response';
 
-import { queryParamGroup } from '.';
+import { queryParamGroup, validate } from '.';
 
 const logger = getLogger();
 
@@ -51,6 +52,17 @@ const getRouter = (basePath: string = '/', routePath: string = '/dashboards') =>
 
   router.get(
     path,
+    validate([
+      query('search').optional().isString().trim(),
+      query('filter').optional().isString().trim(),
+      query('include').optional().isString().trim(),
+      query('select').optional().isString().trim(),
+      query('sort').optional().isString().trim(),
+      query('page[number]').optional().isInt({ min: 0 }),
+      query('page[size]').optional().isInt({ min: 0 }),
+      query('page[cursor]').optional().isString().trim(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(false, true),
     AuthzGuards.readDashboardsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -104,6 +116,13 @@ const getRouter = (basePath: string = '/', routePath: string = '/dashboards') =>
 
   router.get(
     `${path}/:id`,
+    validate([
+      param('id').isString(),
+      query('include').optional().isString().trim(),
+      query('select').optional().isString().trim(),
+      query('sort').optional().isString().trim(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(false, true),
     AuthzGuards.readDashboardsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -138,6 +157,17 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.get(
     path,
+    validate([
+      query('search').optional().isString().trim(),
+      query('filter').optional().isString().trim(),
+      query('include').optional().isString().trim(),
+      query('select').optional().isString().trim(),
+      query('sort').optional().isString().trim(),
+      query('page[number]').optional().isInt({ min: 0 }),
+      query('page[size]').optional().isInt({ min: 0 }),
+      query('page[cursor]').optional().isString().trim(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(),
     AuthzGuards.readDashboardsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -191,6 +221,11 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.get(
     `${path}/slug`,
+    validate([
+      query('keyword').isString().trim().notEmpty(),
+      query('type').trim().isIn(['counter', 'shortid']),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(true),
     AuthzGuards.readLocationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -214,6 +249,13 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.get(
     `${path}/:id`,
+    validate([
+      param('id').isString(),
+      query('include').optional().isString().trim(),
+      query('select').optional().isString().trim(),
+      query('sort').optional().isString().trim(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(),
     AuthzGuards.readDashboardsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -238,6 +280,18 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.post(
     path,
+    validate([
+      body('slug').isString().trim().notEmpty(),
+      body('name').isString().trim().notEmpty(),
+      body('description').optional().isString().trim(),
+      body('published').optional().isBoolean(),
+      body('organization').optional().isString().trim(),
+      body('layers').optional().isArray(),
+      body('layers.*').optional().isString().trim().notEmpty(),
+      body('widgets').optional().isArray(),
+      body('widgets.*').optional().isString().trim().notEmpty(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(true),
     AuthzGuards.writeDashboardsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -256,6 +310,19 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.put(
     `${path}/:id`,
+    validate([
+      param('id').isString().trim().notEmpty(),
+      body('slug').optional().isString().trim().notEmpty(),
+      body('name').optional().isString().trim().notEmpty(),
+      body('description').optional().isString().trim(),
+      body('published').optional().isBoolean(),
+      body('organization').optional().isString().trim(),
+      body('layers').optional().isArray(),
+      body('layers.*').optional().isString().trim().notEmpty(),
+      body('widgets').optional().isArray(),
+      body('widgets.*').optional().isString().trim().notEmpty(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(true),
     AuthzGuards.writeDashboardsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -283,6 +350,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.delete(
     `${path}/:id`,
+    validate([param('id').isString().trim().notEmpty(), query('group').optional().isString().trim()]),
     guard.enforcePrimaryGroup(),
     AuthzGuards.writeDashboardsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {

@@ -18,8 +18,9 @@
 */
 
 import { Response, Router } from 'express';
+import { param, query, body } from 'express-validator';
 import asyncHandler from 'express-async-handler';
-import { get, set } from 'lodash';
+import { get, set, compact } from 'lodash';
 import urljoin from 'url-join';
 
 import { DEFAULT_CONTENT_TYPE } from '../config';
@@ -30,12 +31,15 @@ import { getLogger } from '../logging';
 import { AuthzGuards, AuthzRequest, guard } from '../middlewares/authz-guards';
 import { createSerializer as createGroupSerializer } from '../serializers/GroupRoleSerializer';
 import { createSerializer as createStatusSerializer } from '../serializers/StatusSerializer';
-import { createSerializer as createUserSerializer } from '../serializers/UserSerializer';
+import {
+  createSerializer as createUserSerializer,
+  createBulkSerializer as createUserBulkSerializer,
+} from '../serializers/UserSerializer';
 import { AuthzServiceSpec } from '../services/auth0-authz';
 import { AuthManagementService } from '../services/auth0-management';
 import { ResponseMeta } from '../types/response';
 
-import { queryParamGroup, requireReqBodyKeys, requireReqParamKeys, validateEmail } from '.';
+import { queryParamGroup, validate } from '.';
 
 const logger = getLogger();
 
@@ -45,6 +49,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
   router.get(
     path,
+    validate([query('include').optional().isString().trim()]),
     guard.includeGroups(),
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
@@ -79,6 +84,11 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
   router.put(
     path,
+    validate([
+      query('include').optional().isString().trim(),
+      body('firstName').optional().isString().trim().notEmpty(),
+      body('lastName').optional().isString().trim().notEmpty(),
+    ]),
     guard.includeGroups(),
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
@@ -120,15 +130,14 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
   router.post(
     `${path}/change-email`,
+    validate([query('include').optional().isString().trim(), body('email').trim().isEmail()]),
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
       const include = queryParamGroup(<string>req.query.include);
 
-      requireReqBodyKeys(req, ['email']);
       const { email } = req.body;
 
-      validateEmail(email);
       const user = await authMgmtService.emailChangeRequest(req.identity.sub, email);
 
       const data = {
@@ -150,6 +159,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
   router.delete(
     `${path}/change-email`,
+    validate([query('include').optional().isString().trim()]),
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
@@ -175,10 +185,10 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
   router.get(
     `${path}/change-email`,
+    validate([query('accessToken').isString().trim().notEmpty()]),
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
-      requireReqParamKeys(req, ['accessToken']);
       const accessToken = <string>req.query.accessToken;
       const tempUserInfo = await authMgmtService.getUserInfo(accessToken);
 
@@ -194,6 +204,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
   router.post(
     `${path}/change-password`,
+    validate([query('include').optional().isString().trim(), body('email').trim().isEmail()]),
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
@@ -216,6 +227,12 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.get(
     path,
+    validate([
+      query('include').optional().isString().trim(),
+      query('page[number]').optional().isInt({ min: 0 }),
+      query('page[size]').optional().isInt({ min: 0 }),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(true),
     AuthzGuards.readUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -278,6 +295,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.get(
     `${path}/groups`,
+    validate([query('include').optional().isString().trim(), query('group').optional().isString().trim()]),
     guard.enforcePrimaryGroup(true),
     AuthzGuards.readUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -307,6 +325,11 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.get(
     `${path}/:email`,
+    validate([
+      param('email').trim().isEmail(),
+      query('include').optional().isString().trim(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(true),
     AuthzGuards.readUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -316,7 +339,6 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const email = req.params.email;
       const include = queryParamGroup(<string>req.query.include);
 
-      validateEmail(email);
       const user = await authMgmtService.getUserByEmail(email);
       const userId = get(user, 'user_id');
 
@@ -339,6 +361,13 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.post(
     path,
+    validate([
+      body('email').trim().isEmail(),
+      body('groups').isArray(),
+      body('groups.*').isString().trim().notEmpty(),
+      query('include').optional().isString().trim(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(true),
     AuthzGuards.writeUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -347,10 +376,8 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
       const include = queryParamGroup(<string>req.query.include);
 
-      requireReqBodyKeys(req, ['email', 'groups']);
       const { email, groups } = req.body;
 
-      validateEmail(email);
       const user = await authMgmtService.getUserByEmail(email, false);
       if (user) {
         throw new AlreadyExistsError('Email address is already registered.', 400);
@@ -365,7 +392,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const available = nestedGroups.map((group: any) => get(group, '_id'));
 
       if (Array.isArray(groups) && !groups.every((r) => available.includes(r))) {
-        throw new RecordNotFound('Invalid group specified.', 404);
+        throw new RecordNotFound('Invalid groups specified.', 404);
       }
 
       const newUser = await authMgmtService.createUserInvite(email);
@@ -404,115 +431,121 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.put(
     path,
+    validate([
+      body('emails').isArray(),
+      body('emails.*').trim().isEmail(),
+      body('groups').isArray(),
+      body('groups.*').isString().trim().notEmpty(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(true),
     AuthzGuards.writeUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
-      const emails = get(req.body, 'emails', []);
-      const groups = get(req.body, 'groups', []);
+      const emails: string[] = get(req.body, 'emails', []);
+      const groups: string[] = get(req.body, 'groups', []);
 
       const groupMembership = await authzService.calculateGroupMemberships(req.identity.sub);
       const groupId = authzService.findPrimaryGroupId(groupMembership, req.groups[0]); // enforce a single primary group;
 
       const isOwner = await authzService.isGroupOwner(req.identity.sub, groupId);
-
       const nestedGroups = await authzService.getNestedGroups(groupId, [], isOwner ? ['OWNER'] : ['OWNER', 'ADMIN']);
       const available = nestedGroups.map((group: any) => get(group, '_id'));
 
       if (!groups.every((r) => available.includes(r))) {
-        throw new RecordNotFound('Invalid group specified.', 404);
+        throw new RecordNotFound('Invalid groups specified.', 404);
       }
 
-      const tempResult: {
-        email: string;
-        success?: boolean;
-        error?: string;
-      }[] = [];
+      const data: { email: string; error?: string; status?: number }[] = [];
 
-      const users = await forEachAsync(emails, async (email: string) => {
-        try {
-          validateEmail(email);
-          const user = await authMgmtService.getUserByEmail(email);
-          const userId = get(user, 'user_id');
+      const existingUserIds = [...new Set(nestedGroups.map((group) => get(group, 'members', [])).flat())];
+      const uniqueEmails = new Set(emails);
 
-          if (req.identity.sub === userId) {
-            throw new UnauthorizedError('You cannot update your own user.', 403);
+      const userIds = compact(
+        await forEachAsync([...uniqueEmails], async (email: string) => {
+          try {
+            const user = await authMgmtService.getUserByEmail(email);
+            const userId = get(user, 'user_id');
+
+            if (existingUserIds.includes(userId)) {
+              throw new AlreadyExistsError('The user already exists.', 409); // 409 Conflict;
+            }
+            if (req.identity.sub === userId) {
+              throw new UnauthorizedError('You cannot update your own user.', 403);
+            }
+
+            const [triesToUpdateAnAdmin, triesToUpdateAnOwner] = await Promise.all([
+              authzService.isGroupAdmin(userId, groupId),
+              authzService.isGroupOwner(userId, groupId),
+            ]);
+            if (triesToUpdateAnOwner) {
+              throw new UnauthorizedError('You cannot update an owner.', 403);
+            }
+            if (triesToUpdateAnAdmin && !isOwner) {
+              throw new UnauthorizedError('You cannot update an admin.', 403);
+            }
+
+            data.push({ email: user.email, status: 200 });
+
+            return userId;
+          } catch (err) {
+            data.push({ email: email, error: err.message, status: err.code });
           }
+        })
+      );
 
-          const triesToUpdateAnOwner = await authzService.isGroupOwner(userId, groupId);
-          if (triesToUpdateAnOwner) {
-            throw new UnauthorizedError('You cannot update an owner.', 403);
-          }
+      if (data.some((res) => ![200, 409].includes(res.status))) {
+        const code = 400;
+        const response = createUserBulkSerializer().serialize(data);
 
-          const triesToUpdateAnAdmin = await authzService.isGroupAdmin(userId, groupId);
-          if (triesToUpdateAnAdmin && !isOwner) {
-            throw new UnauthorizedError('You cannot update an admin.', 403);
-          }
-
-          tempResult.push({
-            email: user.email,
-          });
-
-          return { email, userId };
-        } catch (err) {
-          tempResult.push({
-            email: email,
-            error: err.message,
-          });
-        }
-      });
-
-      if (tempResult.some((item) => !!item.error)) {
-        return res.header('Content-Type', DEFAULT_CONTENT_TYPE).status(200).send(tempResult);
+        res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+        return res.status(code).send(response);
       }
 
-      const result = [];
+      await forEachAsync(nestedGroups, async (group: any) => {
+        const groupId = get(group, '_id');
+        const members = get(group, 'members', []);
 
-      await forEachAsync(users, async (user) => {
-        try {
-          await forEachAsync(nestedGroups, async (group: any) => {
-            const groupId = get(group, '_id');
-            const members = get(group, 'members', []);
+        const toAdd = userIds.filter((userId) => !members.includes(userId) && groups.includes(groupId));
+        const toRemove = userIds.filter((userId) => members.includes(userId) && !groups.includes(groupId));
 
-            if (!members.includes(user.userId) && groups.includes(groupId)) {
-              return authzService.addGroupMembers(groupId, [user.userId]); // add to group;
-            }
-            if (members.includes(user.userId) && !groups.includes(groupId)) {
-              return authzService.deleteGroupMembers(groupId, [user.userId]); // remove from group;
-            }
-          });
-
-          result.push({
-            email: user.email,
-            success: true,
-          });
-        } catch (err) {
-          result.push({
-            email: user.email,
-            success: false,
-            error: err.message,
-          });
+        const tasks = [];
+        if (toAdd.length) {
+          tasks.push(authzService.addGroupMembers(groupId, toAdd)); // add to group;
         }
+        if (toRemove.length) {
+          tasks.push(authzService.deleteGroupMembers(groupId, toRemove)); // remove from group;
+        }
+        return Promise.all(tasks);
       });
 
-      res.header('Content-Type', DEFAULT_CONTENT_TYPE).status(200).send(result);
+      const code = 200;
+      const response = createUserBulkSerializer().serialize(data);
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
     })
   );
 
   router.put(
     `${path}/:email`,
+    validate([
+      param('email').trim().isEmail(),
+      body('groups').isArray(),
+      body('groups.*').isString().trim().notEmpty(),
+      query('group').optional().isString().trim(),
+    ]),
     guard.enforcePrimaryGroup(true),
     AuthzGuards.writeUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
-      const email = req.params.email;
-      const body = req.body;
+      const email: string = req.params.email;
+      const groups: string[] = get(req.body, 'groups', []);
 
-      validateEmail(email);
       const user = await authMgmtService.getUserByEmail(email);
       const userId = get(user, 'user_id');
 
@@ -523,24 +556,23 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const groupMembership = await authzService.calculateGroupMemberships(req.identity.sub);
       const groupId = authzService.findPrimaryGroupId(groupMembership, req.groups[0]); // enforce a single primary group;
 
-      const triesToUpdateAnOwner = await authzService.isGroupOwner(userId, groupId);
+      const [triesToUpdateAnOwner, triesToUpdateAnAdmin, isOwner] = await Promise.all([
+        authzService.isGroupOwner(userId, groupId),
+        authzService.isGroupAdmin(userId, groupId),
+        authzService.isGroupOwner(req.identity.sub, groupId),
+      ]);
       if (triesToUpdateAnOwner) {
         throw new UnauthorizedError('You cannot update an owner.', 403);
       }
-
-      const triesToUpdateAnAdmin = await authzService.isGroupAdmin(userId, groupId);
-      const isOwner = await authzService.isGroupOwner(req.identity.sub, groupId);
-
       if (triesToUpdateAnAdmin && !isOwner) {
         throw new UnauthorizedError('You cannot update an admin.', 403);
       }
 
-      const groups = get(body, 'groups', []);
       const nestedGroups = await authzService.getNestedGroups(groupId, [], isOwner ? ['OWNER'] : ['OWNER', 'ADMIN']);
       const available = nestedGroups.map((group: any) => get(group, '_id'));
 
       if (Array.isArray(groups) && !groups.every((r) => available.includes(r))) {
-        throw new RecordNotFound('Invalid group specified.', 404);
+        throw new RecordNotFound('Invalid groups specified.', 404);
       }
 
       const responses = await forEachAsync(nestedGroups, async (group: any) => {
@@ -566,6 +598,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
   router.delete(
     `${path}/:email`,
+    validate([param('email').trim().isEmail(), query('group').optional().isString().trim()]),
     guard.enforcePrimaryGroup(true),
     AuthzGuards.writeUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -574,7 +607,6 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
       const email = req.params.email;
 
-      validateEmail(email);
       const user = await authMgmtService.getUserByEmail(email);
       const userId = get(user, 'user_id');
 
@@ -585,14 +617,14 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const groupMembership = await authzService.calculateGroupMemberships(req.identity.sub);
       const groupId = authzService.findPrimaryGroupId(groupMembership, req.groups[0]); // enforce a single primary group;
 
-      const triesToDeleteAnOwner = await authzService.isGroupOwner(userId, groupId);
+      const [triesToDeleteAnOwner, triesToDeleteAnAdmin, isOwner] = await Promise.all([
+        authzService.isGroupOwner(userId, groupId),
+        authzService.isGroupAdmin(userId, groupId),
+        authzService.isGroupOwner(req.identity.sub, groupId),
+      ]);
       if (triesToDeleteAnOwner) {
         throw new UnauthorizedError('You cannot delete an owner.', 403);
       }
-
-      const triesToDeleteAnAdmin = await authzService.isGroupAdmin(userId, groupId);
-      const isOwner = await authzService.isGroupOwner(req.identity.sub, groupId);
-
       if (triesToDeleteAnAdmin && !isOwner) {
         throw new UnauthorizedError('You need to be an owner to delete an admin', 403);
       }
@@ -601,6 +633,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
       const responses = await forEachAsync(nestedGroups, async (group: any) => {
         const members = get(group, 'members', []);
+
         if (members.includes(userId)) {
           const groupId = get(group, '_id');
           return authzService.deleteGroupMembers(groupId, [userId]);

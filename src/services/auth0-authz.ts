@@ -18,6 +18,7 @@
 */
 
 import { AuthorizationClient } from '@natgeosociety/auth0-authorization';
+import { User } from 'auth0';
 import { get, set } from 'lodash';
 import makeError from 'make-error';
 
@@ -35,17 +36,17 @@ export interface AuthzServiceSpec {
   getGroup(id: string);
   getGroups(filterGroups?: string[]);
   getUserGroups(id: string);
-  getGroupOwners(id: string);
-  getGroupAdmins(id: string);
-  isGroupOwner(userId: string, groupId: string);
-  isGroupAdmin(userId: string, groupId: string);
+  getGroupOwners(id: string, onlyIds?: boolean): Promise<string[] | User[]>;
+  getGroupAdmins(id: string, onlyIds?: boolean): Promise<string[] | User[]>;
+  isGroupOwner(userId: string, groupId: string): Promise<string>;
+  isGroupAdmin(userId: string, groupId: string): Promise<string>;
   createGroup(name: string, description: string, members?: string[]);
   updateGroup(id: string, name: string, description: string);
   addNestedGroups(groupId: string, nestedGroupIds: string[]);
   deleteNestedGroups(groupId: string, nestedGroupIds: string[]);
   addGroupRoles(groupId: string, roleIds: string[]);
   deleteGroup(groupId: string);
-  getPermission();
+  getPermissions();
   createPermission(name: string, description: string, applicationId: string, applicationType?: string);
   deletePermission(permissionId: string);
   getRole(roleId: string);
@@ -107,34 +108,38 @@ export class Auth0AuthzService implements AuthzServiceSpec {
     return this.authzClient.getUserGroups({ userId: id });
   }
 
-  async getGroupOwners(id: string) {
+  async getGroupOwners(id: string, onlyIds: boolean = false): Promise<string[] | User[]> {
     const groups = await this.getNestedGroups(id, ['OWNER']);
-
-    if (!groups.length || !Array.isArray(groups[0].members)) {
+    if (!groups.length) {
       return [];
     }
-    return Promise.all(groups[0].members.map((userId) => this.authzClient.getUser({ userId })));
+    const members: string[] = get(groups[0], 'members', []);
+    if (onlyIds) {
+      return members;
+    }
+    return Promise.all(members.map((userId) => this.authzClient.getUser({ userId })));
   }
 
-  async getGroupAdmins(id: string) {
+  async getGroupAdmins(id: string, onlyIds: boolean = false): Promise<string[] | User[]> {
     const groups = await this.getNestedGroups(id, ['ADMIN']);
-
-    if (!groups.length || !Array.isArray(groups[0].members)) {
+    if (!groups.length) {
       return [];
     }
-    return Promise.all(groups[0].members.map((userId) => this.authzClient.getUser({ userId })));
+    const members: string[] = get(groups[0], 'members', []);
+    if (onlyIds) {
+      return members;
+    }
+    return Promise.all(members.map((userId) => this.authzClient.getUser({ userId })));
   }
 
-  async isGroupOwner(userId: string, groupId: string) {
-    const owners = await this.getGroupOwners(groupId);
-
-    return owners.find((owner) => owner.user_id === userId);
+  async isGroupOwner(userId: string, groupId: string): Promise<string> {
+    const owners = <string[]>await this.getGroupOwners(groupId, true);
+    return owners.find((ownerId) => ownerId === userId);
   }
 
-  async isGroupAdmin(userId: string, groupId: string) {
-    const admins = await this.getGroupAdmins(groupId);
-
-    return admins.find((admin) => admin.user_id === userId);
+  async isGroupAdmin(userId: string, groupId: string): Promise<string> {
+    const admins = <string[]>await this.getGroupAdmins(groupId, true);
+    return admins.find((adminId) => adminId === userId);
   }
 
   async createGroup(name: string, description: string, members?: string[]) {
@@ -157,7 +162,7 @@ export class Auth0AuthzService implements AuthzServiceSpec {
     return this.authzClient.addGroupRoles({ groupId, roleIds });
   }
 
-  async getPermission() {
+  async getPermissions() {
     return this.authzClient.getPermissions();
   }
 
