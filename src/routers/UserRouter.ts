@@ -204,7 +204,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
   router.post(
     `${path}/change-password`,
-    validate([query('include').optional().isString().trim(), body('email').trim().isEmail()]),
+    validate([]),
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
