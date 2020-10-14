@@ -218,18 +218,19 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
     })
   );
 
-  router.delete(
+  router.post(
     `${path}/organizations`,
-    validate([query('group').optional().isString().trim()]),
-    guard.enforcePrimaryGroup(false, true),
+    validate([]),
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
+
+      const organizations = req.body;
 
       const userId = req.identity.sub;
       const groupMembership = await authzService.calculateGroupMemberships(userId);
 
-      await forEachAsync(req.groups, async (group) => {
-        const groupId = authzService.findPrimaryGroupId(groupMembership, group);
+      await forEachAsync(organizations, async (organization) => {
+        const groupId = authzService.findPrimaryGroupId(groupMembership, organization);
 
         const nestedGroups = await authzService.getNestedGroups(groupId);
 

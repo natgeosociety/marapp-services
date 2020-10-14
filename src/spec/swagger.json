@@ -3475,19 +3475,11 @@
       }
     },
     "/users/profile/organizations": {
-      "delete": {
+      "post": {
         "tags": ["profile"],
         "summary": "Remove current user's organizations",
         "operationId": "removeUserOrganizations",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "group",
-            "description": "Primary group name. Required when multiple primary groups included in the token.",
-            "required": false,
-            "type": "string"
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "OK"
