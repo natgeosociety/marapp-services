@@ -218,6 +218,34 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
     })
   );
 
+  router.delete(
+    `${path}/organizations`,
+    validate([query('group').optional().isString().trim()]),
+    guard.enforcePrimaryGroup(false, true),
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const authzService: AuthzServiceSpec = req.app.locals.authzService;
+
+      const userId = req.identity.sub;
+      const groupMembership = await authzService.calculateGroupMemberships(userId);
+
+      await forEachAsync(req.groups, async (group) => {
+        const groupId = authzService.findPrimaryGroupId(groupMembership, group);
+
+        const nestedGroups = await authzService.getNestedGroups(groupId);
+
+        return nestedGroups.map((group: any) => authzService.deleteGroupMembers(group._id, [userId]));
+      });
+
+      const success = true;
+
+      const code = 200;
+      const response = createStatusSerializer().serialize({ success });
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
+
   return router;
 };
 
