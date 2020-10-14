@@ -234,7 +234,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
         const nestedGroups = await authzService.getNestedGroups(groupId);
 
-        return nestedGroups.map((group: any) => authzService.deleteGroupMembers(group._id, [userId]));
+        return Promise.all(nestedGroups.map((group: any) => authzService.deleteGroupMembers(group._id, [userId])));
       });
 
       const success = true;
