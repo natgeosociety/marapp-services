@@ -128,6 +128,24 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
     })
   );
 
+  router.delete(
+    path,
+    validate([]),
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
+
+      await authMgmtService.deleteUser(req.identity.sub);
+
+      const success = true;
+
+      const code = 200;
+      const response = createStatusSerializer().serialize({ success });
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
+
   router.post(
     `${path}/change-email`,
     validate([query('include').optional().isString().trim(), body('email').trim().isEmail()]),

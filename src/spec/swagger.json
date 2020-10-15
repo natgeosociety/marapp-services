@@ -3333,6 +3333,32 @@
             "Bearer": []
           }
         ]
+      },
+      "delete": {
+        "tags": ["profile"],
+        "summary": "Delete current user's profile",
+        "description": "",
+        "operationId": "deleteUserProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
       }
     },
     "/users/profile/change-email": {
