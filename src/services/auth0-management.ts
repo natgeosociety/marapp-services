@@ -224,7 +224,7 @@ export class Auth0ManagementService implements AuthManagementService {
       const userMeta = { ...user.user_metadata, pendingUserId: null, pendingUserEmail: null };
 
       // update the email address on the original user;
-      await this.updateUser(user.user_id, { email: newUserEmail, user_metadata: userMeta });
+      await this.updateUser(user.user_id, { email: newUserEmail, email_verified: true, user_metadata: userMeta });
 
       // delete the temporary passwordless user account;
       await this.deleteUser(tempUser.user_id);
