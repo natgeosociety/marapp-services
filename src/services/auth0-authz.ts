@@ -250,8 +250,11 @@ export class Auth0AuthzService implements AuthzServiceSpec {
   async getMemberGroups(userId: string, primaryGroups: string[]) {
     let groups = [];
     try {
-      const members = await this.calculateGroupMemberships(userId);
-      const primaryGroupIds = primaryGroups.map((g) => this.findPrimaryGroupId(<any>members, g));
+      const members = <any>await this.calculateGroupMemberships(userId);
+
+      const primaryGroupIds = primaryGroups
+        .filter((pg: string) => members.find((m) => m.name === pg))
+        .map((g) => this.findPrimaryGroupId(members, g));
 
       const nestedGroups = await forEachAsync(primaryGroupIds, async (groupId) => this.getNestedGroups(groupId));
       const flatten = [].concat.apply([], nestedGroups);
