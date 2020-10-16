@@ -131,17 +131,58 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
   router.delete(
     path,
     validate([]),
+    guard.includeGroups(),
     asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const authzService: AuthzServiceSpec = req.app.locals.authzService;
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
+
+      const userId = req.identity.sub;
+      const groupMembership = await authzService.calculateGroupMemberships(userId);
+
+      const availableGroups = req.groups.filter((group: any) => groupMembership.find((g: any) => g.name === group));
+
+      // check if it's the only owner of a group;
+      await forEachAsync(availableGroups, async (group) => {
+        const groupId = authzService.findPrimaryGroupId(groupMembership, group);
+        const groupOwners = await authzService.getGroupOwners(groupId, true);
+
+        if (groupOwners.includes(userId) && groupOwners.length === 1) {
+          throw new UnauthorizedError(`You cannot delete your account because you're the only owner of ${group}.`, 403);
+        }
+      });
+
+      // check if it's the only super admin;
+      const superAdmins = await authzService.getSuperAdmins(true);
+
+      if (superAdmins.includes(userId) && superAdmins.length === 1) {
+        throw new UnauthorizedError(`You cannot delete your account because you're the only super admin.`, 403);
+      }
 
       let success, code;
 
       try {
-        await authMgmtService.deleteUser(req.identity.sub);
+        // remove from all groups;
+        await forEachAsync(availableGroups, async (group) => {
+          const groupId = authzService.findPrimaryGroupId(groupMembership, group);
+
+          const nestedGroups = await authzService.getNestedGroups(groupId);
+          const availableNestedGroups = nestedGroups.filter((group: any) =>
+            groupMembership.find((g: any) => g._id === group._id)
+          );
+
+          return Promise.all(
+            availableNestedGroups.map((group: any) => authzService.deleteGroupMembers(group._id, [userId]))
+          );
+        });
+
+        // delete user;
+        await authMgmtService.deleteUser(userId);
 
         success = true;
         code = 200;
       } catch (err) {
+        logger.error(err);
+
         success = false;
         code = 418;
       }

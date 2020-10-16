@@ -29,7 +29,7 @@ import { AuthzServiceSpec } from './auth0-authz';
 
 const logger = getLogger('membership-service');
 
-enum RoleEnum {
+export enum RoleEnum {
   OWNER = 'Owner',
   ADMIN = 'Admin',
   EDITOR = 'Editor',
