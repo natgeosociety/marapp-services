@@ -1,3 +1,33 @@
+# [1.6.0](https://github.com/natgeosociety/marapp-services/compare/v1.5.0...v1.6.0) (2020-10-08)
+
+
+### Bug Fixes
+
+* Add standalone bulk response serializer ([12d3b6e](https://github.com/natgeosociety/marapp-services/commit/12d3b6eabbb8d1da4bbb9e9d7d1556434114e218))
+* admin/owner destruct order ([b4a4e91](https://github.com/natgeosociety/marapp-services/commit/b4a4e91732740a662880631db18d13d6c6c55740))
+* cleanup empty values ([6e0745c](https://github.com/natgeosociety/marapp-services/commit/6e0745c107665c4c74617212888af08557a6d4df))
+* cleanup organization resources [EP-2599] ([f6e6cfc](https://github.com/natgeosociety/marapp-services/commit/f6e6cfc40c4635640912b046891d5e5df8b3e601))
+* Enforce layer id when generating tiles ([be4c109](https://github.com/natgeosociety/marapp-services/commit/be4c109d1fb7474afb0f87dd47dab26edf78ddd6))
+* next cursor condition [EP-2487] ([1f848cb](https://github.com/natgeosociety/marapp-services/commit/1f848cb2c1e5fbbf933ce0164bcd9ef11669b49e))
+* skip update of users that already have a role [EP-3024] ([10ad445](https://github.com/natgeosociety/marapp-services/commit/10ad44537363011e01d9d485309b3eb117b033d8))
+* Tile router typo for Y coordinate ([b51d577](https://github.com/natgeosociety/marapp-services/commit/b51d577803889193994553c17281672e88cd6c63))
+* update response status code ([1da3e83](https://github.com/natgeosociety/marapp-services/commit/1da3e83f3aa7faed959732c16a5bf0fd67e6b1b2))
+* **pagination:** Handle next cursor when page is empty [EP-2487] ([0771321](https://github.com/natgeosociety/marapp-services/commit/0771321159cab7819c631fe6e658aba93fdecbce))
+* **search:** Add lowercase filter to search analyzer [EP-2752] ([24f62c4](https://github.com/natgeosociety/marapp-services/commit/24f62c42d96f18990d369085f7a79b9451b37c17))
+* **search:** Case insensitive sorting, sort numeric substrings based on their numeric value [EP-1127] ([3fb51be](https://github.com/natgeosociety/marapp-services/commit/3fb51be0e94c12c445060e0e572c2129a6ac10db))
+* **search:** Include digits in search analyzer [EP-2752] ([20b45e4](https://github.com/natgeosociety/marapp-services/commit/20b45e46762db1a5903fee9dfbd7b1b510360085))
+
+
+### Features
+
+* input validation & sanitization [EP-3004] ([53f2469](https://github.com/natgeosociety/marapp-services/commit/53f2469d0e90079734d180a9a2acf81cec46de38))
+
+
+### Performance Improvements
+
+* optimize users update [EP-2216] ([e63f970](https://github.com/natgeosociety/marapp-services/commit/e63f9705680bc1087f2a0ecc220f5b53b5dbb571))
+* update redirect type for tile requests ([eddb5f1](https://github.com/natgeosociety/marapp-services/commit/eddb5f1252e4352d7b12e1330b639fab690c4409))
+
 # [1.5.0](https://github.com/natgeosociety/marapp-services/compare/v1.4.0...v1.5.0) (2020-09-24)
 
 
