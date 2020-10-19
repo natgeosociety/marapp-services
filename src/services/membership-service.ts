@@ -409,7 +409,7 @@ export class MembershipService implements MembershipServiceSpec {
    * @param value
    */
   enforceOrganizationName(value: string): boolean {
-    const slugRegexp = new RegExp('^[A-Z0-9](-?[A-Z0-9])*$');
+    const slugRegexp = new RegExp('^[a-z0-9](-?[a-z0-9])*$');
     return !!value.match(slugRegexp);
   }
 
