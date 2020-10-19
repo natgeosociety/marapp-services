@@ -1,3 +1,21 @@
+# [1.7.0](https://github.com/natgeosociety/marapp-services/compare/v1.6.0...v1.7.0) (2020-10-19)
+
+
+### Bug Fixes
+
+* delete account special cases ([#64](https://github.com/natgeosociety/marapp-services/issues/64)) ([9f1df32](https://github.com/natgeosociety/marapp-services/commit/9f1df32379eaaf6e191252463cd536de71b15565))
+* force email verified to true ([47df21f](https://github.com/natgeosociety/marapp-services/commit/47df21fd826c49014f3ad2ff7db1b96eb4f238fb))
+* primary groups based on membership ([0f7d3b7](https://github.com/natgeosociety/marapp-services/commit/0f7d3b7560c0f017b01569d61c95323a44f2903e))
+* user profile orgs remove only from available nested groups ([20f93a7](https://github.com/natgeosociety/marapp-services/commit/20f93a7d80abaf81d4d516baea5f4ce073c4b736))
+
+
+### Features
+
+* delete user profile [EP-2924] ([#63](https://github.com/natgeosociety/marapp-services/issues/63)) ([43286e5](https://github.com/natgeosociety/marapp-services/commit/43286e573f29f8617f21b0f9a52ca77ecf447c65))
+* enforce lowercase for slug when creating org [EP-2755] ([fe95f1b](https://github.com/natgeosociety/marapp-services/commit/fe95f1b30e7afc110f20af048280ed1bbbb6b4ad))
+* remove continent option from location types [EP-2767] ([9dba09a](https://github.com/natgeosociety/marapp-services/commit/9dba09adf1918d08fbadaf82e92c8d1e6329911b))
+* user profile remove orgs [EP-2620] ([#61](https://github.com/natgeosociety/marapp-services/issues/61)) ([5553707](https://github.com/natgeosociety/marapp-services/commit/555370767a048e004fee5456860d90d8dfdbb2cd))
+
 # [1.6.0](https://github.com/natgeosociety/marapp-services/compare/v1.5.0...v1.6.0) (2020-10-08)
 
 
