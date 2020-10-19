@@ -36,7 +36,7 @@ import { slugValidator } from './validators';
 const logger = getLogger('LocationModel');
 
 export enum LocationTypeEnum {
-  CONTINENT = 'Continent',
+  // CONTINENT = 'Continent',
   COUNTRY = 'Country',
   JURISDICTION = 'Jurisdiction',
   BIOME = 'Biome',

@@ -23,6 +23,7 @@ import { get, set } from 'lodash';
 import makeError from 'make-error';
 
 import { AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET, AUTH0_DOMAIN, AUTH0_EXTENSION_URL } from '../config/auth0';
+import { RoleEnum } from './membership-service';
 import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
 
@@ -38,6 +39,7 @@ export interface AuthzServiceSpec {
   getUserGroups(id: string);
   getGroupOwners(id: string, onlyIds?: boolean): Promise<string[] | User[]>;
   getGroupAdmins(id: string, onlyIds?: boolean): Promise<string[] | User[]>;
+  getSuperAdmins(onlyIds?: boolean): Promise<string[] | User[]>;
   isGroupOwner(userId: string, groupId: string): Promise<string>;
   isGroupAdmin(userId: string, groupId: string): Promise<string>;
   createGroup(name: string, description: string, members?: string[]);
@@ -130,6 +132,17 @@ export class Auth0AuthzService implements AuthzServiceSpec {
       return members;
     }
     return Promise.all(members.map((userId) => this.authzClient.getUser({ userId })));
+  }
+
+  async getSuperAdmins(onlyIds: boolean = false) {
+    const { roles } = await this.getRoles();
+    const superAdminRole: any = roles.find((role) => role.name.endsWith(RoleEnum.SUPER_ADMIN));
+
+    if (onlyIds) {
+      return superAdminRole.users;
+    }
+
+    return Promise.all(superAdminRole.users.map((userId) => this.authzClient.getUser({ userId })));
   }
 
   async isGroupOwner(userId: string, groupId: string): Promise<string> {
@@ -250,8 +263,11 @@ export class Auth0AuthzService implements AuthzServiceSpec {
   async getMemberGroups(userId: string, primaryGroups: string[]) {
     let groups = [];
     try {
-      const members = await this.calculateGroupMemberships(userId);
-      const primaryGroupIds = primaryGroups.map((g) => this.findPrimaryGroupId(<any>members, g));
+      const members = <any>await this.calculateGroupMemberships(userId);
+
+      const primaryGroupIds = primaryGroups
+        .filter((pg: string) => members.find((m) => m.name === pg))
+        .map((g) => this.findPrimaryGroupId(members, g));
 
       const nestedGroups = await forEachAsync(primaryGroupIds, async (groupId) => this.getNestedGroups(groupId));
       const flatten = [].concat.apply([], nestedGroups);

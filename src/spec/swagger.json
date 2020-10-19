@@ -3333,6 +3333,35 @@
             "Bearer": []
           }
         ]
+      },
+      "delete": {
+        "tags": ["profile"],
+        "summary": "Delete current user's profile",
+        "description": "",
+        "operationId": "deleteUserProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "418": {
+            "description": "I'm a teapot"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
       }
     },
     "/users/profile/change-email": {
@@ -3452,6 +3481,33 @@
         "tags": ["profile"],
         "summary": "Change current user's password",
         "operationId": "changeUserPassword",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/users/profile/organizations": {
+      "post": {
+        "tags": ["profile"],
+        "summary": "Remove current user's organizations",
+        "operationId": "removeUserOrganizations",
         "parameters": [],
         "responses": {
           "200": {
