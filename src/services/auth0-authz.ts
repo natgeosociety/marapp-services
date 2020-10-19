@@ -23,9 +23,10 @@ import { get, set } from 'lodash';
 import makeError from 'make-error';
 
 import { AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET, AUTH0_DOMAIN, AUTH0_EXTENSION_URL } from '../config/auth0';
-import { RoleEnum } from './membership-service';
 import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
+
+import { RoleEnum } from './membership-service';
 
 export const Auth0Error = makeError('Auth0Error');
 
@@ -136,13 +137,15 @@ export class Auth0AuthzService implements AuthzServiceSpec {
 
   async getSuperAdmins(onlyIds: boolean = false) {
     const { roles } = await this.getRoles();
-    const superAdminRole: any = roles.find((role) => role.name.endsWith(RoleEnum.SUPER_ADMIN));
-
-    if (onlyIds) {
-      return superAdminRole.users;
+    const superAdminRole = roles.find((r) => r?.name && r?.name.endsWith(RoleEnum.SUPER_ADMIN));
+    if (!superAdminRole) {
+      return [];
     }
-
-    return Promise.all(superAdminRole.users.map((userId) => this.authzClient.getUser({ userId })));
+    const members: string[] = get(superAdminRole, 'users', []);
+    if (onlyIds) {
+      return members;
+    }
+    return Promise.all(members.map((userId) => this.authzClient.getUser({ userId })));
   }
 
   async isGroupOwner(userId: string, groupId: string): Promise<string> {
