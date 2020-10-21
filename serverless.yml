@@ -413,4 +413,4 @@ resources:
     SNSWipeDataTopic:
       Type: AWS::SNS::Topic
       Properties:
-        TopicName: ${self:custom.snsWipeDataTopic}
+        TopicName: ${self:custom.stageEnvironment.snsWipeDataTopic}
