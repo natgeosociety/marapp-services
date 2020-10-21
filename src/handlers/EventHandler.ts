@@ -22,9 +22,9 @@ export const wipeDataTaskHandler = async (event: SNSEvent, context: Context) => 
   const decoded = JSON.parse(message);
   const { organizationId, organizationName } = <SNSWipeDataEvent>decoded;
 
-  logger.debug(`removing records for organization: ${organizationName}`);
+  logger.debug('removing records for organization %s with slug: %s', organizationId, organizationName);
 
-  try {
+  return new Promise(async (resolve, reject) => {
     const parser = new MongooseQueryParser();
     const models: Model<any>[] = [LocationModel, CollectionModel, LayerModel, WidgetModel, DashboardModel];
 
@@ -46,8 +46,10 @@ export const wipeDataTaskHandler = async (event: SNSEvent, context: Context) => 
     await forEachAsync(models, async (model: IESPlugin) => model.esDeleteByQuery({ organization: organizationName }));
 
     logger.debug('[esDeleteByQuery] duration: %s (ms)', performance.now() - t2);
-  } catch (err) {
-    logger.warn('failed to wipe environment for organization: %s', organizationName);
+
+    resolve();
+  }).catch((err) => {
+    logger.warn('failed to wipe environment for organization %s with slug: %s', organizationId, organizationName);
     logger.error(err);
-  }
+  });
 };
