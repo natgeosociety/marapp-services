@@ -51,6 +51,10 @@ provider:
       Action:
         - SNS:Publish
       Resource: ${env:SNS_TOPIC_MANAGER_ARN}
+    - Effect: Allow
+      Action:
+        - SNS:Publish
+      Resource: ${env:SNS_TOPIC_WIPE_DATA_ARN}
 
 custom:
   stageEnv: ${opt:stage, self:provider.stage}
