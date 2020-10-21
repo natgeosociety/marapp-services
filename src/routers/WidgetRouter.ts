@@ -18,8 +18,8 @@
 */
 
 import { Response, Router } from 'express';
-import { param, query, body } from 'express-validator';
 import asyncHandler from 'express-async-handler';
+import { body, param, query } from 'express-validator';
 import { merge } from 'lodash';
 import urljoin from 'url-join';
 

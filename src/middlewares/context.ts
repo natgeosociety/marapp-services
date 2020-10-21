@@ -20,13 +20,13 @@
 import { NextFunction, Request, Response } from 'express';
 import asyncHandler from 'express-async-handler';
 import { Connection } from 'mongoose';
-import { hrtime } from 'process';
+import { performance } from 'perf_hooks';
 import { RedisClient } from 'redis';
 
 import { MONGODB_URI, REDIS_URI } from '../config';
 import { createMongoConnection } from '../helpers/mongoose';
 import { createRedisConnection } from '../helpers/redis';
-import { convertHrtime, forEachAsync } from '../helpers/util';
+import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
 import { Auth0AuthzService } from '../services/auth0-authz';
 import { Auth0ManagementService } from '../services/auth0-management';
@@ -54,7 +54,7 @@ let eeSharedContext: EESharedContext;
  * @param next
  */
 export const globalContext = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-  const start = hrtime();
+  const start = performance.now();
 
   if (!sharedContext) {
     logger.debug('[globalContext] shared context');
@@ -77,10 +77,8 @@ export const globalContext = asyncHandler(async (req: Request, res: Response, ne
   req.app.locals.authzService = new Auth0AuthzService();
   req.app.locals.authManagementService = new Auth0ManagementService();
 
-  const end = hrtime(start);
-  const { milliseconds } = convertHrtime(end);
-
-  logger.debug(`[globalContext] shared context duration: ${milliseconds}ms`);
+  const end = performance.now();
+  logger.debug(`[globalContext] shared context duration: ${end - start}(ms)`);
 
   next();
 });
@@ -92,7 +90,7 @@ export const globalContext = asyncHandler(async (req: Request, res: Response, ne
  * @param next
  */
 export const eeContext = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-  const start = hrtime();
+  const start = performance.now();
 
   if (!eeSharedContext) {
     logger.debug('[eeContext] shared context');
@@ -105,10 +103,9 @@ export const eeContext = asyncHandler(async (req: Request, res: Response, next: 
     // resolve connection(s);
     await eeSharedContext.ee;
   }
-  const end = hrtime(start);
-  const { milliseconds } = convertHrtime(end);
 
-  logger.debug(`[eeContext] shared context duration: ${milliseconds}ms`);
+  const end = performance.now();
+  logger.debug(`[eeContext] shared context duration: ${end - start}(ms)`);
 
   next();
 });

@@ -36,6 +36,7 @@ export interface IESPlugin {
     filterBy?: { [key: string]: any },
     fields?: string[]
   ): Promise<any>;
+  esDeleteByQuery?(esQuery: object): Promise<any>;
 }
 
 export default (schema: Schema, options: ESIndexConfig) => {
@@ -43,43 +44,42 @@ export default (schema: Schema, options: ESIndexConfig) => {
 
   schema.post('save', async function (doc) {
     const modelName: string = this.constructor.modelName;
-    const indexName: string = [ES_INDEX_PREFIX, modelName.toLowerCase()].filter((e) => !!e).join('-');
+    const indexName: string = modelToEsIndex(modelName);
     const docId: string = doc.id || doc._id;
 
-    logger.debug(`indexing es document by id: ${docId}`);
+    logger.debug('[post-save] indexing es document: %s', docId);
 
     const fieldsToIndex: string[] = Object.keys(options.mappings.properties);
     const partial = <MongooseDocument>pick(doc, fieldsToIndex);
 
     if (!(await searchService.hasIndex(indexName))) {
-      logger.debug(`creating es index for model: ${modelName}`);
-
+      logger.debug('[post-save] creating es index: %s', indexName);
       await searchService.createIndex(indexName, options);
     }
-    logger.debug(`updating es document: ${docId}`);
 
+    logger.debug('[post-save] updating es document: %s', docId);
     return searchService.indexById(indexName, docId, partial);
   });
 
   schema.post('remove', async function (doc) {
     const modelName: string = this.constructor.modelName;
-    const indexName: string = [ES_INDEX_PREFIX, modelName.toLowerCase()].filter((e) => !!e).join('-');
+    const indexName: string = modelToEsIndex(modelName);
     const docId: string = doc.id || doc._id;
 
-    logger.debug(`removing es document: ${docId}`);
-
+    logger.debug('[post-remove] removing es document: %s', docId);
     return searchService.removeById(indexName, docId);
   });
 
   schema.statics.esSync = async function () {
     const modelName: string = this.modelName;
-    const indexName: string = [ES_INDEX_PREFIX, modelName.toLowerCase()].filter((e) => !!e).join('-');
+    const indexName: string = modelToEsIndex(modelName);
 
     if (await searchService.hasIndex(indexName)) {
-      logger.debug(`deleting es index for model: ${modelName}`);
-
+      logger.debug('[esSync] deleting es index: %s', indexName);
       await searchService.deleteIndex(indexName);
     }
+
+    logger.debug('[esSync] creating es index: %s', indexName);
     await searchService.createIndex(indexName, options);
 
     const fieldsToSelect: string = Object.keys(options.mappings.properties).join(' ');
@@ -89,9 +89,9 @@ export default (schema: Schema, options: ESIndexConfig) => {
   };
 
   schema.statics.esSearch = async function (esQuery: object, from: number = 0, size: number = 10) {
-    const modelName: string = this.modelName;
-    const indexName: string = [ES_INDEX_PREFIX, modelName.toLowerCase()].filter((e) => !!e).join('-');
+    const indexName: string = modelToEsIndex(this.modelName);
 
+    logger.debug('[esSearch] searching es index %s: %O', indexName, esQuery);
     return searchService.search(indexName, esQuery, from, size);
   };
 
@@ -138,13 +138,11 @@ export default (schema: Schema, options: ESIndexConfig) => {
         0,
         10000
       );
+      logger.debug('[esSearchOnlyIds] found %s documents for query: %O', data.hits.hits.length, query);
 
-      logger.debug(`found ${data.body.hits.hits.length} hits for query: ${JSON.stringify(query)}`);
-
-      return data.body.hits.hits.reduce((result, { _id, highlight }) => {
+      return data.hits.hits.reduce((result, { _id, highlight }) => {
         result[_id] = Object.keys(highlight).reduce((a, c) => {
           a[c] = highlight[c][0];
-
           return a;
         }, {});
 
@@ -196,15 +194,41 @@ export default (schema: Schema, options: ESIndexConfig) => {
         0,
         10000
       );
+      logger.debug('[esSearchOnlyIdsAndAggs] found %s documents for query: %O', data.hits.hits.length, query);
 
-      logger.debug(`found ${data.body.hits.hits.length} hits for query: ${JSON.stringify(query)}`);
-
-      result.ids = data.body.hits.hits.map((hit) => hit._id);
-      result.aggs = data.body.aggregations.default.buckets;
+      result.ids = data.hits.hits.map((hit) => hit._id);
+      result.aggs = data.aggregations.default.buckets;
     } catch (err) {
       logger.error(err);
     }
-
     return result;
   };
+
+  schema.statics.esDeleteByQuery = async function (esQuery: { [key: string]: any } = {}) {
+    const indexName: string = modelToEsIndex(this.modelName);
+    if (isEmpty(esQuery)) {
+      return false;
+    }
+    let success: boolean = true;
+    try {
+      const query = {
+        match: esQuery,
+      };
+      const data = await searchService.deleteByQuery(indexName, query);
+      logger.debug('[esDeleteByQuery] deleted %s out of %s documents for query: %O', data.deleted, data.total, esQuery);
+    } catch (err) {
+      logger.error(err);
+      success = false;
+    }
+    return success;
+  };
 };
+
+/**
+ * Helper function.
+ * @param modelName
+ * @param indexPrefix
+ * @param sep
+ */
+const modelToEsIndex = (modelName: string, indexPrefix: string = ES_INDEX_PREFIX, sep: string = '-'): string =>
+  [indexPrefix, modelName.toLowerCase()].filter(Boolean).join(sep);

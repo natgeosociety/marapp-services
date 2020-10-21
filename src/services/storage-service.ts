@@ -18,17 +18,20 @@
 */
 
 import makeError from 'make-error';
+import { Readable } from 'stream';
 import urljoin from 'url-join';
 
 import { NODE_ENV, S3_ASSETS_PATH_PREFIX } from '../config';
 import { getLogger } from '../logging';
 
 import { fetchURLToStream } from './fetch';
-import { s3KeyExists, s3StreamUpload } from './s3';
+import { createLifecyclePolicy, s3KeyExists, s3StreamUpload } from './s3';
 
 const logger = getLogger();
 
-export const StorageServiceError = makeError('StorageServiceError');
+const StorageServiceError = makeError('StorageServiceError');
+
+const MAP_TILES_PREFIX = 'map-tiles';
 
 /**
  * Slippy map tilenames.
@@ -58,12 +61,17 @@ export const uploadMapTile = async (
       return meta.storageUrl;
     }
   } catch (err) {
-    // silent catch;
+    logger.error(err);
   }
 };
 
 /**
- * Check if a map tilename exists in storage.
+ * Check if a map tile key exists in storage.
+ * @param layerId
+ * @param mapId
+ * @param zoom
+ * @param x
+ * @param y
  */
 export const existsMapTile = async (
   layerId: string,
@@ -83,17 +91,28 @@ export const existsMapTile = async (
       return meta.storageUrl;
     }
   } catch (err) {
-    // silent catch;
+    logger.error(err);
   }
 };
 
+/**
+ * Encode tile keys based on Slippy Map file naming convention.
+ * - format: <s3-prefix>/<map-tiles-prefix>/<layer-id>/<zoom>/<x-coord>/<y-coord>/tile_<tile-id>.png
+ * See: https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+ * @param layerId
+ * @param mapId
+ * @param zoom
+ * @param x
+ * @param y
+ * @param pathPrefix
+ */
 const encodeTileKey = (
   layerId: string,
   mapId: string,
   zoom: number,
   x: number,
   y: number,
-  pathPrefix: string = '/map-tiles'
+  pathPrefix: string = MAP_TILES_PREFIX
 ): string => {
   const map = mapId.split('/').pop();
   const id = map.split('-')[0];
@@ -102,6 +121,41 @@ const encodeTileKey = (
   const path = urljoin(S3_ASSETS_PATH_PREFIX, pathPrefix, layerId, String(zoom), String(x), String(y), name);
 
   return path.startsWith('/') ? path.substr(1) : path; // remove prefix from S3 paths;
+};
+
+/**
+ * Remove map tiles for specified layerIds.
+ * @param layerIds
+ * @param pathPrefix
+ */
+export const removeMapTiles = async (layerIds: string[], pathPrefix: string = MAP_TILES_PREFIX) => {
+  const prefixed = layerIds.map((layerId: string) => {
+    const path = urljoin(S3_ASSETS_PATH_PREFIX, pathPrefix, layerId);
+    return path.startsWith('/') ? path.substr(1) : path; // remove prefix from S3 paths;
+  });
+
+  let success: boolean;
+  try {
+    success = await createLifecyclePolicy(prefixed);
+  } catch (err) {
+    success = false;
+    logger.error(err);
+  }
+  return success;
+};
+
+/**
+ * Gather layers and remove existing map tiles from storage;
+ * @param stream
+ */
+export const removeLayerMapTiles = async (stream: Readable) => {
+  const layerIds: string[] = [];
+  for await (const chunk of stream) {
+    layerIds.push(chunk.id);
+  }
+  logger.info('[removeLayerMapTiles] %s layers', layerIds.length);
+
+  return removeMapTiles(layerIds);
 };
 
 /**

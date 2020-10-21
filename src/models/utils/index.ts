@@ -20,6 +20,7 @@
 import { eachDeep } from 'deepdash/standalone';
 import { get, isEmpty, isFunction, isNil, omit, set } from 'lodash';
 import { Document, Model, Query } from 'mongoose';
+import { Readable } from 'stream';
 
 import { DocumentError, ExposedError, RecordNotFound, ValidationError } from '../../errors';
 import { encodePaginationCursor, QueryOptions } from '../../helpers/mongoose';
@@ -413,6 +414,52 @@ export const getAll = async <T extends Document, L extends keyof T>(
 };
 
 /**
+ * Get all documents as a stream for the specified model.
+ * @param model
+ * @param mongooseOptions
+ * @param filterIds
+ * @param raiseError
+ */
+export const getAllStream = async <T extends Document, L extends keyof T>(
+  model: Model<T>,
+  mongooseOptions: QueryOptions = {},
+  filterIds: string[] = null,
+  raiseError: boolean = true
+): Promise<Readable> => {
+  let queryCond: { [key: string]: any } = {
+    ...mongooseOptions.search,
+    ...mongooseOptions.filter,
+  };
+  let sortCond: { [key: string]: number } = {
+    ...mongooseOptions.sort,
+    _id: 1, // default sorting;
+  };
+
+  let query: Query<T[]> = model
+    // @ts-ignore
+    .find(queryCond)
+    .select(mongooseOptions.select)
+    .populate(mongooseOptions.populate)
+    .sort(sortCond);
+
+  try {
+    const cursor = query.cursor();
+    return cursor;
+  } catch (err) {
+    logger.error(err);
+    if (raiseError) {
+      if (err instanceof ExposedError) {
+        throw err;
+      }
+      if (err.name === 'MongoError' && err.code === 2) {
+        throw new DocumentError('Could not retrieve documents. Cannot have a mix of inclusion and exclusion.', 400);
+      }
+      throw new DocumentError('Could not retrieve documents.', 500);
+    }
+  }
+};
+
+/**
  * Remove a document.
  * @param model
  * @param doc
@@ -460,6 +507,35 @@ export const removeById = async <T extends Document, L extends keyof T>(
     logger.error(err);
     if (raiseError) {
       throw new DocumentError('Could not remove document.', 500);
+    }
+    success = false;
+  }
+  return success;
+};
+
+/**
+ * Remove documents by query.
+ * Deletes every document that matches filter in the collection.
+ * @param model
+ * @param queryCond
+ * @param raiseError
+ */
+export const removeByQuery = async <T extends Document, L extends keyof T>(
+  model: Model<T>,
+  queryCond: { [key in L]?: any } = {},
+  raiseError: boolean = true
+): Promise<boolean> => {
+  if (isEmpty(queryCond)) {
+    return false;
+  }
+  let success: boolean = true;
+  try {
+    const res = await model.deleteMany(<any>queryCond);
+    logger.debug('successfully removed %s documents.', res.deletedCount);
+  } catch (err) {
+    logger.error(err);
+    if (raiseError) {
+      throw new DocumentError('Could not remove documents.', 500);
     }
     success = false;
   }
