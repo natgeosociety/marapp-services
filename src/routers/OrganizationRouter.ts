@@ -400,7 +400,8 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         success = await membershipService.deleteOrganization(groupId);
         if (success) {
           const message: SNSWipeDataEvent = {
-            organization: group.name,
+            organizationId: groupId,
+            organizationName: group.name,
           };
           await triggerWipeDataEvent(message);
         }

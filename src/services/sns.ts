@@ -41,7 +41,8 @@ export interface SNSComputeMetricEvent {
 }
 
 export interface SNSWipeDataEvent {
-  organization: string;
+  organizationId: string;
+  organizationName: string;
 }
 
 /**

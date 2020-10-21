@@ -34,10 +34,10 @@ import { getAll, getById, remove, save, update } from '../models/utils';
 import { createSerializer } from '../serializers/LayerSerializer';
 import { createSerializer as createSlugSerializer } from '../serializers/SlugSerializer';
 import { createSerializer as createStatusSerializer } from '../serializers/StatusSerializer';
+import { removeMapTiles } from '../services/storage-service';
 import { ResponseMeta } from '../types/response';
 
 import { queryParamGroup, validate } from '.';
-import { removeMapTiles } from '../services/storage-service';
 
 const logger = getLogger();
 
