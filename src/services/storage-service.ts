@@ -153,7 +153,7 @@ export const removeLayerMapTiles = async (stream: Readable) => {
   for await (const chunk of stream) {
     layerIds.push(chunk.id);
   }
-  logger.info('[removeLayerMapTiles] %s layers', layerIds.length);
+  logger.debug('[removeLayerMapTiles] %s layers', layerIds.length);
 
   return removeMapTiles(layerIds);
 };
