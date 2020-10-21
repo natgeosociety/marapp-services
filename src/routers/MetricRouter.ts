@@ -18,8 +18,8 @@
 */
 
 import { Response, Router } from 'express';
-import { param, query, body } from 'express-validator';
 import asyncHandler from 'express-async-handler';
+import { param, query } from 'express-validator';
 import { merge } from 'lodash';
 import Redlock from 'redlock';
 import urljoin from 'url-join';
@@ -35,7 +35,7 @@ import { LocationModel, MetricModel } from '../models';
 import { exists, getAll, getById, getOne, remove, removeById } from '../models/utils';
 import { createSerializer } from '../serializers/MetricSerializer';
 import { createSerializer as createStatusSerializer } from '../serializers/StatusSerializer';
-import { OperationTypeEnum, publishSNSMessage, SNSMessage } from '../services/sns';
+import { OperationTypeEnum, SNSComputeMetricEvent, triggerComputeMetricEvent } from '../services/sns';
 import { ResponseMeta, SuccessResponse } from '../types/response';
 
 import { queryParamGroup, validate } from '.';
@@ -376,13 +376,13 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         .then(async () => {
           logger.debug(`successfully created lock for: ${resource}`);
 
-          const message: SNSMessage = {
+          const message: SNSComputeMetricEvent = {
             id: parent.id,
             operationType: <any>operationType,
             version: parent.version,
             resources: [],
           };
-          const messageId = await publishSNSMessage(message);
+          const messageId = await triggerComputeMetricEvent(message);
 
           const code = 200;
           const response: SuccessResponse = { code, data: { operationId: messageId } };
@@ -447,13 +447,13 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         .then(async () => {
           logger.debug(`successfully created lock for: ${resource}`);
 
-          const message: SNSMessage = {
+          const message: SNSComputeMetricEvent = {
             id: parent.id,
             operationType: <any>operationType,
             version: parent.version,
             resources: [child.slug],
           };
-          const messageId = await publishSNSMessage(message);
+          const messageId = await triggerComputeMetricEvent(message);
 
           const code = 200;
           const response: SuccessResponse = { code, data: { operationId: messageId } };

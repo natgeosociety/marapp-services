@@ -26,7 +26,7 @@ import { getLogger } from '../logging';
 
 const logger = getLogger();
 
-export const ElasticSearchError = makeError('ElasticSearchError');
+const ElasticSearchError = makeError('ElasticSearchError');
 
 export interface ESIndexConfig {
   settings?: {
@@ -49,6 +49,7 @@ export interface SearchService {
   indexById(indexName: string, id: string, doc: MongooseDocument);
   removeById(indexName: string, id: string);
   search(indexName: string, esQuery: object, from?: number, size?: number);
+  deleteByQuery(indexName: string, esQuery: object);
   catIndices();
 }
 
@@ -57,8 +58,8 @@ export class ElasticSearchService implements SearchService {
 
   /**
    * Create index using native ES config
-   * @param indexName
-   * @param indexConfig
+   * @param indexName: A comma-separated list of index names to search
+   * @param indexConfig: The configuration for the index (settings and mappings)
    */
   async createIndex(indexName: string, indexConfig: ESIndexConfig) {
     try {
@@ -71,47 +72,47 @@ export class ElasticSearchService implements SearchService {
           },
         },
       });
-      logger.debug(`es client indices create responded with: ${res.statusCode}`);
-      return res;
+      logger.debug('[createIndex] client responded with: %s', res.statusCode);
+      return res.body;
     } catch (err) {
-      logger.error([err.name, JSON.stringify(err.body)].join(': '));
-      throw new ElasticSearchError(`Could not create index: ${indexName}`);
+      logger.error('[createIndex] %s: %s', err.name, JSON.stringify(err.body));
+      throw new ElasticSearchError('Could not create index.');
     }
   }
 
   /**
    * Check for existing index
-   * @param indexName
+   * @param indexName: A comma-separated list of index names to search
    */
   async hasIndex(indexName: string): Promise<boolean> {
     try {
       const res = await this.client.indices.exists({ index: indexName });
-      logger.debug(`es client indices exists responded with: ${res.statusCode}`);
+      logger.debug('[hasIndex] client responded with: %s', res.statusCode);
       return res.statusCode === 200;
     } catch (err) {
-      logger.error([err.name, JSON.stringify(err.body)].join(': '));
-      throw new ElasticSearchError(`Could not check index: ${indexName}`);
+      logger.error('[hasIndex] %s: %s', err.name, JSON.stringify(err.body));
+      throw new ElasticSearchError('Could not check index.');
     }
   }
 
   /**
    * Delete index (including it's documents)
-   * @param indexName
+   * @param indexName: A comma-separated list of index names to search
    */
   async deleteIndex(indexName: string) {
     try {
       const res = await this.client.indices.delete({ index: indexName });
-      logger.debug(`es client indices delete responded with: ${res.statusCode}`);
-      return res;
+      logger.debug('[deleteIndex] client responded with: %s', res.statusCode);
+      return res.body;
     } catch (err) {
-      logger.error([err.name, JSON.stringify(err.body)].join(': '));
-      throw new ElasticSearchError(`Could not delete index: ${indexName}`);
+      logger.error('[deleteIndex] %s: %s', err.name, JSON.stringify(err.body));
+      throw new ElasticSearchError('Could not delete index.');
     }
   }
 
   /**
    * Index multiple documents at index
-   * @param indexName
+   * @param indexName: A comma-separated list of index names to search
    * @param docs
    */
   async bulkIndex(indexName: string, docs: MongooseDocument[]) {
@@ -131,19 +132,19 @@ export class ElasticSearchService implements SearchService {
           doc,
         ]),
       });
-      logger.debug(`es client bulk responded with: ${res.statusCode}`);
-      return res;
+      logger.debug('[bulkIndex] client responded with: %s', res.statusCode);
+      return res.body;
     } catch (err) {
-      logger.error([err.name, JSON.stringify(err.body)].join(': '));
-      throw new ElasticSearchError(`Could not bulk using index: ${indexName}`);
+      logger.error('[bulkIndex] %s: %s', err.name, JSON.stringify(err.body));
+      throw new ElasticSearchError('Could not bulk index documents.');
     }
   }
 
   /**
    * Index document at index using id
-   * @param indexName
-   * @param id
-   * @param doc
+   * @param indexName: A comma-separated list of index names to search
+   * @param id: Document ID
+   * @param doc: The document
    */
   async indexById(indexName: string, id: string, doc: MongooseDocument) {
     try {
@@ -153,18 +154,18 @@ export class ElasticSearchService implements SearchService {
         body: doc,
         id,
       });
-      logger.debug(`es client index responded with: ${res.statusCode}`);
-      return res;
+      logger.debug('[indexById] client responded with: %s', res.statusCode);
+      return res.body;
     } catch (err) {
-      logger.error([err.name, JSON.stringify(err.body)].join(': '));
-      throw new ElasticSearchError(`Could not index document: ${id} in index: ${indexName}`);
+      logger.error('[indexById] %s: %s', err.name, JSON.stringify(err.body));
+      throw new ElasticSearchError('Could not index document.');
     }
   }
 
   /**
    * Remove document at index by id
-   * @param indexName
-   * @param id
+   * @param indexName: A comma-separated list of index names to search
+   * @param id: Document ID
    */
   async removeById(indexName: string, id: string) {
     try {
@@ -173,20 +174,20 @@ export class ElasticSearchService implements SearchService {
         type: 'doc',
         id,
       });
-      logger.debug(`es client delete responded with: ${res.statusCode}`);
-      return res;
+      logger.debug('[removeById] client responded with: %s', res.statusCode);
+      return res.body;
     } catch (err) {
-      logger.error([err.name, JSON.stringify(err.body)].join(': '));
-      throw new ElasticSearchError(`Could not remove document: ${id} in index: ${indexName}`);
+      logger.error('[removeById] %s: %s', err.name, JSON.stringify(err.body));
+      throw new ElasticSearchError('Could not remove document.');
     }
   }
 
   /**
    * Perform native ES paginated search based on index & query
-   * @param indexName
-   * @param esQuery
-   * @param from
-   * @param size
+   * @param indexName: A comma-separated list of index names to search
+   * @param esQuery: The search definition using the Query DSL
+   * @param from: Starting offset (default: 0)
+   * @param size: Number of hits to return (default: 10)
    */
   async search(indexName: string, esQuery: object, from: number = 0, size: number = 10) {
     try {
@@ -197,11 +198,11 @@ export class ElasticSearchService implements SearchService {
         from,
         size,
       });
-      logger.debug(`es client search responded with: ${res.statusCode}`);
-      return res;
+      logger.debug('[search] client responded with: %s', res.statusCode);
+      return res.body;
     } catch (err) {
-      logger.error([err.name, JSON.stringify(err.body)].join(': '));
-      throw new ElasticSearchError(`Could not search ${indexName}: ${JSON.stringify(esQuery)}`);
+      logger.error('[search] %s: %s', err.name, JSON.stringify(err.body));
+      throw new ElasticSearchError('Could not search documents.');
     }
   }
 
@@ -211,11 +212,31 @@ export class ElasticSearchService implements SearchService {
   async catIndices() {
     try {
       const res = await this.client.cat.indices();
-      logger.debug(`es cat indices responded with: ${res.statusCode}`);
-      return res;
+      logger.debug('[catIndices] client responded with: %s', res.statusCode);
+      return res.body;
     } catch (err) {
-      logger.error([err.name, JSON.stringify(err.body)].join(': '));
-      throw new ElasticSearchError(`Could not cat indices`);
+      logger.error('[catIndices] %s: %s', err.name, JSON.stringify(err.body));
+      throw new ElasticSearchError('Could not cat indices.');
+    }
+  }
+
+  /**
+   * Deletes documents that match the specified query.
+   * @param indexName: A comma-separated list of index names to search
+   * @param esQuery: The search definition using the Query DSL
+   */
+  async deleteByQuery(indexName: string, esQuery: object) {
+    try {
+      const res = await this.client.deleteByQuery({
+        index: indexName,
+        type: 'doc',
+        body: { query: esQuery },
+      });
+      logger.debug('[deleteByQuery] client responded with: %s', res.statusCode);
+      return res.body;
+    } catch (err) {
+      logger.error('[deleteByQuery] %s: %s', err.name, JSON.stringify(err.body));
+      throw new ElasticSearchError('Could not delete by query.');
     }
   }
 }

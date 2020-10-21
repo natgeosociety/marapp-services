@@ -46,4 +46,5 @@ export const ELASTICSEARCH_URI = requireEnv('ELASTICSEARCH_URI');
 export const GOOGLE_SERVICE_ACCOUNT = requireEnv('GOOGLE_SERVICE_ACCOUNT');
 export const SNS_TOPIC_SUBSCRIPTION_ARN = requireEnv('SNS_TOPIC_SUBSCRIPTION_ARN');
 export const SNS_TOPIC_MANAGER_ARN = requireEnv('SNS_TOPIC_MANAGER_ARN');
+export const SNS_TOPIC_WIPE_DATA_ARN = requireEnv('SNS_TOPIC_WIPE_DATA_ARN');
 export const SERVICE_API_KEY = requireEnv('SERVICE_API_KEY');

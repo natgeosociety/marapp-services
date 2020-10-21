@@ -32,6 +32,8 @@ const mkOptions = (label: string): LoggerOptions => {
       format.timestamp({
         format: 'YYYY-MM-DD HH:mm:ss',
       }),
+      format.splat(),
+      format.simple(),
       format.printf((info) => `${info.timestamp} ${info.level} [${info.label}]: ${info.message}`)
     ),
     transports: [new transports.Console()],

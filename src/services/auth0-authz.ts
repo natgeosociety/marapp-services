@@ -69,6 +69,8 @@ export interface AuthzServiceSpec {
     permissions: string[],
     applicationType?: string
   );
+  addUserToRoles(userId: string, roleIds: string[]);
+  removeUserFromRoles(userId: string, roleIds: string[]);
   deleteRole(roleId: string);
   calculateGroupMemberships(groupId: string);
   getNestedGroups(groupId: string, filterGroups?: GroupType[], excludeGroups?: GroupType[]);
@@ -224,6 +226,14 @@ export class Auth0AuthzService implements AuthzServiceSpec {
       applicationType,
       permissions,
     });
+  }
+
+  async addUserToRoles(userId: string, roleIds: string[]) {
+    return this.authzClient.addUserToRoles({ userId, roleIds });
+  }
+
+  async removeUserFromRoles(userId: string, roleIds: string[]) {
+    return this.authzClient.removeUserFromRoles({ userId, roleIds });
   }
 
   async deleteRole(roleId: string) {

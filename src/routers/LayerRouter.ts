@@ -18,8 +18,8 @@
 */
 
 import { Response, Router } from 'express';
-import { param, query, body } from 'express-validator';
 import asyncHandler from 'express-async-handler';
+import { body, param, query } from 'express-validator';
 import { merge } from 'lodash';
 import urljoin from 'url-join';
 
@@ -37,6 +37,7 @@ import { createSerializer as createStatusSerializer } from '../serializers/Statu
 import { ResponseMeta } from '../types/response';
 
 import { queryParamGroup, validate } from '.';
+import { removeMapTiles } from '../services/storage-service';
 
 const logger = getLogger();
 
@@ -374,6 +375,10 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         throw new RecordNotFound(`Could not retrieve document.`, 404);
       }
       const success = await remove(LayerModel, doc);
+      if (success) {
+        logger.debug('[removeMapTiles] layer: %s', doc.id);
+        await removeMapTiles([doc.id]);
+      }
 
       const code = 200;
       const response = createStatusSerializer().serialize({ success });

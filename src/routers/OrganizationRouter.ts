@@ -18,8 +18,8 @@
 */
 
 import { Response, Router } from 'express';
-import { param, query, body } from 'express-validator';
 import asyncHandler from 'express-async-handler';
+import { body, param, query } from 'express-validator';
 import { get, set } from 'lodash';
 import urljoin from 'url-join';
 
@@ -38,6 +38,7 @@ import { createSerializer as createStatusSerializer } from '../serializers/Statu
 import { AuthzServiceSpec } from '../services/auth0-authz';
 import { AuthManagementService } from '../services/auth0-management';
 import { MembershipService } from '../services/membership-service';
+import { SNSComputeMetricEvent, SNSWipeDataEvent, triggerWipeDataEvent } from '../services/sns';
 import { ResponseMeta } from '../types/response';
 
 import { queryParamGroup, validate } from '.';
@@ -384,11 +385,22 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
     AuthzGuards.writeOrganizationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
-
-      const id = req.params.id;
-
       const membershipService = new MembershipService(authzService);
-      const success = await membershipService.deleteOrganization(id);
+
+      const groupId = req.params.id;
+
+      const group = await this.authzService.getGroup(groupId);
+      if (!group) {
+        throw new RecordNotFound(`Could not retrieve document.`, 404);
+      }
+
+      const success = await membershipService.deleteOrganization(groupId);
+      if (success) {
+        const message: SNSWipeDataEvent = {
+          organization: group.name,
+        };
+        await triggerWipeDataEvent(message);
+      }
 
       const code = 200;
       const response = createStatusSerializer().serialize({ success });
