@@ -389,7 +389,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
       const groupId = req.params.id;
 
-      const group = await this.authzService.getGroup(groupId);
+      const group = await authzService.getGroup(groupId);
       if (!group) {
         throw new RecordNotFound(`Could not retrieve document.`, 404);
       }
