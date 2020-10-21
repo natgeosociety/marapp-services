@@ -52,7 +52,7 @@ export interface SNSWipeDataEvent {
  */
 const publishSNSMessage = async (
   message: { [key: string]: any },
-  topicArn: string = SNS_TOPIC_MANAGER_ARN,
+  topicArn: string,
   raiseError: boolean = true
 ): Promise<string> => {
   const encoded = JSON.stringify(message);
