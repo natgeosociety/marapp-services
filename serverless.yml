@@ -54,7 +54,7 @@ provider:
     - Effect: Allow
       Action:
         - SNS:Publish
-      Resource: ${env:SNS_TOPIC_WIPE_DATA_ARN}
+      Resource: ${self:custom.stageEnvironment.snsWipeDataTopicArn}
 
 custom:
   stageEnv: ${opt:stage, self:provider.stage}
