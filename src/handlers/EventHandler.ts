@@ -1,4 +1,4 @@
-import { Context, SNSEvent } from 'aws-lambda';
+import { Callback, Context, Handler, SNSEvent } from 'aws-lambda';
 import { Model } from 'mongoose';
 import { performance } from 'perf_hooks';
 
@@ -13,7 +13,7 @@ import { removeLayerMapTiles } from '../services/storage-service';
 
 const logger = getLogger();
 
-export const wipeDataTaskHandler = async (event: SNSEvent, context: Context) => {
+export const wipeDataTaskHandler: Handler = async (event: SNSEvent, context: Context, callback: Callback) => {
   const messageId = event?.Records?.[0]?.Sns?.MessageId;
   const message = event?.Records?.[0]?.Sns?.Message;
 
@@ -24,7 +24,7 @@ export const wipeDataTaskHandler = async (event: SNSEvent, context: Context) => 
 
   logger.debug('removing records for organization %s with slug: %s', organizationId, organizationName);
 
-  return new Promise(async (resolve, reject) => {
+  try {
     const parser = new MongooseQueryParser();
     const models: Model<any>[] = [LocationModel, CollectionModel, LayerModel, WidgetModel, DashboardModel];
 
@@ -46,10 +46,9 @@ export const wipeDataTaskHandler = async (event: SNSEvent, context: Context) => 
     await forEachAsync(models, async (model: IESPlugin) => model.esDeleteByQuery({ organization: organizationName }));
 
     logger.debug('[esDeleteByQuery] duration: %s (ms)', performance.now() - t2);
-
-    resolve();
-  }).catch((err) => {
+  } catch (err) {
     logger.warn('failed to wipe environment for organization %s with slug: %s', organizationId, organizationName);
     logger.error(err);
-  });
+  }
+  callback(null, true);
 };
