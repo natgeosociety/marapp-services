@@ -387,12 +387,13 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
       const membershipService = new MembershipService(authzService);
 
-      const groupId = req.params.id;
+      const id = req.params.id;
 
-      const group = await authzService.getGroup(groupId);
+      const group = await authzService.getGroup(id);
       if (!group) {
         throw new RecordNotFound(`Could not retrieve document.`, 404);
       }
+      const groupId = group?._id;
 
       const success = await membershipService.deleteOrganization(groupId);
       if (success) {
