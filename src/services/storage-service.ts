@@ -128,7 +128,10 @@ const encodeTileKey = (
  * @param layerIds
  * @param pathPrefix
  */
-export const removeMapTiles = async (layerIds: string[], pathPrefix: string = MAP_TILES_PREFIX) => {
+export const removeMapTiles = async (layerIds: string[], pathPrefix: string = MAP_TILES_PREFIX): Promise<boolean> => {
+  if (!layerIds.length) {
+    return false;
+  }
   const prefixed = layerIds.map((layerId: string) => {
     const path = urljoin(S3_ASSETS_PATH_PREFIX, pathPrefix, layerId);
     return path.startsWith('/') ? path.substr(1) : path; // remove prefix from S3 paths;
@@ -148,7 +151,7 @@ export const removeMapTiles = async (layerIds: string[], pathPrefix: string = MA
  * Gather layers and remove existing map tiles from storage;
  * @param stream
  */
-export const removeLayerMapTiles = async (stream: Readable) => {
+export const removeLayerMapTiles = async (stream: Readable): Promise<boolean> => {
   const layerIds: string[] = [];
   for await (const chunk of stream) {
     layerIds.push(chunk.id);

@@ -23,10 +23,10 @@ import { API_BASE } from '../config';
 import { getLogger } from '../logging';
 import MetricRouter from '../routers/MetricRouter';
 
-import { anonymous, authenticated } from '.';
+import { anonymousHttpHandler, authHttpHandler } from '.';
 
 const logger = getLogger();
 
-export const openHandler: Handler = anonymous(MetricRouter.getRouter(API_BASE));
+export const openHandler: Handler = anonymousHttpHandler(MetricRouter.getRouter(API_BASE));
 
-export const managementHandler: Handler = authenticated(MetricRouter.getAdminRouter(API_BASE));
+export const managementHandler: Handler = authHttpHandler(MetricRouter.getAdminRouter(API_BASE));

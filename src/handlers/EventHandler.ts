@@ -1,4 +1,4 @@
-import { Callback, Context, Handler, SNSEvent } from 'aws-lambda';
+import { Context, Handler, SNSEvent } from 'aws-lambda';
 import { Model } from 'mongoose';
 import { performance } from 'perf_hooks';
 
@@ -11,9 +11,11 @@ import { getAllStream, removeByQuery } from '../models/utils';
 import { SNSWipeDataEvent } from '../services/sns';
 import { removeLayerMapTiles } from '../services/storage-service';
 
+import { contextEventHandler } from '.';
+
 const logger = getLogger();
 
-export const wipeDataTaskHandler: Handler = async (event: SNSEvent, context: Context, callback: Callback) => {
+export const wipeDataTaskHandler: Handler = contextEventHandler(async (event: SNSEvent, context: Context) => {
   const messageId = event?.Records?.[0]?.Sns?.MessageId;
   const message = event?.Records?.[0]?.Sns?.Message;
 
@@ -50,5 +52,4 @@ export const wipeDataTaskHandler: Handler = async (event: SNSEvent, context: Con
     logger.warn('failed to wipe environment for organization %s with slug: %s', organizationId, organizationName);
     logger.error(err);
   }
-  callback(null, true);
-};
+});

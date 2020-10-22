@@ -17,6 +17,7 @@
   specific language governing permissions and limitations under the License.
 */
 
+import { Context, Handler, SNSEvent } from 'aws-lambda';
 import { NextFunction, Request, Response } from 'express';
 import asyncHandler from 'express-async-handler';
 import { Connection } from 'mongoose';
@@ -35,77 +36,107 @@ import { initEarthEngine } from '../services/earthengine';
 
 const logger = getLogger();
 
-interface SharedContext {
+export interface SharedContext {
   mongoConn?: Promise<Connection>;
   redisClient?: Promise<RedisClient>;
 }
 
-interface EESharedContext {
+export interface EESharedContext {
   ee?: Promise<boolean>;
 }
 
-let sharedContext: SharedContext;
-let eeSharedContext: EESharedContext;
+let sharedContextHttp: SharedContext;
+let eeSharedContextHttp: EESharedContext;
+let sharedContextSNS: SharedContext;
 
 /**
- * Shared context, available between invocations.
+ * Shared HTTP context, available between invocations.
  * @param req
  * @param res
  * @param next
  */
-export const globalContext = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+export const contextHttp = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   const start = performance.now();
 
-  if (!sharedContext) {
-    logger.debug('[globalContext] shared context');
+  if (!sharedContextHttp) {
+    logger.debug('[contextHttp] shared context');
 
     // create connection(s);
-    sharedContext = {
+    sharedContextHttp = {
       mongoConn: createMongoConnection(MONGODB_URI),
       redisClient: createRedisConnection(REDIS_URI),
     };
 
     // resolve connection(s);
-    await forEachAsync(Object.entries(sharedContext), async ([key, conn]) => {
+    await forEachAsync(Object.entries(sharedContextHttp), async ([key, conn]) => {
       await conn;
     });
   }
 
   // set-up app locals;
-  req.app.locals.redisClient = await sharedContext.redisClient;
-  req.app.locals.cacheService = new RedisCacheService(await sharedContext.redisClient);
+  req.app.locals.redisClient = await sharedContextHttp.redisClient;
+  req.app.locals.cacheService = new RedisCacheService(await sharedContextHttp.redisClient);
   req.app.locals.authzService = new Auth0AuthzService();
   req.app.locals.authManagementService = new Auth0ManagementService();
 
   const end = performance.now();
-  logger.debug(`[globalContext] shared context duration: ${end - start}(ms)`);
+  logger.debug(`[contextHttp] shared context duration: ${end - start}(ms)`);
 
   next();
 });
 
 /**
- * EarthEngine shared context, available between invocations.
+ * EarthEngine HTTP shared context, available between invocations.
  * @param req
  * @param res
  * @param next
  */
-export const eeContext = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+export const eeContextHttp = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   const start = performance.now();
 
-  if (!eeSharedContext) {
-    logger.debug('[eeContext] shared context');
+  if (!eeSharedContextHttp) {
+    logger.debug('[eeContextHttp] shared context');
 
     // create connection(s);
-    eeSharedContext = {
+    eeSharedContextHttp = {
       ee: initEarthEngine(),
     };
 
     // resolve connection(s);
-    await eeSharedContext.ee;
+    await eeSharedContextHttp.ee;
   }
 
   const end = performance.now();
-  logger.debug(`[eeContext] shared context duration: ${end - start}(ms)`);
+  logger.debug(`[eeContextHttp] shared context duration: ${end - start}(ms)`);
 
   next();
 });
+
+/**
+ * Shared event context, available between invocations.
+ * @param event
+ * @param context
+ */
+export const contextEvent = async (event: SNSEvent, context: Context) => {
+  const start = performance.now();
+
+  if (!sharedContextSNS) {
+    logger.debug('[contextEvent] shared context');
+
+    // create connection(s);
+    sharedContextSNS = {
+      mongoConn: createMongoConnection(MONGODB_URI),
+      redisClient: createRedisConnection(REDIS_URI),
+    };
+
+    // resolve connection(s);
+    await forEachAsync(Object.entries(sharedContextSNS), async ([key, conn]) => {
+      await conn;
+    });
+  }
+
+  const end = performance.now();
+  logger.debug(`[contextEvent] shared context duration: ${end - start}(ms)`);
+
+  return { event, context };
+};

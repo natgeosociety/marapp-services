@@ -23,10 +23,10 @@ import { API_BASE } from '../config';
 import { getLogger } from '../logging';
 import WidgetRouter from '../routers/WidgetRouter';
 
-import { anonymous, authenticated } from '.';
+import { anonymousHttpHandler, authHttpHandler } from '.';
 
 const logger = getLogger();
 
-export const openHandler: Handler = anonymous(WidgetRouter.getRouter(API_BASE));
+export const openHandler: Handler = anonymousHttpHandler(WidgetRouter.getRouter(API_BASE));
 
-export const managementHandler: Handler = authenticated(WidgetRouter.getAdminRouter(API_BASE));
+export const managementHandler: Handler = authHttpHandler(WidgetRouter.getAdminRouter(API_BASE));

@@ -23,10 +23,10 @@ import { API_BASE } from '../config';
 import { getLogger } from '../logging';
 import UserRouter from '../routers/UserRouter';
 
-import { authenticated } from '.';
+import { authHttpHandler } from '.';
 
 const logger = getLogger();
 
-export const profileHandler: Handler = authenticated(UserRouter.getProfileRouter(API_BASE));
+export const profileHandler: Handler = authHttpHandler(UserRouter.getProfileRouter(API_BASE));
 
-export const managementHandler: Handler = authenticated(UserRouter.getAdminRouter(API_BASE));
+export const managementHandler: Handler = authHttpHandler(UserRouter.getAdminRouter(API_BASE));

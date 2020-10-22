@@ -23,10 +23,10 @@ import { API_BASE } from '../config';
 import { getLogger } from '../logging';
 import LayerRouter from '../routers/LayerRouter';
 
-import { anonymous, authenticated } from '.';
+import { anonymousHttpHandler, authHttpHandler } from '.';
 
 const logger = getLogger();
 
-export const openHandler: Handler = anonymous(LayerRouter.getRouter(API_BASE));
+export const openHandler: Handler = anonymousHttpHandler(LayerRouter.getRouter(API_BASE));
 
-export const managementHandler: Handler = authenticated(LayerRouter.getAdminRouter(API_BASE));
+export const managementHandler: Handler = authHttpHandler(LayerRouter.getAdminRouter(API_BASE));
