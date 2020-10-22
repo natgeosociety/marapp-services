@@ -1,3 +1,25 @@
+# [1.8.0](https://github.com/natgeosociety/marapp-services/compare/v1.7.0...v1.8.0) (2020-10-22)
+
+
+### Bug Fixes
+
+* add bucket PutBucketPolicy IAM role ([f5df154](https://github.com/natgeosociety/marapp-services/commit/f5df154f02485fc77924e760da5365d86e53f7a6))
+* request with async handler and promise ([c0a63f6](https://github.com/natgeosociety/marapp-services/commit/c0a63f6f433682d469517182a2a82f5383cca62a))
+* return callback parameter ([d3ad40d](https://github.com/natgeosociety/marapp-services/commit/d3ad40d054edb05b045afdd2d3e8a8563b42eeee))
+* serverless IAM roles ([02a6d5e](https://github.com/natgeosociety/marapp-services/commit/02a6d5e459cfa390ef25b0b6e7f2a16b8f92f8b4))
+* service name typo ([92cd962](https://github.com/natgeosociety/marapp-services/commit/92cd962cfeff0b5316d996875472f2231e28b05f))
+* set IAM publish action for wipe-data topic ([32c4adb](https://github.com/natgeosociety/marapp-services/commit/32c4adb8e7ee4e612a85fd5f4b59c113aa7efc26))
+* typo ([5bef8bb](https://github.com/natgeosociety/marapp-services/commit/5bef8bb47d9a853d97f346d5fb254ba4a5ac6bea))
+* update loglevel ([4280f4d](https://github.com/natgeosociety/marapp-services/commit/4280f4d63245e561bbd2129923335b5a8625333d))
+* workspace delete group ID ([0a2983b](https://github.com/natgeosociety/marapp-services/commit/0a2983b37de97ea7e43e5a35a60c31f7bdeecbc1))
+* **profile:** handle super-admin checks [EP-3155] ([12a31c1](https://github.com/natgeosociety/marapp-services/commit/12a31c1d66a11c99c9fa32ed3960e2ec89747b8b))
+
+
+### Features
+
+* handle complete workspace deletion ([bde3321](https://github.com/natgeosociety/marapp-services/commit/bde33215e15042715e9b603ac89d9d0734c60fab))
+* storage map-tiles deletion on layer delete ([45a81cd](https://github.com/natgeosociety/marapp-services/commit/45a81cd7d938910fdf0e4bc2b72d66e99915f399))
+
 # [1.7.0](https://github.com/natgeosociety/marapp-services/compare/v1.6.0...v1.7.0) (2020-10-19)
 
 
