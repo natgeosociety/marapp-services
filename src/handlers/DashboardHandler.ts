@@ -23,10 +23,10 @@ import { API_BASE } from '../config';
 import { getLogger } from '../logging';
 import DashboardRouter from '../routers/DashboardRouter';
 
-import { anonymous, authenticated } from '.';
+import { anonymousHttpHandler, authHttpHandler } from '.';
 
 const logger = getLogger();
 
-export const openHandler: Handler = anonymous(DashboardRouter.getRouter(API_BASE));
+export const openHandler: Handler = anonymousHttpHandler(DashboardRouter.getRouter(API_BASE));
 
-export const managementHandler: Handler = authenticated(DashboardRouter.getAdminRouter(API_BASE));
+export const managementHandler: Handler = authHttpHandler(DashboardRouter.getAdminRouter(API_BASE));

@@ -18,7 +18,8 @@
 */
 
 import AWS from 'aws-sdk';
-import { PutObjectRequest } from 'aws-sdk/clients/s3';
+import { HeadObjectRequest, PutBucketLifecycleRequest, PutObjectRequest } from 'aws-sdk/clients/s3';
+import { isArray, isString } from 'lodash';
 import makeError from 'make-error';
 import { Readable } from 'stream';
 import urljoin from 'url-join';
@@ -28,6 +29,7 @@ import { getLogger } from '../logging';
 
 const logger = getLogger();
 
+export const S3Error = makeError('S3Error');
 export const UploadError = makeError('UploadError');
 
 const s3 = new AWS.S3({ s3ForcePathStyle: true, endpoint: S3_ENDPOINT_URL });
@@ -45,11 +47,12 @@ interface StorageEvent {
 export const s3StreamUpload = async (
   readable: Readable,
   keyPath: string,
-  contentType: string
+  contentType: string,
+  bucketName: string = S3_ASSETS_BUCKET
 ): Promise<StorageEvent> => {
   try {
     const config: PutObjectRequest = {
-      Bucket: S3_ASSETS_BUCKET,
+      Bucket: bucketName,
       Key: keyPath,
       Body: readable,
       ContentType: contentType,
@@ -74,12 +77,12 @@ export const s3StreamUpload = async (
 /**
  * Return the metadata of an object if it exist.
  */
-export const s3KeyExists = async (keyPath: string): Promise<StorageEvent> => {
+export const s3KeyExists = async (keyPath: string, bucketName: string = S3_ASSETS_BUCKET): Promise<StorageEvent> => {
+  const config: HeadObjectRequest = {
+    Bucket: bucketName,
+    Key: keyPath,
+  };
   try {
-    const config = {
-      Bucket: S3_ASSETS_BUCKET,
-      Key: keyPath,
-    };
     const meta = await s3.headObject(config).promise();
 
     logger.debug(`found S3 key ${meta.ContentLength} bytes: ${keyPath}`);
@@ -95,6 +98,56 @@ export const s3KeyExists = async (keyPath: string): Promise<StorageEvent> => {
       throw new UploadError(`Failed to request file meta from S3. ${err.message}`);
     }
   }
+};
+
+/**
+ * Creates a new lifecycle configuration for the bucket or replaces an
+ * existing lifecycle configuration.
+ * @param bucketName:
+ * @param objectKeyPrefix: object key name prefix.
+ * @param expTTLSeconds: expiration for the lifecycle of the object.
+ */
+export const createLifecyclePolicy = async (
+  objectKeyPrefix: string | string[],
+  bucketName: string = S3_ASSETS_BUCKET,
+  expTTLSeconds: number = 3600
+): Promise<boolean> => {
+  let keyPrefixes: string[];
+  if (isString(objectKeyPrefix)) {
+    keyPrefixes = [<string>objectKeyPrefix];
+  } else if (isArray(objectKeyPrefix) && objectKeyPrefix.every(isString)) {
+    keyPrefixes = <string[]>objectKeyPrefix;
+  } else {
+    throw new S3Error('Unsupported object key prefix format.');
+  }
+  logger.debug('[createLifecyclePolicy] object key prefix: %O', keyPrefixes);
+
+  const exp = new Date();
+  exp.setSeconds(new Date().getSeconds() + expTTLSeconds);
+
+  // Specifies lifecycle configuration rules for an Amazon S3 bucket.
+  const params: PutBucketLifecycleRequest = {
+    Bucket: bucketName,
+    LifecycleConfiguration: {
+      Rules: keyPrefixes.map((prefix: string) => ({
+        Expiration: {
+          Date: exp,
+        },
+        Prefix: prefix,
+        Status: 'Enabled',
+      })),
+    },
+  };
+
+  let success: boolean = true;
+  try {
+    const res = await s3.putBucketLifecycle(params).promise();
+    logger.debug('[createLifecyclePolicy] client responded with: %s', JSON.stringify(res));
+  } catch (err) {
+    success = false;
+    logger.error(err);
+  }
+  return success;
 };
 
 /**

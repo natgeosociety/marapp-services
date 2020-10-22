@@ -23,8 +23,8 @@ import { API_BASE } from '../config';
 import { getLogger } from '../logging';
 import SubscriberRouter from '../routers/SubscriberRouter';
 
-import { open } from '.';
+import { openHttpHandler } from '.';
 
 const logger = getLogger();
 
-export const openHandler: Handler = open(SubscriberRouter.getRouter(API_BASE));
+export const openHandler: Handler = openHttpHandler(SubscriberRouter.getRouter(API_BASE));

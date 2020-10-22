@@ -18,8 +18,8 @@
 */
 
 import { Response, Router } from 'express';
-import { param, query, body } from 'express-validator';
 import asyncHandler from 'express-async-handler';
+import { body, param, query } from 'express-validator';
 import { get, set } from 'lodash';
 import urljoin from 'url-join';
 
@@ -38,6 +38,7 @@ import { createSerializer as createStatusSerializer } from '../serializers/Statu
 import { AuthzServiceSpec } from '../services/auth0-authz';
 import { AuthManagementService } from '../services/auth0-management';
 import { MembershipService } from '../services/membership-service';
+import { SNSComputeMetricEvent, SNSWipeDataEvent, triggerWipeDataEvent } from '../services/sns';
 import { ResponseMeta } from '../types/response';
 
 import { queryParamGroup, validate } from '.';
@@ -384,11 +385,30 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
     AuthzGuards.writeOrganizationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
+      const membershipService = new MembershipService(authzService);
 
       const id = req.params.id;
 
-      const membershipService = new MembershipService(authzService);
-      const success = await membershipService.deleteOrganization(id);
+      const group = await authzService.getGroup(id);
+      if (!group) {
+        throw new RecordNotFound(`Could not retrieve document.`, 404);
+      }
+      const groupId = group?._id;
+
+      let success: boolean;
+      try {
+        success = await membershipService.deleteOrganization(groupId);
+        if (success) {
+          const message: SNSWipeDataEvent = {
+            organizationId: groupId,
+            organizationName: group.name,
+          };
+          await triggerWipeDataEvent(message);
+        }
+      } catch (err) {
+        logger.error(err);
+        success = false;
+      }
 
       const code = 200;
       const response = createStatusSerializer().serialize({ success });

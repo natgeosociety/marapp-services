@@ -20,7 +20,7 @@
 import AWS, { SNS } from 'aws-sdk';
 import makeError from 'make-error';
 
-import { AWS_REGION, SNS_TOPIC_MANAGER_ARN } from '../config';
+import { AWS_REGION, SNS_TOPIC_MANAGER_ARN, SNS_TOPIC_WIPE_DATA_ARN } from '../config';
 import { getLogger } from '../logging';
 
 const sns = new AWS.SNS({ region: AWS_REGION });
@@ -33,24 +33,34 @@ export enum OperationTypeEnum {
   CALCULATE = 'calculate',
 }
 
-export interface SNSMessage {
+export interface SNSComputeMetricEvent {
   id: string;
   operationType: OperationTypeEnum;
   version: number;
   resources?: string[];
 }
 
+export interface SNSWipeDataEvent {
+  organizationId: string;
+  organizationName: string;
+}
+
 /**
  * Publish messages to an Amazon SNS topic.
  * @param message
+ * @param topicArn
  * @param raiseError
  */
-export const publishSNSMessage = async (message: SNSMessage, raiseError: boolean = true): Promise<string> => {
+const publishSNSMessage = async (
+  message: { [key: string]: any },
+  topicArn: string,
+  raiseError: boolean = true
+): Promise<string> => {
   const encoded = JSON.stringify(message);
 
   const params: SNS.Types.PublishInput = {
     Message: encoded,
-    TopicArn: SNS_TOPIC_MANAGER_ARN,
+    TopicArn: topicArn,
   };
   try {
     const response = await sns.publish(params).promise();
@@ -64,4 +74,15 @@ export const publishSNSMessage = async (message: SNSMessage, raiseError: boolean
       throw new PublishError(`Could not publish SNS message to topic: ${params.TopicArn}`);
     }
   }
+};
+
+export const triggerComputeMetricEvent = async (
+  message: SNSComputeMetricEvent,
+  raiseError: boolean = true
+): Promise<string> => {
+  return publishSNSMessage(message, SNS_TOPIC_MANAGER_ARN, raiseError);
+};
+
+export const triggerWipeDataEvent = async (message: SNSWipeDataEvent, raiseError: boolean = true): Promise<string> => {
+  return publishSNSMessage(message, SNS_TOPIC_WIPE_DATA_ARN, raiseError);
 };

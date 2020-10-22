@@ -21,11 +21,11 @@ import { Handler } from 'aws-lambda';
 
 import { API_BASE } from '../config';
 import { getLogger } from '../logging';
-import { eeContext } from '../middlewares/context';
+import { eeContextHttp } from '../middlewares/context';
 import TileRouter from '../routers/TileRouter';
 
-import { open } from '.';
+import { openHttpHandler } from '.';
 
 const logger = getLogger();
 
-export const openHandler: Handler = open(eeContext, TileRouter.getRouter(API_BASE));
+export const openHandler: Handler = openHttpHandler(eeContextHttp, TileRouter.getRouter(API_BASE));

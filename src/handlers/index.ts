@@ -17,27 +17,27 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { Handler } from 'aws-lambda';
+import { Context, Handler, SNSEvent } from 'aws-lambda';
 import { ErrorRequestHandler, RequestHandler } from 'express';
 import serverlessHttp from 'serverless-http';
 
 import { getLogger } from '../logging';
 import { expressFactory } from '../middlewares';
-import { globalContext } from '../middlewares/context';
+import { contextEvent, contextHttp } from '../middlewares/context';
 import { apiKey, jwtError, jwtRSA } from '../middlewares/jwt';
 
 const logger = getLogger();
 
 /**
- * Base handler for Lambda function(s) that processes events.
+ * Base HTTP handler for Lambda function(s) that processes events.
  * @param handlers
  */
-export const baseHandler = <H extends RequestHandler | ErrorRequestHandler>(handlers: H[]): Handler => {
+export const baseHttpHandler = <H extends RequestHandler | ErrorRequestHandler>(handlers: H[]): Handler => {
   return async (event, context) => {
     // See: https://docs.aws.amazon.com/lambda/latest/dg/nodejs-context.html#nodejs-prog-model-context-properties
     context.callbackWaitsForEmptyEventLoop = false;
 
-    const app = expressFactory(globalContext, ...handlers);
+    const app = expressFactory(contextHttp, ...handlers);
 
     const handler = serverlessHttp(app);
     return handler(event, context);
@@ -45,27 +45,38 @@ export const baseHandler = <H extends RequestHandler | ErrorRequestHandler>(hand
 };
 
 /**
+ * Base async handler for Lambda function(s) that processes events.
+ * @param handler
+ */
+export const contextEventHandler = (handler: Handler): Handler => {
+  return async (event: SNSEvent, context: Context) => {
+    const ctx = await contextEvent(event, context);
+    return handler(ctx.event, ctx.context, null);
+  };
+};
+
+/**
  * Wrapper for non-authenticated handlers.
  * @param handlers
  */
-export const open = (...handlers: RequestHandler[]): Handler => baseHandler(handlers);
+export const openHttpHandler = (...handlers: RequestHandler[]): Handler => baseHttpHandler(handlers);
 
 /**
  * Wrapper for authenticated handlers.
  * @param handlers
  */
-export const authenticated = (...handlers: RequestHandler[]): Handler =>
-  baseHandler([jwtRSA(true), jwtError, ...handlers]);
+export const authHttpHandler = (...handlers: RequestHandler[]): Handler =>
+  baseHttpHandler([jwtRSA(true), jwtError, ...handlers]);
 
 /**
  * Wrapper for (optional) anonymous handlers.
  * @param handlers
  */
-export const anonymous = (...handlers: RequestHandler[]): Handler =>
-  baseHandler([jwtRSA(false), jwtError, ...handlers]);
+export const anonymousHttpHandler = (...handlers: RequestHandler[]): Handler =>
+  baseHttpHandler([jwtRSA(false), jwtError, ...handlers]);
 
 /**
  * Wrapper for system handlers (apiKey).
  * @param handlers
  */
-export const system = (...handlers: RequestHandler[]): Handler => baseHandler([apiKey, ...handlers]);
+export const systemHttpHandler = (...handlers: RequestHandler[]): Handler => baseHttpHandler([apiKey, ...handlers]);

@@ -23,10 +23,10 @@ import { API_BASE } from '../config';
 import { getLogger } from '../logging';
 import CollectionRouter from '../routers/CollectionRouter';
 
-import { anonymous, authenticated } from '.';
+import { anonymousHttpHandler, authHttpHandler } from '.';
 
 const logger = getLogger();
 
-export const openHandler: Handler = anonymous(CollectionRouter.getRouter(API_BASE));
+export const openHandler: Handler = anonymousHttpHandler(CollectionRouter.getRouter(API_BASE));
 
-export const managementHandler: Handler = authenticated(CollectionRouter.getAdminRouter(API_BASE));
+export const managementHandler: Handler = authHttpHandler(CollectionRouter.getAdminRouter(API_BASE));

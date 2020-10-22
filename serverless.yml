@@ -40,6 +40,7 @@ provider:
     S3_ASSETS_PATH_PREFIX: ${self:custom.s3AssetsPathPrefix}
     SNS_TOPIC_MANAGER_ARN: ${env:SNS_TOPIC_MANAGER_ARN}
     SNS_TOPIC_SUBSCRIPTION_ARN: ${self:custom.stageEnvironment.snsWorkerResultTopicArn}
+    SNS_TOPIC_WIPE_DATA_ARN: ${self:custom.stageEnvironment.snsWipeDataTopicArn}
     SERVICE_API_KEY: ${env:SERVICE_API_KEY}
   iamRoleStatements:
     - Effect: Allow
@@ -48,8 +49,16 @@ provider:
       Resource: "arn:aws:s3:::${self:custom.stageEnvironment.assetsBucket}/*"
     - Effect: Allow
       Action:
+        - s3:PutBucketPolicy
+      Resource: "arn:aws:s3:::${self:custom.stageEnvironment.assetsBucket}"
+    - Effect: Allow
+      Action:
         - SNS:Publish
       Resource: ${env:SNS_TOPIC_MANAGER_ARN}
+    - Effect: Allow
+      Action:
+        - SNS:Publish
+      Resource: ${self:custom.stageEnvironment.snsWipeDataTopicArn}
 
 custom:
   stageEnv: ${opt:stage, self:provider.stage}
@@ -63,6 +72,8 @@ custom:
     assetsBucket: ${self:service.name}-assets-${self:custom.stageEnv}
     snsWorkerResultTopic: ${self:service.name}-${self:custom.stageEnv}-sns-result
     snsWorkerResultTopicArn: { "Fn::Join": [":", ["arn:aws:sns:${self:provider.region}", { "Ref": "AWS::AccountId" }, "${self:custom.stageEnvironment.snsWorkerResultTopic}" ] ]  }
+    snsWipeDataTopic: ${self:service.name}-${self:custom.stageEnv}-sns-wipe-data
+    snsWipeDataTopicArn: { "Fn::Join": [":", ["arn:aws:sns:${self:provider.region}", { "Ref": "AWS::AccountId" }, "${self:custom.stageEnvironment.snsWipeDataTopic}" ] ]  }
 
   # Plugins configuration
   webpack:
@@ -306,6 +317,13 @@ functions:
           path: services/api/v1/operations/{any+}
           method: any
           cors: true
+  wipe-data:
+    timeout: 300 # 5 minutes
+    handler: src/handlers/EventHandler.wipeDataTaskHandler
+    events:
+      - sns:
+          arn: !Ref SNSWipeDataTopic
+          topicName: ${self:custom.stageEnvironment.snsWipeDataTopic}
 
 resources:
   Resources:
@@ -400,3 +418,7 @@ resources:
         Subscription:
           - Protocol: HTTPS
             Endpoint: { "Fn::Join": ["", [ "https://", { "Ref": "ApiGatewayRestApi" }, ".execute-api.${self:provider.region}.amazonaws.com/${self:custom.stageEnv}/${self:custom.snsHTTPSSubscriptionPath}" ] ]  }
+    SNSWipeDataTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:custom.stageEnvironment.snsWipeDataTopic}

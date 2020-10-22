@@ -18,9 +18,9 @@
 */
 
 import { Response, Router } from 'express';
-import { param, query, body } from 'express-validator';
 import asyncHandler from 'express-async-handler';
-import { get, set, compact } from 'lodash';
+import { body, param, query } from 'express-validator';
+import { compact, get, set } from 'lodash';
 import urljoin from 'url-join';
 
 import { DEFAULT_CONTENT_TYPE } from '../config';
@@ -32,8 +32,8 @@ import { AuthzGuards, AuthzRequest, guard } from '../middlewares/authz-guards';
 import { createSerializer as createGroupSerializer } from '../serializers/GroupRoleSerializer';
 import { createSerializer as createStatusSerializer } from '../serializers/StatusSerializer';
 import {
-  createSerializer as createUserSerializer,
   createBulkSerializer as createUserBulkSerializer,
+  createSerializer as createUserSerializer,
 } from '../serializers/UserSerializer';
 import { AuthzServiceSpec } from '../services/auth0-authz';
 import { AuthManagementService } from '../services/auth0-management';

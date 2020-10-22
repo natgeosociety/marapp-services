@@ -19,10 +19,10 @@
 
 import ee from '@google/earthengine';
 import { Request, Response, Router } from 'express';
-import { param, query, body } from 'express-validator';
 import asyncHandler from 'express-async-handler';
 import cacheControl from 'express-cache-controller';
-import { get, inRange, isEmpty } from 'lodash';
+import { body, param, query } from 'express-validator';
+import { get, isEmpty } from 'lodash';
 import urljoin from 'url-join';
 
 import { API_MAP_TILES_TTL } from '../config';
@@ -61,7 +61,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/tiles') => {
     asyncHandler(async (req: Request, res: Response) => {
       const layerId = req.params.layer;
 
-      const z = Number(req.params.z);
+      const z = Number(req.params.z); // Z goes from 0 to MAX_ZOOM_LEVEL
       const x = Number(req.params.x); // X goes from 0 to 2^zoom − 1
       const y = Number(req.params.y); // Y goes from 0 to 2^zoom − 1
 

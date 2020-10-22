@@ -23,9 +23,9 @@ import { API_BASE } from '../config';
 import { getLogger } from '../logging';
 import OrganizationRouter from '../routers/OrganizationRouter';
 
-import { anonymous, authenticated } from '.';
+import { anonymousHttpHandler, authHttpHandler } from '.';
 
 const logger = getLogger();
 
-export const openHandler: Handler = anonymous(OrganizationRouter.getRouter(API_BASE));
-export const managementHandler: Handler = authenticated(OrganizationRouter.getAdminRouter(API_BASE));
+export const openHandler: Handler = anonymousHttpHandler(OrganizationRouter.getRouter(API_BASE));
+export const managementHandler: Handler = authHttpHandler(OrganizationRouter.getAdminRouter(API_BASE));
