@@ -49,7 +49,7 @@ provider:
       Resource: "arn:aws:s3:::${self:custom.stageEnvironment.assetsBucket}/*"
     - Effect: Allow
       Action:
-        - s3:PutBucketPolicy
+        - s3:PutLifecycleConfiguration
       Resource: "arn:aws:s3:::${self:custom.stageEnvironment.assetsBucket}"
     - Effect: Allow
       Action:

@@ -18,7 +18,7 @@
 */
 
 import AWS from 'aws-sdk';
-import { HeadObjectRequest, PutBucketLifecycleRequest, PutObjectRequest } from 'aws-sdk/clients/s3';
+import { HeadObjectRequest, PutBucketLifecycleConfigurationRequest, PutObjectRequest } from 'aws-sdk/clients/s3';
 import { isArray, isString } from 'lodash';
 import makeError from 'make-error';
 import { Readable } from 'stream';
@@ -103,14 +103,14 @@ export const s3KeyExists = async (keyPath: string, bucketName: string = S3_ASSET
 /**
  * Creates a new lifecycle configuration for the bucket or replaces an
  * existing lifecycle configuration.
- * @param bucketName:
+ * @param bucketName: name of the bucket.
  * @param objectKeyPrefix: object key name prefix.
- * @param expTTLSeconds: expiration for the lifecycle of the object.
+ * @param expDaysTTL: lifetime, in days, of the objects in the bucket.
  */
 export const createLifecyclePolicy = async (
   objectKeyPrefix: string | string[],
   bucketName: string = S3_ASSETS_BUCKET,
-  expTTLSeconds: number = 3600
+  expDaysTTL: number = 1
 ): Promise<boolean> => {
   let keyPrefixes: string[];
   if (isString(objectKeyPrefix)) {
@@ -122,18 +122,17 @@ export const createLifecyclePolicy = async (
   }
   logger.debug('[createLifecyclePolicy] object key prefix: %O', keyPrefixes);
 
-  const exp = new Date();
-  exp.setSeconds(new Date().getSeconds() + expTTLSeconds);
-
   // Specifies lifecycle configuration rules for an Amazon S3 bucket.
-  const params: PutBucketLifecycleRequest = {
+  const params: PutBucketLifecycleConfigurationRequest = {
     Bucket: bucketName,
     LifecycleConfiguration: {
       Rules: keyPrefixes.map((prefix: string) => ({
         Expiration: {
-          Date: exp,
+          Days: expDaysTTL,
         },
-        Prefix: prefix,
+        Filter: {
+          Prefix: prefix,
+        },
         Status: 'Enabled',
       })),
     },
@@ -141,7 +140,7 @@ export const createLifecyclePolicy = async (
 
   let success: boolean = true;
   try {
-    const res = await s3.putBucketLifecycle(params).promise();
+    const res = await s3.putBucketLifecycleConfiguration(params).promise();
     logger.debug('[createLifecyclePolicy] client responded with: %s', JSON.stringify(res));
   } catch (err) {
     success = false;
