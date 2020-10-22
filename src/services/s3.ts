@@ -69,7 +69,7 @@ export const s3StreamUpload = async (
       storageUrl: getStorageUrl(meta.Bucket, meta.Key),
     };
   } catch (err) {
-    logger.error(err);
+    logger.error(err.message);
     throw new UploadError(`Failed to upload file to S3. ${err.message}`);
   }
 };
@@ -93,8 +93,8 @@ export const s3KeyExists = async (keyPath: string, bucketName: string = S3_ASSET
       storageUrl: getStorageUrl(config.Bucket, config.Key),
     };
   } catch (err) {
+    logger.error(err.message);
     if (err.code !== 'NotFound') {
-      logger.error(err);
       throw new UploadError(`Failed to request file meta from S3. ${err.message}`);
     }
   }
@@ -144,7 +144,7 @@ export const createLifecyclePolicy = async (
     logger.debug('[createLifecyclePolicy] client responded with: %s', JSON.stringify(res));
   } catch (err) {
     success = false;
-    logger.error(err);
+    logger.error(err.message);
   }
   return success;
 };
