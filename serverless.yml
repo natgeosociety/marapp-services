@@ -49,6 +49,10 @@ provider:
       Resource: "arn:aws:s3:::${self:custom.stageEnvironment.assetsBucket}/*"
     - Effect: Allow
       Action:
+        - s3:PutBucketPolicy
+      Resource: "arn:aws:s3:::${self:custom.stageEnvironment.assetsBucket}"
+    - Effect: Allow
+      Action:
         - SNS:Publish
       Resource: ${env:SNS_TOPIC_MANAGER_ARN}
     - Effect: Allow
