@@ -3503,6 +3503,33 @@
         ]
       }
     },
+    "/users/profile/verify-email": {
+      "post": {
+        "tags": ["profile"],
+        "summary": "Resend email verification for current user",
+        "operationId": "verifyUserEmail",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
     "/users/profile/organizations": {
       "post": {
         "tags": ["profile"],
