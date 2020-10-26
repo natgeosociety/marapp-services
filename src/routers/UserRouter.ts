@@ -285,6 +285,29 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
   );
 
   router.post(
+    `${path}/verify-email`,
+    validate([]),
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
+
+      const user = await authMgmtService.getUser(req.identity.sub);
+      const userId = get(user, 'user_id');
+      const emailVerified = get(user, 'email_verified');
+
+      if (emailVerified) {
+        throw new AlreadyExistsError('Email address is already verified.', 400);
+      }
+      const success = await authMgmtService.sendEmailVerification(userId);
+
+      const code = 200;
+      const response = createStatusSerializer().serialize({ success });
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
+
+  router.post(
     `${path}/organizations`,
     validate([]),
     asyncHandler(async (req: AuthzRequest, res: Response) => {
