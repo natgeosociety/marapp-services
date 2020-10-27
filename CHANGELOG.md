@@ -1,3 +1,15 @@
+# [1.9.0](https://github.com/natgeosociety/marapp-services/compare/v1.8.0...v1.9.0) (2020-10-27)
+
+
+### Bug Fixes
+
+* change S3 put lifecycle configuration endpoint ([546acd7](https://github.com/natgeosociety/marapp-services/commit/546acd75dc3cb617d4f84fd4b1fd6d604212b32e))
+
+
+### Features
+
+* **profile:** resend email validation [EP-3231] ([5177b9d](https://github.com/natgeosociety/marapp-services/commit/5177b9d605abfd22e766ae3903c612c0aef2ff03))
+
 # [1.8.0](https://github.com/natgeosociety/marapp-services/compare/v1.7.0...v1.8.0) (2020-10-22)
 
 
