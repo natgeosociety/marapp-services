@@ -51,6 +51,7 @@ export interface AuthManagementService {
   passwordChangeRequest(userId: string): Promise<boolean>;
   passwordChangeTicket(userId: string, redirectURL: string, TTL?: number): Promise<string>;
   createUserInvite(email: string): Promise<User>;
+  sendEmailVerification(userId: string): Promise<boolean>;
 }
 
 export class Auth0ManagementService implements AuthManagementService {
@@ -327,5 +328,20 @@ export class Auth0ManagementService implements AuthManagementService {
       mark_email_as_verified: true,
     });
     return ticket;
+  }
+
+  /**
+   * Send an email to the specified user that asks them to verify their email address.
+   * @param userId
+   */
+  async sendEmailVerification(userId: string): Promise<boolean> {
+    let success: boolean = true;
+    try {
+      await this.mgmtClient.sendEmailVerification({ user_id: userId });
+    } catch (err) {
+      logger.error(err);
+      success = false;
+    }
+    return success;
   }
 }
