@@ -49,6 +49,27 @@ export const schemaOptions: SchemaOptions = {
 };
 
 /**
+ * Auto-generate model slug middleware.
+ * @param modelName
+ */
+export const generateSlugMiddleware = function (modelName: string) {
+  const fn = async function () {
+    const model = this.model(modelName);
+    if (!model) {
+      throw new Error(`Model not found for name: ${modelName}`);
+    }
+    const slug: string = this.get('slug');
+    const name: string = this.get('name');
+    const organization: string = this.get('organization');
+
+    if (this.isNew && !slug && name) {
+      this.set('slug', await model.getUniqueSlug(name, { organization }));
+    }
+  };
+  return fn;
+};
+
+/**
  * Validate document references.
  * References need to belong to the same workspace/organization.
  * @param model

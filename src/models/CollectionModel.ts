@@ -27,7 +27,7 @@ import { getLogger } from '../logging';
 import { computeAreaKm2, computeShapeBbox, computeShapeCentroid, mergeGeojson } from '../services/geospatial';
 
 import { Location, LocationModel, Metric } from '.';
-import { checkWorkspaceRefs, schemaOptions } from './middlewares';
+import { checkWorkspaceRefs, generateSlugMiddleware, schemaOptions } from './middlewares';
 import esPlugin, { IESPlugin } from './plugins/elasticsearch';
 import slugifyPlugin, { ISlugifyPlugin } from './plugins/slugify';
 import { getByIds } from './utils';
@@ -132,6 +132,11 @@ CollectionSchema.plugin(esPlugin, {
 
 // Slugify plugin;
 CollectionSchema.plugin(slugifyPlugin, { uniqueField: 'slug', separator: '-' });
+
+/**
+ * Pre-validate middleware, handles slug auto-generation.
+ */
+CollectionSchema.pre('validate', generateSlugMiddleware('Collection'));
 
 /**
  * Post-save middleware, computes geojson, areaKm2, geojson, centroid.

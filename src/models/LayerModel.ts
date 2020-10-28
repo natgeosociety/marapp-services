@@ -23,7 +23,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getLogger } from '../logging';
 
-import { checkWorkspaceRefs, schemaOptions } from './middlewares';
+import { checkWorkspaceRefs, generateSlugMiddleware, schemaOptions } from './middlewares';
 import esPlugin, { IESPlugin } from './plugins/elasticsearch';
 import slugifyPlugin, { ISlugifyPlugin } from './plugins/slugify';
 import { isArrayEmptyValidator, isEmptyValidator, slugValidator } from './validators';
@@ -158,6 +158,11 @@ LayerSchema.index({ name: 1 });
 
 // Slugify plugin;
 LayerSchema.plugin(slugifyPlugin, { uniqueField: 'slug', separator: '-' });
+
+/**
+ * Pre-validate middleware, handles slug auto-generation.
+ */
+LayerSchema.pre('validate', generateSlugMiddleware('Layer'));
 
 /**
  * Pre-save middleware, handles validation & versioning.

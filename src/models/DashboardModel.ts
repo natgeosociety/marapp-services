@@ -24,7 +24,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getLogger } from '../logging';
 
 import { Layer, Widget } from '.';
-import { checkWorkspaceRefs, schemaOptions } from './middlewares';
+import { checkWorkspaceRefs, generateSlugMiddleware, schemaOptions } from './middlewares';
 import esPlugin, { IESPlugin } from './plugins/elasticsearch';
 import slugifyPlugin, { ISlugifyPlugin } from './plugins/slugify';
 import { slugValidator } from './validators';
@@ -117,6 +117,11 @@ DashboardSchema.index({ name: 1 });
 
 // Slugify plugin;
 DashboardSchema.plugin(slugifyPlugin, { uniqueField: 'slug', separator: '-' });
+
+/**
+ * Pre-validate middleware, handles slug auto-generation.
+ */
+DashboardSchema.pre('validate', generateSlugMiddleware('Dashboard'));
 
 /**
  * Pre-save middleware, handles validation & versioning.

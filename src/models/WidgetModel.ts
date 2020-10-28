@@ -24,7 +24,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getLogger } from '../logging';
 
 import { Layer, MetricModel } from '.';
-import { checkWorkspaceRefs, schemaOptions } from './middlewares';
+import { checkWorkspaceRefs, generateSlugMiddleware, schemaOptions } from './middlewares';
 import esPlugin, { IESPlugin } from './plugins/elasticsearch';
 import slugifyPlugin, { ISlugifyPlugin } from './plugins/slugify';
 import { getDistinctValues } from './utils';
@@ -137,6 +137,11 @@ WidgetSchema.statics.enumOptionsResolver = function () {
     metrics: () => getDistinctValues(MetricModel, 'slug'),
   };
 };
+
+/**
+ * Pre-validate middleware, handles slug auto-generation.
+ */
+WidgetSchema.pre('validate', generateSlugMiddleware('Widget'));
 
 /**
  * Pre-save middleware, handles validation & versioning.
