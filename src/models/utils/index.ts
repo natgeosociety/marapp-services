@@ -53,6 +53,9 @@ export const save = async <T extends Document>(
   } catch (err) {
     logger.error(err);
     if (raiseError) {
+      if (err instanceof ExposedError) {
+        throw err;
+      }
       if (err.name === 'MongoError' && err.code === 11000) {
         throw new DocumentError('Could not save document. Duplicate key error.', 400);
       }
@@ -104,6 +107,9 @@ export const getById = async <T extends Document, L extends keyof T>(
   } catch (err) {
     logger.error(err);
     if (raiseError) {
+      if (err instanceof ExposedError) {
+        throw err;
+      }
       if (err.name === 'MongoError' && err.code === 2) {
         throw new DocumentError('Could not retrieve document. Cannot have a mix of inclusion and exclusion.', 400);
       }
@@ -147,6 +153,9 @@ export const exists = async <T extends Document, L extends keyof T>(
   } catch (err) {
     logger.error(err);
     if (raiseError) {
+      if (err instanceof ExposedError) {
+        throw err;
+      }
       throw new DocumentError('Could not retrieve document.', 500);
     }
   }
@@ -187,6 +196,9 @@ export const getOne = async <T extends Document, L extends keyof T, K extends ke
   } catch (err) {
     logger.error(err);
     if (raiseError) {
+      if (err instanceof ExposedError) {
+        throw err;
+      }
       if (err.name === 'MongoError' && err.code === 2) {
         throw new DocumentError('Could not retrieve document. Cannot have a mix of inclusion and exclusion.', 400);
       }
@@ -220,6 +232,9 @@ export const update = async <T extends Document, L extends keyof T>(
   } catch (err) {
     logger.error(err);
     if (raiseError) {
+      if (err instanceof ExposedError) {
+        throw err;
+      }
       if (err.name === 'MongoError' && err.code === 11000) {
         throw new DocumentError('Could not update document. Duplicate key error.', 400);
       }
@@ -262,6 +277,9 @@ export const getByIds = async <T extends Document, L extends keyof T>(
   } catch (err) {
     logger.error(err);
     if (raiseError) {
+      if (err instanceof ExposedError) {
+        throw err;
+      }
       if (err.name === 'MongoError' && err.code === 2) {
         throw new DocumentError('Could not retrieve documents. Cannot have a mix of inclusion and exclusion.', 400);
       }
@@ -476,6 +494,9 @@ export const remove = async <T extends Document, L extends keyof T>(
   } catch (err) {
     logger.error(err);
     if (raiseError) {
+      if (err instanceof ExposedError) {
+        throw err;
+      }
       throw new DocumentError('Could not remove document.', 500);
     }
     success = false;
@@ -506,6 +527,9 @@ export const removeById = async <T extends Document, L extends keyof T>(
   } catch (err) {
     logger.error(err);
     if (raiseError) {
+      if (err instanceof ExposedError) {
+        throw err;
+      }
       throw new DocumentError('Could not remove document.', 500);
     }
     success = false;
@@ -535,6 +559,9 @@ export const removeByQuery = async <T extends Document, L extends keyof T>(
   } catch (err) {
     logger.error(err);
     if (raiseError) {
+      if (err instanceof ExposedError) {
+        throw err;
+      }
       throw new DocumentError('Could not remove documents.', 500);
     }
     success = false;
@@ -560,6 +587,9 @@ export const removeByIds = async <T extends Document>(
   } catch (err) {
     logger.error(err);
     if (raiseError) {
+      if (err instanceof ExposedError) {
+        throw err;
+      }
       throw new DocumentError('Could not remove documents.', 500);
     }
     success = false;
@@ -595,6 +625,9 @@ export const countByQuery = async <T extends Document, L extends keyof T>(
   } catch (err) {
     logger.error(err);
     if (raiseError) {
+      if (err instanceof ExposedError) {
+        throw err;
+      }
       throw new DocumentError('Could not count documents.', 500);
     }
   }
@@ -642,6 +675,9 @@ export const getByGeometryIntersection = async <T extends Document, L extends ke
   } catch (err) {
     logger.error(err);
     if (raiseError) {
+      if (err instanceof ExposedError) {
+        throw err;
+      }
       throw new DocumentError('Could not retrieve geometry intersections.', 500);
     }
   }
@@ -665,6 +701,9 @@ export const getDistinctValues = async <T extends Document>(
   } catch (err) {
     logger.error(err);
     if (raiseError) {
+      if (err instanceof ExposedError) {
+        throw err;
+      }
       throw new DocumentError('Could not retrieve distinct values.', 500);
     }
   }

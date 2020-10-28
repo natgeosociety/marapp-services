@@ -27,7 +27,7 @@ import { getLogger } from '../logging';
 import { computeAreaKm2, computeShapeBbox, computeShapeCentroid, mergeGeojson } from '../services/geospatial';
 
 import { Location, LocationModel, Metric } from '.';
-import { generateSlugMiddleware, schemaOptions } from './middlewares';
+import { checkWorkspaceRefs, generateSlugMiddleware, schemaOptions } from './middlewares';
 import esPlugin, { IESPlugin } from './plugins/elasticsearch';
 import slugifyPlugin, { ISlugifyPlugin } from './plugins/slugify';
 import { getByIds } from './utils';
@@ -178,6 +178,16 @@ CollectionSchema.post('findOne', async function (result: CollectionDocument) {
     result.areaKm2 = computeAreaKm2(geojson);
     result.centroid = computeShapeCentroid(geojson);
   }
+});
+
+/**
+ * Pre-save middleware, handles validation.
+ */
+CollectionSchema.pre('save', async function () {
+  const locations: string[] = this.get('locations');
+  const organization: string = this.get('organization');
+
+  await checkWorkspaceRefs(this.model('Location'), locations, organization);
 });
 
 interface ICollectionModel extends Model<CollectionDocument>, IESPlugin, ISlugifyPlugin {}
