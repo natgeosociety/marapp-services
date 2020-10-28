@@ -160,6 +160,19 @@ LayerSchema.index({ name: 1 });
 LayerSchema.plugin(slugifyPlugin, { uniqueField: 'slug', separator: '-' });
 
 /**
+ * Pre-validate middleware, handles slug auto-generation.
+ */
+LayerSchema.pre('validate', async function () {
+  const slug: string = this.get('slug');
+  const name: string = this.get('name');
+  const organization: string = this.get('organization');
+
+  if (this.isNew && !slug && name) {
+    this.set('slug', await LayerModel.getUniqueSlug(name, { organization }));
+  }
+});
+
+/**
  * Pre-save middleware, handles versioning.
  */
 LayerSchema.pre('save', async function () {

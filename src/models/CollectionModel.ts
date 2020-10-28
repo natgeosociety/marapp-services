@@ -134,6 +134,19 @@ CollectionSchema.plugin(esPlugin, {
 CollectionSchema.plugin(slugifyPlugin, { uniqueField: 'slug', separator: '-' });
 
 /**
+ * Pre-validate middleware, handles slug auto-generation.
+ */
+CollectionSchema.pre('validate', async function () {
+  const slug: string = this.get('slug');
+  const name: string = this.get('name');
+  const organization: string = this.get('organization');
+
+  if (this.isNew && !slug && name) {
+    this.set('slug', await CollectionModel.getUniqueSlug(name, { organization }));
+  }
+});
+
+/**
  * Post-save middleware, computes geojson, areaKm2, geojson, centroid.
  */
 CollectionSchema.post('find', async function (results) {

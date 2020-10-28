@@ -281,7 +281,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
   router.post(
     path,
     validate([
-      body('slug').isString().trim().notEmpty(),
+      body('slug').optional().isString().trim().notEmpty(),
       body('name').isString().trim().notEmpty(),
       body('description').optional().isString().trim(),
       body('published').optional().isBoolean(),
