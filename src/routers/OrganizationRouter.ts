@@ -20,7 +20,7 @@
 import { Response, Router } from 'express';
 import asyncHandler from 'express-async-handler';
 import { body, param, query } from 'express-validator';
-import { get, set } from 'lodash';
+import { compact, get, set } from 'lodash';
 import urljoin from 'url-join';
 
 import { DEFAULT_CONTENT_TYPE } from '../config';
@@ -35,6 +35,7 @@ import { countByQuery } from '../models/utils';
 import { createSerializer } from '../serializers/OrganizationSerializer';
 import { createSerializer as createStatsSerializer } from '../serializers/StatsSerializer';
 import { createSerializer as createStatusSerializer } from '../serializers/StatusSerializer';
+import { createBulkSerializer as createUserBulkSerializer } from '../serializers/UserSerializer';
 import { AuthzServiceSpec } from '../services/auth0-authz';
 import { AuthManagementService } from '../services/auth0-management';
 import { MembershipService } from '../services/membership-service';
@@ -280,11 +281,30 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       }
 
       if (owners) {
+        const tempData: { email: string; error?: string; status?: number }[] = [];
+
         const ownerIds = await forEachAsync(owners, async (email: any) => {
-          const user = await authMgmtService.getUserByEmail(email);
-          logger.debug(`resolved owner ${user.user_id} for email: ${email}`);
-          return user.user_id;
+          try {
+            const user = await authMgmtService.getUserByEmail(email);
+            logger.debug(`resolved owner ${user.user_id} for email: ${email}`);
+            tempData.push({ email: user.email, status: 200 });
+            return user.user_id;
+          } catch (err) {
+            logger.debug(`unresolved owner for email: ${email}`);
+            logger.error(err.message);
+            tempData.push({ email: email, error: err.message, status: err.code });
+          }
         });
+
+        if (tempData.some((res) => ![200, 409].includes(res.status))) {
+          const code = 400;
+          const response = createUserBulkSerializer().serialize(tempData);
+
+          res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+          res.status(code).send(response);
+
+          return;
+        }
 
         const nestedGroups = await authzService.getNestedGroups(id, ['OWNER']);
         const memberIds = get(nestedGroups[0], 'members', []);
@@ -349,11 +369,30 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         throw new ParameterRequiredError('Invalid format for field: slug', 400);
       }
 
+      const tempData: { email: string; error?: string; status?: number }[] = [];
+
       const ownerIds = await forEachAsync(owners, async (email) => {
-        const user = await authMgmtService.getUserByEmail(email);
-        logger.debug(`resolved owner ${user.user_id} for email: ${email}`);
-        return user.user_id;
+        try {
+          const user = await authMgmtService.getUserByEmail(email);
+          logger.debug(`resolved owner ${user.user_id} for email: ${email}`);
+          tempData.push({ email: user.email, status: 200 });
+          return user.user_id;
+        } catch (err) {
+          logger.debug(`unresolved owner for email: ${email}`);
+          logger.error(err.message);
+          tempData.push({ email: email, error: err.message, status: err.code });
+        }
       });
+
+      if (tempData.some((res) => ![200, 409].includes(res.status))) {
+        const code = 400;
+        const response = createUserBulkSerializer().serialize(tempData);
+
+        res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+        res.status(code).send(response);
+
+        return;
+      }
 
       const group = await membershipService.createOrganization(slug, name, ownerIds);
 
