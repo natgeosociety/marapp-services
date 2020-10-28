@@ -35,6 +35,7 @@ import { countByQuery } from '../models/utils';
 import { createSerializer } from '../serializers/OrganizationSerializer';
 import { createSerializer as createStatsSerializer } from '../serializers/StatsSerializer';
 import { createSerializer as createStatusSerializer } from '../serializers/StatusSerializer';
+import { createBulkSerializer as createUserBulkSerializer } from '../serializers/UserSerializer';
 import { AuthzServiceSpec } from '../services/auth0-authz';
 import { AuthManagementService } from '../services/auth0-management';
 import { MembershipService } from '../services/membership-service';
@@ -296,8 +297,8 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         });
 
         if (tempData.some((res) => ![200, 409].includes(res.status))) {
-          const code = 403;
-          const response = createSerializer().serialize({ errors: tempData });
+          const code = 400;
+          const response = createUserBulkSerializer().serialize(tempData);
 
           res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
           res.status(code).send(response);
@@ -384,8 +385,8 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       });
 
       if (tempData.some((res) => ![200, 409].includes(res.status))) {
-        const code = 403;
-        const response = createSerializer().serialize({ errors: tempData });
+        const code = 400;
+        const response = createUserBulkSerializer().serialize(tempData);
 
         res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
         res.status(code).send(response);
