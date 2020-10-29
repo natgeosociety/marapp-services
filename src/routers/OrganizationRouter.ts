@@ -20,7 +20,7 @@
 import { Response, Router } from 'express';
 import asyncHandler from 'express-async-handler';
 import { body, param, query } from 'express-validator';
-import { compact, get, set } from 'lodash';
+import { get, set } from 'lodash';
 import urljoin from 'url-join';
 
 import { DEFAULT_CONTENT_TYPE } from '../config';
@@ -39,7 +39,7 @@ import { createBulkSerializer as createUserBulkSerializer } from '../serializers
 import { AuthzServiceSpec } from '../services/auth0-authz';
 import { AuthManagementService } from '../services/auth0-management';
 import { MembershipService } from '../services/membership-service';
-import { SNSComputeMetricEvent, SNSWipeDataEvent, triggerWipeDataEvent } from '../services/sns';
+import { SNSWipeDataEvent, triggerWipeDataEvent } from '../services/sns';
 import { ResponseMeta } from '../types/response';
 
 import { queryParamGroup, validate } from '.';
