@@ -20,7 +20,7 @@
 import { Response, Router } from 'express';
 import asyncHandler from 'express-async-handler';
 import { body, param, query } from 'express-validator';
-import { compact, get, set } from 'lodash';
+import { get, set } from 'lodash';
 import urljoin from 'url-join';
 
 import { DEFAULT_CONTENT_TYPE } from '../config';
@@ -39,7 +39,7 @@ import { createBulkSerializer as createUserBulkSerializer } from '../serializers
 import { AuthzServiceSpec } from '../services/auth0-authz';
 import { AuthManagementService } from '../services/auth0-management';
 import { MembershipService } from '../services/membership-service';
-import { SNSComputeMetricEvent, SNSWipeDataEvent, triggerWipeDataEvent } from '../services/sns';
+import { SNSWipeDataEvent, triggerWipeDataEvent } from '../services/sns';
 import { ResponseMeta } from '../types/response';
 
 import { queryParamGroup, validate } from '.';
@@ -365,7 +365,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
       const { slug, name, owners } = req.body;
 
-      if (!membershipService.enforceOrganizationName(slug)) {
+      if (!membershipService.enforceWorkspaceName(slug)) {
         throw new ParameterRequiredError('Invalid format for field: slug', 400);
       }
 
@@ -394,7 +394,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         return;
       }
 
-      const group = await membershipService.createOrganization(slug, name, ownerIds);
+      const group = await membershipService.createWorkspace(slug, name, ownerIds);
 
       const data = {
         id: group?._id,
@@ -436,7 +436,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
       let success: boolean;
       try {
-        success = await membershipService.deleteOrganization(groupId);
+        success = await membershipService.deleteWorkspace(groupId);
         if (success) {
           const message: SNSWipeDataEvent = {
             organizationId: groupId,
