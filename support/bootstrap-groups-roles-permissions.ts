@@ -66,7 +66,7 @@ const main = async (): Promise<void> => {
       throw Error(`No user found for email: ${argv.ownerEmail}`);
     }
     const name = argv.createGroup.trim();
-    await membershipService.createOrganization(name, name, [user.user_id]);
+    await membershipService.createWorkspace(name, name, [user.user_id]);
   }
 
   if (argv.deleteRoles && argv.deleteRoles.length) {
@@ -79,7 +79,7 @@ const main = async (): Promise<void> => {
   }
 
   if (argv.updateGroupsConfig) {
-    await membershipService.updateOrganizationConfig();
+    await membershipService.updateWorkspaceConfig();
   }
 };
 

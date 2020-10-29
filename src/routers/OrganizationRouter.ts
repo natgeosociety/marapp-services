@@ -345,7 +345,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
       const { slug, name, owners } = req.body;
 
-      if (!membershipService.enforceOrganizationName(slug)) {
+      if (!membershipService.enforceWorkspaceName(slug)) {
         throw new ParameterRequiredError('Invalid format for field: slug', 400);
       }
 
@@ -355,7 +355,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         return user.user_id;
       });
 
-      const group = await membershipService.createOrganization(slug, name, ownerIds);
+      const group = await membershipService.createWorkspace(slug, name, ownerIds);
 
       const data = {
         id: group?._id,
@@ -397,7 +397,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
       let success: boolean;
       try {
-        success = await membershipService.deleteOrganization(groupId);
+        success = await membershipService.deleteWorkspace(groupId);
         if (success) {
           const message: SNSWipeDataEvent = {
             organizationId: groupId,

@@ -26,7 +26,7 @@ import { AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET, AUTH0_DOMAIN, AUTH0_EXTENSION_URL
 import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
 
-import { RoleEnum } from './membership-service';
+import { GlobalRoleEnum } from './membership-service';
 
 export const Auth0Error = makeError('Auth0Error');
 
@@ -139,7 +139,7 @@ export class Auth0AuthzService implements AuthzServiceSpec {
 
   async getSuperAdmins(onlyIds: boolean = false) {
     const { roles } = await this.getRoles();
-    const superAdminRole = roles.find((r) => r?.name && r?.name.endsWith(RoleEnum.SUPER_ADMIN));
+    const superAdminRole = roles.find((r) => r?.name && r?.name.endsWith(GlobalRoleEnum.SUPER_ADMIN));
     if (!superAdminRole) {
       return [];
     }
