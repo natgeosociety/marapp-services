@@ -54,7 +54,6 @@ const getRouter = (basePath: string = '/', routePath: string = '/organizations')
   const queryFilters: MongooseQueryFilter[] = [
     { key: 'published', op: '==', value: String(true) },
     { key: '*.published', op: '==', value: String(true) },
-    { key: '*.publicResource', op: '==', value: String(true) },
   ];
 
   router.get(
