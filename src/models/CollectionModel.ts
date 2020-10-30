@@ -187,7 +187,7 @@ CollectionSchema.pre('save', async function () {
   const locations: string[] = this.get('locations');
   const organization: string = this.get('organization');
 
-  await checkWorkspaceRefs(this.model('Location'), locations, organization);
+  await checkWorkspaceRefs(this.model('Location'), locations, organization, true);
 });
 
 interface ICollectionModel extends Model<CollectionDocument>, IESPlugin, ISlugifyPlugin {}

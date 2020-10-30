@@ -75,11 +75,13 @@ export const generateSlugMiddleware = function (modelName: string) {
  * @param model
  * @param refIds
  * @param organization
+ * @param allowPublicResource
  */
 export const checkWorkspaceRefs = async <T extends Document>(
   model: Model<T>,
   refIds: string[],
-  organization: string
+  organization: string,
+  allowPublicResource: boolean = false
 ): Promise<void> => {
   if (!organization) {
     throw new Error('Missing required parameter: organization');
@@ -87,8 +89,10 @@ export const checkWorkspaceRefs = async <T extends Document>(
   if (refIds && refIds.length) {
     logger.debug('[checkWorkspaceRefs] checking references for organization %s: %s', organization, refIds);
 
-    const res: any[] = await model.find(<any>{ _id: { $in: refIds } }).select('organization');
-    const isValid = res.every((r) => r?.organization === organization);
+    const res: any[] = await model.find(<any>{ _id: { $in: refIds } }).select(['organization', 'publicResource']);
+    const isValid = res.every(
+      (r) => r?.organization === organization || (allowPublicResource && r?.publicResource === true)
+    );
     if (!isValid) {
       throw new DocumentError('Could not save document. Invalid references saved on document.', 400);
     }
