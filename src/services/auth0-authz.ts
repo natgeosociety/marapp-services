@@ -32,7 +32,7 @@ export const Auth0Error = makeError('Auth0Error');
 
 const logger = getLogger();
 
-type GroupType = 'OWNER' | 'ADMIN' | 'EDITOR' | 'VIEWER';
+type GroupType = 'OWNER' | 'ADMIN' | 'EDITOR' | 'VIEWER' | 'PUBLIC';
 
 export interface AuthzServiceSpec {
   getGroup(id: string);
@@ -241,11 +241,13 @@ export class Auth0AuthzService implements AuthzServiceSpec {
   }
 
   async getNestedGroups(groupId: string, filterGroups: GroupType[] = [], excludeGroups: GroupType[] = []) {
+    const exclude: GroupType[] = ['PUBLIC'];
+    exclude.push(...excludeGroups);
     let nestedGroups = await this.authzClient.getNestedGroups({ groupId });
     if (filterGroups.length) {
       nestedGroups = nestedGroups.filter((g) => filterGroups.every((k) => g.name.endsWith(k)));
     }
-    return nestedGroups.filter((r) => excludeGroups.every((k) => !r.name.endsWith(k)));
+    return nestedGroups.filter((r) => exclude.every((k) => !r.name.endsWith(k)));
   }
 
   async getNestedGroupMembers(groupId: string, page: number = 1, perPage: number = 10) {
