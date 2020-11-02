@@ -47,6 +47,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/collections') =
   const queryFilters: MongooseQueryFilter[] = [
     { key: 'published', op: '==', value: String(true) },
     { key: '*.published', op: '==', value: String(true) },
+    { key: '*.publicResource', op: '==', value: String(true) },
   ];
   const parser = new MongooseQueryParser();
 
