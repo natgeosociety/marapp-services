@@ -298,18 +298,23 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       body('organization').optional().isString().trim(),
       body('references').optional().isArray(),
       body('references.*').optional().isString().trim().notEmpty(),
+      query('include').optional().isString().trim(),
+      query('select').optional().isString().trim(),
       query('group').optional().isString().trim(),
     ]),
     guard.enforcePrimaryGroup(true),
     AuthzGuards.writeLayersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const include = queryParamGroup(<string>req.query.include);
+      const queryOptions = parser.parse(req.query);
+
       const body = req.body;
       const data = merge(body, { organization: req.groups[0] }); // enforce a single primary group;
 
-      const doc = await save(LayerModel, data);
+      const doc = await save(LayerModel, data, queryOptions);
 
       const code = 200;
-      const response = createSerializer().serialize(doc);
+      const response = createSerializer(include).serialize(doc);
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);
@@ -332,6 +337,8 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       body('organization').optional().isString().trim(),
       body('references').optional({ nullable: true }).isArray(),
       body('references.*').optional().isString().trim().notEmpty(),
+      query('include').optional().isString().trim(),
+      query('select').optional().isString().trim(),
       query('group').optional().isString().trim(),
     ]),
     guard.enforcePrimaryGroup(true),
@@ -340,8 +347,10 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const id = req.params.id;
       const body = req.body;
 
+      const include = queryParamGroup(<string>req.query.include);
+
       const predefined = queryFilters.concat([{ key: 'organization', op: 'in', value: req.groups }]);
-      const queryOptions = parser.parse(req.query, { predefined });
+      const queryOptions = parser.parse(null, { predefined });
 
       const doc = await getById(LayerModel, id, queryOptions, ['slug']);
       if (!doc) {
@@ -349,10 +358,11 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       }
       const data = merge(body, { organization: req.groups[0] }); // enforce a single primary group;
 
-      const updated = await update(LayerModel, doc, data);
+      const queryOptionsGet = parser.parse(req.query, { predefined });
+      const updated = await update(LayerModel, doc, data, queryOptionsGet);
 
       const code = 200;
-      const response = createSerializer().serialize(updated);
+      const response = createSerializer(include).serialize(updated);
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);

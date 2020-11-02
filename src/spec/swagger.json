@@ -191,6 +191,20 @@
           },
           {
             "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "select",
+            "description": "Comma separated field names.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
             "name": "group",
             "description": "Primary group name. Required when multiple primary groups included in the token.",
             "required": false,
@@ -359,6 +373,20 @@
             "schema": {
               "$ref": "#/definitions/Location"
             }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "select",
+            "description": "Comma separated field names.",
+            "required": false,
+            "type": "string"
           },
           {
             "in": "query",
@@ -729,6 +757,20 @@
           },
           {
             "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "select",
+            "description": "Comma separated field names.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
             "name": "group",
             "description": "Primary group name. Required when multiple primary groups included in the token.",
             "required": false,
@@ -897,6 +939,20 @@
             "schema": {
               "$ref": "#/definitions/Collection"
             }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "select",
+            "description": "Comma separated field names.",
+            "required": false,
+            "type": "string"
           },
           {
             "in": "query",
@@ -1962,6 +2018,20 @@
           },
           {
             "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "select",
+            "description": "Comma separated field names.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
             "name": "group",
             "description": "Primary group name. Required when multiple primary groups included in the token.",
             "required": false,
@@ -2130,6 +2200,20 @@
             "schema": {
               "$ref": "#/definitions/Widget"
             }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "select",
+            "description": "Comma separated field names.",
+            "required": false,
+            "type": "string"
           },
           {
             "in": "query",
@@ -2500,6 +2584,20 @@
           },
           {
             "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "select",
+            "description": "Comma separated field names.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
             "name": "group",
             "description": "Primary group name. Required when multiple primary groups included in the token.",
             "required": false,
@@ -2668,6 +2766,20 @@
             "schema": {
               "$ref": "#/definitions/Layer"
             }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "select",
+            "description": "Comma separated field names.",
+            "required": false,
+            "type": "string"
           },
           {
             "in": "query",
@@ -3015,6 +3127,20 @@
           },
           {
             "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "select",
+            "description": "Comma separated field names.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
             "name": "group",
             "description": "Primary group name. Required when multiple primary groups included in the token.",
             "required": false,
@@ -3183,6 +3309,20 @@
             "schema": {
               "$ref": "#/definitions/Dashboard"
             }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "select",
+            "description": "Comma separated field names.",
+            "required": false,
+            "type": "string"
           },
           {
             "in": "query",

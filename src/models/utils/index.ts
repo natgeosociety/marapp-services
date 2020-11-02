@@ -37,12 +37,16 @@ type AggCount = { key: string; value: string; count: number };
  * Save a document.
  * @param model
  * @param data
+ * @param mongooseOptions
+ * @param uniqueIndexFields
  * @param omitPaths
  * @param raiseError
  */
-export const save = async <T extends Document>(
+export const save = async <T extends Document, L extends keyof T>(
   model: Model<T>,
   data: T,
+  mongooseOptions: QueryOptions = {},
+  uniqueIndexFields: L[] = [],
   omitPaths: string[] = ['id', 'createdAt', 'updatedAt'],
   raiseError: boolean = true
 ): Promise<T> => {
@@ -50,6 +54,7 @@ export const save = async <T extends Document>(
   const doc = new model(obj);
   try {
     await doc.save();
+    return getById(model, doc.id, mongooseOptions, uniqueIndexFields);
   } catch (err) {
     logger.error(err);
     if (raiseError) {
@@ -213,6 +218,8 @@ export const getOne = async <T extends Document, L extends keyof T, K extends ke
  * @param model
  * @param doc
  * @param data
+ * @param mongooseOptions
+ * @param uniqueIndexFields
  * @param omitPaths
  * @param raiseError
  */
@@ -220,6 +227,8 @@ export const update = async <T extends Document, L extends keyof T>(
   model: Model<T>,
   doc: T,
   data: T,
+  mongooseOptions: QueryOptions = {},
+  uniqueIndexFields: L[] = [],
   omitPaths: string[] = ['id', 'createdAt', 'updatedAt'],
   raiseError: boolean = true
 ): Promise<T> => {
@@ -229,6 +238,7 @@ export const update = async <T extends Document, L extends keyof T>(
   }
   try {
     await doc.save();
+    return getById(model, doc.id, mongooseOptions, uniqueIndexFields);
   } catch (err) {
     logger.error(err);
     if (raiseError) {
