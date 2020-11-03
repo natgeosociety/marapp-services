@@ -207,7 +207,7 @@ export class MembershipService implements MembershipServiceSpec {
     if (!group) {
       throw new RecordNotFound(`Could not retrieve document.`, 404);
     }
-    const nestedGroups = await this.authzService.getNestedGroups(group?._id);
+    const nestedGroups = await this.authzService.getAllNestedGroups(group?._id);
     const nestedGroupIds = nestedGroups.map((ng) => ng._id);
 
     if (!nestedGroupIds.length) {
