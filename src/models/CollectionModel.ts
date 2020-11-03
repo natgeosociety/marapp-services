@@ -188,6 +188,9 @@ CollectionSchema.pre('save', async function () {
   const organization: string = this.get('organization');
 
   await checkWorkspaceRefs(this.model('Location'), locations, organization, true);
+
+  // exclude saving computed fields;
+  this.set({ geojson: undefined, bbox2d: undefined, areaKm2: undefined, centroid: undefined });
 });
 
 interface ICollectionModel extends Model<CollectionDocument>, IESPlugin, ISlugifyPlugin {}
