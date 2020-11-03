@@ -24,7 +24,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getLogger } from '../logging';
 
 import { Layer, MetricModel } from '.';
-import { schemaOptions } from './middlewares';
+import { checkWorkspaceRefs, generateSlugMiddleware, schemaOptions } from './middlewares';
 import esPlugin, { IESPlugin } from './plugins/elasticsearch';
 import slugifyPlugin, { ISlugifyPlugin } from './plugins/slugify';
 import { getDistinctValues } from './utils';
@@ -139,9 +139,19 @@ WidgetSchema.statics.enumOptionsResolver = function () {
 };
 
 /**
- * Pre-save middleware, handles versioning.
+ * Pre-validate middleware, handles slug auto-generation.
+ */
+WidgetSchema.pre('validate', generateSlugMiddleware('Widget'));
+
+/**
+ * Pre-save middleware, handles validation & versioning.
  */
 WidgetSchema.pre('save', async function () {
+  const layers: string[] = this.get('layers');
+  const organization: string = this.get('organization');
+
+  await checkWorkspaceRefs(this.model('Layer'), layers, organization);
+
   if (this.isModified()) {
     logger.debug('schema changes detected, incrementing version');
 

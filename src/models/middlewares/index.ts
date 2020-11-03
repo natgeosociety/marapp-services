@@ -17,7 +17,13 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { SchemaOptions } from 'mongoose';
+import { Model, SchemaOptions } from 'mongoose';
+import { Document } from 'mongoose';
+
+import { DocumentError } from '../../errors';
+import { getLogger } from '../../logging';
+
+const logger = getLogger();
 
 /**
  * Mongo default schema options.
@@ -40,4 +46,55 @@ export const schemaOptions: SchemaOptions = {
   timestamps: true,
   minimize: false, // store empty objects;
   collation: { locale: 'en_US', caseLevel: true, numericOrdering: true }, // case insensitive sorting, sort numeric substrings based on their numeric value;
+};
+
+/**
+ * Auto-generate model slug middleware.
+ * @param modelName
+ */
+export const generateSlugMiddleware = function (modelName: string) {
+  const fn = async function () {
+    const model = this.model(modelName);
+    if (!model) {
+      throw new Error(`Model not found for name: ${modelName}`);
+    }
+    const slug: string = this.get('slug');
+    const name: string = this.get('name');
+    const organization: string = this.get('organization');
+
+    if (this.isNew && !slug && name) {
+      this.set('slug', await model.getUniqueSlug(name, { organization }));
+    }
+  };
+  return fn;
+};
+
+/**
+ * Validate document references.
+ * References need to belong to the same workspace/organization.
+ * @param model
+ * @param refIds
+ * @param organization
+ * @param allowPublicResource
+ */
+export const checkWorkspaceRefs = async <T extends Document>(
+  model: Model<T>,
+  refIds: string[],
+  organization: string,
+  allowPublicResource: boolean = false
+): Promise<void> => {
+  if (!organization) {
+    throw new Error('Missing required parameter: organization');
+  }
+  if (refIds && refIds.length) {
+    logger.debug('[checkWorkspaceRefs] checking references for organization %s: %s', organization, refIds);
+
+    const res: any[] = await model.find(<any>{ _id: { $in: refIds } }).select(['organization', 'publicResource']);
+    const isValid = res.every(
+      (r) => r?.organization === organization || (allowPublicResource && r?.publicResource === true)
+    );
+    if (!isValid) {
+      throw new DocumentError('Could not save document. Invalid references saved on document.', 400);
+    }
+  }
 };

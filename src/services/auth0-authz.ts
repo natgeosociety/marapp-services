@@ -26,13 +26,13 @@ import { AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET, AUTH0_DOMAIN, AUTH0_EXTENSION_URL
 import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
 
-import { RoleEnum } from './membership-service';
+import { GlobalRoleEnum } from './membership-service';
 
 export const Auth0Error = makeError('Auth0Error');
 
 const logger = getLogger();
 
-type GroupType = 'OWNER' | 'ADMIN' | 'EDITOR' | 'VIEWER';
+type GroupType = 'OWNER' | 'ADMIN' | 'EDITOR' | 'VIEWER' | 'PUBLIC';
 
 export interface AuthzServiceSpec {
   getGroup(id: string);
@@ -139,7 +139,7 @@ export class Auth0AuthzService implements AuthzServiceSpec {
 
   async getSuperAdmins(onlyIds: boolean = false) {
     const { roles } = await this.getRoles();
-    const superAdminRole = roles.find((r) => r?.name && r?.name.endsWith(RoleEnum.SUPER_ADMIN));
+    const superAdminRole = roles.find((r) => r?.name && r?.name.endsWith(GlobalRoleEnum.SUPER_ADMIN));
     if (!superAdminRole) {
       return [];
     }
@@ -241,11 +241,13 @@ export class Auth0AuthzService implements AuthzServiceSpec {
   }
 
   async getNestedGroups(groupId: string, filterGroups: GroupType[] = [], excludeGroups: GroupType[] = []) {
+    const exclude: GroupType[] = ['PUBLIC'];
+    exclude.push(...excludeGroups);
     let nestedGroups = await this.authzClient.getNestedGroups({ groupId });
     if (filterGroups.length) {
       nestedGroups = nestedGroups.filter((g) => filterGroups.every((k) => g.name.endsWith(k)));
     }
-    return nestedGroups.filter((r) => excludeGroups.every((k) => !r.name.endsWith(k)));
+    return nestedGroups.filter((r) => exclude.every((k) => !r.name.endsWith(k)));
   }
 
   async getNestedGroupMembers(groupId: string, page: number = 1, perPage: number = 10) {

@@ -23,7 +23,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getLogger } from '../logging';
 
-import { schemaOptions } from './middlewares';
+import { checkWorkspaceRefs, generateSlugMiddleware, schemaOptions } from './middlewares';
 import esPlugin, { IESPlugin } from './plugins/elasticsearch';
 import slugifyPlugin, { ISlugifyPlugin } from './plugins/slugify';
 import { isArrayEmptyValidator, isEmptyValidator, slugValidator } from './validators';
@@ -160,9 +160,19 @@ LayerSchema.index({ name: 1 });
 LayerSchema.plugin(slugifyPlugin, { uniqueField: 'slug', separator: '-' });
 
 /**
- * Pre-save middleware, handles versioning.
+ * Pre-validate middleware, handles slug auto-generation.
+ */
+LayerSchema.pre('validate', generateSlugMiddleware('Layer'));
+
+/**
+ * Pre-save middleware, handles validation & versioning.
  */
 LayerSchema.pre('save', async function () {
+  const references: string[] = this.get('references');
+  const organization: string = this.get('organization');
+
+  await checkWorkspaceRefs(this.model('Layer'), references, organization);
+
   if (this.isModified()) {
     logger.debug('schema changes detected, incrementing version');
 

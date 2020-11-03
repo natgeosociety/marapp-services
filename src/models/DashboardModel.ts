@@ -24,7 +24,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getLogger } from '../logging';
 
 import { Layer, Widget } from '.';
-import { schemaOptions } from './middlewares';
+import { checkWorkspaceRefs, generateSlugMiddleware, schemaOptions } from './middlewares';
 import esPlugin, { IESPlugin } from './plugins/elasticsearch';
 import slugifyPlugin, { ISlugifyPlugin } from './plugins/slugify';
 import { slugValidator } from './validators';
@@ -119,9 +119,23 @@ DashboardSchema.index({ name: 1 });
 DashboardSchema.plugin(slugifyPlugin, { uniqueField: 'slug', separator: '-' });
 
 /**
- * Pre-save middleware, handles versioning.
+ * Pre-validate middleware, handles slug auto-generation.
+ */
+DashboardSchema.pre('validate', generateSlugMiddleware('Dashboard'));
+
+/**
+ * Pre-save middleware, handles validation & versioning.
  */
 DashboardSchema.pre('save', async function () {
+  const layers: string[] = this.get('layers');
+  const widgets: string[] = this.get('widgets');
+  const organization: string = this.get('organization');
+
+  await Promise.all([
+    checkWorkspaceRefs(this.model('Layer'), layers, organization),
+    checkWorkspaceRefs(this.model('Widget'), widgets, organization),
+  ]);
+
   if (this.isModified()) {
     logger.debug('schema changes detected, incrementing version');
 

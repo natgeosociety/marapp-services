@@ -28,7 +28,7 @@ import { getLogger } from '../logging';
 import { computeAreaKm2, computeShapeBbox, computeShapeCentroid, normalizeGeojson } from '../services/geospatial';
 
 import { Metric } from '.';
-import { schemaOptions } from './middlewares';
+import { generateSlugMiddleware, schemaOptions } from './middlewares';
 import esPlugin, { IESPlugin } from './plugins/elasticsearch';
 import slugifyPlugin, { ISlugifyPlugin } from './plugins/slugify';
 import { slugValidator } from './validators';
@@ -54,6 +54,7 @@ export interface Location {
   published: boolean;
   featured: boolean;
   organization: string;
+  publicResource: boolean;
   // computed;
   bbox2d?: number[];
   areaKm2?: number;
@@ -85,6 +86,7 @@ const LocationSchema: Schema = new Schema(
     published: { type: Boolean, default: false },
     featured: { type: Boolean, default: false },
     organization: { type: String, required: true },
+    publicResource: { type: Boolean, default: false },
     version: { type: Number, default: 0 },
     bbox2d: { type: [Number] },
     areaKm2: { type: Number },
@@ -147,12 +149,18 @@ LocationSchema.plugin(esPlugin, {
       },
       published: { type: 'boolean' },
       organization: { type: 'keyword' },
+      publicResource: { type: 'boolean' },
     },
   },
 });
 
 // Slugify plugin;
 LocationSchema.plugin(slugifyPlugin, { uniqueField: 'slug', separator: '-' });
+
+/**
+ * Pre-validate middleware, handles slug auto-generation.
+ */
+LocationSchema.pre('validate', generateSlugMiddleware('Location'));
 
 /**
  * Pre-save middleware, handles versioning and computes area related measurements when shape changes.
@@ -169,6 +177,23 @@ LocationSchema.pre('save', async function () {
     const version = this.isNew ? this.get('version') : this.get('version') + 1;
 
     this.set({ geojson, bbox2d, areaKm2, centroid, version });
+  }
+});
+
+/**
+ * Post-save middleware, handles delete all child docs when parent doc is changed.
+ */
+LocationSchema.post('save', async function () {
+  const isPublicResource: boolean = this.get('publicResource');
+  const isPubllished: boolean = this.get('published');
+
+  if (!isPublicResource || !isPubllished) {
+    const id: string = this.get('id');
+    const resCollection = await this.model('Collection').updateMany(
+      { locations: { $in: [id] } },
+      { $pull: { locations: { $in: [id] } } }
+    );
+    logger.debug(`removed reference: ${id} from ${resCollection.nModified} collection(s)`);
   }
 });
 
