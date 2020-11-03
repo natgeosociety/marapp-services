@@ -1,3 +1,11 @@
+## [1.10.1](https://github.com/natgeosociety/marapp-services/compare/v1.10.0...v1.10.1) (2020-11-03)
+
+
+### Bug Fixes
+
+* force email verified to false on email change request ([c76b8e8](https://github.com/natgeosociety/marapp-services/commit/c76b8e87ba3062171d2a880d2f163648440b7d2d))
+* typo ([99c2cab](https://github.com/natgeosociety/marapp-services/commit/99c2cab08381c2e700635da86457dd2160f4616b))
+
 # [1.10.0](https://github.com/natgeosociety/marapp-services/compare/v1.9.0...v1.10.0) (2020-11-03)
 
 
