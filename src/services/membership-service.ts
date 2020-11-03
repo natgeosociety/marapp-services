@@ -427,7 +427,7 @@ export class MembershipService implements MembershipServiceSpec {
 
   async createGlobalRole(roleType: string, permissionMap: { [key in ScopesEnum]?: string }, applicationId: string) {
     const name = [GLOBAL_PREFIX, ROLES_GLOBAL[roleType].name].join(':');
-    const description = ROLES_WORKSPACE[roleType].description;
+    const description = ROLES_GLOBAL[roleType].description;
     const permissions = [
       ...ROLES_GLOBAL[roleType].readScopes.map((scope) => permissionMap[scope]),
       ...ROLES_GLOBAL[roleType].writeScopes.map((scope) => permissionMap[scope]),
