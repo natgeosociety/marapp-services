@@ -1,3 +1,22 @@
+# [1.10.0](https://github.com/natgeosociety/marapp-services/compare/v1.9.0...v1.10.0) (2020-11-03)
+
+
+### Bug Fixes
+
+* exclude public role from available groups ([5b92a2e](https://github.com/natgeosociety/marapp-services/commit/5b92a2efe419121b233641817415becec6303607))
+* query filters collection & organization ([9085477](https://github.com/natgeosociety/marapp-services/commit/9085477e7d37e0618139acd5d2aaaeeb8e798cb2))
+* remove publicResource filter condition ([30239a5](https://github.com/natgeosociety/marapp-services/commit/30239a5034ca4bdb6d6e23f3d6bbaa408f2d118e))
+
+
+### Features
+
+* add support for public role, refactor membership-service ([be73b23](https://github.com/natgeosociety/marapp-services/commit/be73b23cad9531ad1029d9f7ef447d356c0aa910))
+* auto-generate slug if missing [EP-3263] ([7616564](https://github.com/natgeosociety/marapp-services/commit/7616564d8cb4d444db8e7335cdcb48f0070a23cb))
+* org create/edit owner emails feedback [EP-3125] ([#74](https://github.com/natgeosociety/marapp-services/issues/74)) ([d2f815b](https://github.com/natgeosociety/marapp-services/commit/d2f815b2efc5f14ef4aed93e063e191e92fa059d))
+* public locations on collection [EP-3172] ([a1054d6](https://github.com/natgeosociety/marapp-services/commit/a1054d654a6e28cdda0497270ce655cf8065776d))
+* support include and select query options on PUT/POST ([dccefd4](https://github.com/natgeosociety/marapp-services/commit/dccefd4099e0302e8d8d65fde3b81bb32affb72e))
+* validate document references [EP-3250] ([993ee1c](https://github.com/natgeosociety/marapp-services/commit/993ee1cf679602efa7f31ab8e42a8fe74d220876))
+
 # [1.9.0](https://github.com/natgeosociety/marapp-services/compare/v1.8.0...v1.9.0) (2020-10-27)
 
 
