@@ -17,6 +17,26 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { env } from 'custom-env';
+import { Widget } from '../../../src/models/WidgetModel';
 
-env();
+export default (data?: Widget): Widget => ({
+  slug: `test-widget-${Math.floor(Math.random() * 1000)}`,
+  name: 'new widget',
+  config: {
+    widgetConfig: {
+      paramsConfig: [
+        {
+          key: 'slug',
+          required: true,
+        },
+      ],
+      sentence: {
+        default:
+          'From {start_year} to {end_year}, {location} lost {loss_total_area} of tree cover, equivalent to a {loss_total_perc} decrease in tree cover since {first_year}',
+      },
+    },
+  },
+  metrics: ['tree-loss'],
+  // layers: ['']
+  ...data,
+});

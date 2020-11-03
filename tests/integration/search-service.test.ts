@@ -25,7 +25,7 @@ beforeAll(async () => {
   ES = await new ElasticSearchService();
 });
 
-describe('Search service', () => {
+xdescribe('Search service', () => {
   const indexName = `new-index-${Math.random()}`;
 
   it('should not find the new index', async () => {
@@ -87,15 +87,15 @@ describe('Search service', () => {
     await ES.indexById(indexName, 'test', itemToIndex);
   });
 
-  // it ('should find indexed data using the new index', async () => {
-  //   const data = await ES.search(indexName, {
-  //     query: {
-  //       match_all : {}
-  //     }
-  //   });
+  it('should find indexed data using the new index', async () => {
+    const data = await ES.search(indexName, {
+      query: {
+        match_all: {},
+      },
+    });
 
-  //   expect(data.hits.total).toBeGreaterThan(0);
-  // });
+    expect(data.hits.total).toBeGreaterThan(0);
+  });
 
   it('should delete data using the new index', async () => {
     await ES.deleteByQuery(indexName, {

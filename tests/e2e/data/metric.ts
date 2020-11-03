@@ -17,6 +17,10 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { env } from 'custom-env';
+import { Metric } from '../../../src/models/MetricModel';
 
-env();
+export default (data?: Metric): Metric => ({
+  slug: `tree-loss`,
+  metric: {},
+  ...data,
+});

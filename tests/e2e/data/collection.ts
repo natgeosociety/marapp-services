@@ -17,6 +17,12 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { env } from 'custom-env';
+import { Collection } from '../../../src/models/CollectionModel';
 
-env();
+export default (data?: Collection): Collection => ({
+  slug: `test-collection-${Math.floor(Math.random() * 1000)}`,
+  name: 'new collection',
+  published: true,
+  // locations: [''],
+  ...data,
+});

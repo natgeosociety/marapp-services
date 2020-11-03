@@ -17,6 +17,13 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { env } from 'custom-env';
+import { Dashboard } from '../../../src/models/DashboardModel';
 
-env();
+export default (data?: Dashboard): Dashboard => ({
+  slug: `test-dashboard-${Math.floor(Math.random() * 1000)}`,
+  name: 'new dashboard',
+  published: true,
+  // layers: [''],
+  // widgets: [''],
+  ...data,
+});

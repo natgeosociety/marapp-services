@@ -70,7 +70,7 @@ beforeAll(async () => {
   TestModel = model('Test', TestSchema);
 });
 
-describe('Mongoose elasticsearch plugin', () => {
+xdescribe('Mongoose elasticsearch plugin', () => {
   it('should not find any document', async () => {
     const result = await TestModel.findOne({});
 
@@ -114,22 +114,26 @@ describe('Mongoose elasticsearch plugin', () => {
     expect(result.hits.total).toBe(0);
   });
 
-  // it('should save a new document and be indexed by ES', async () => {
-  //   const doc = new TestModel({ name: 'John2', available: true });
-  //   const result = await doc.save();
+  it('should save a new document and be indexed by ES', async () => {
+    const doc = new TestModel({ name: 'John2', available: true });
+    const result = await doc.save();
 
-  //   expect(result).toBeTruthy();
-  // });
+    expect(result).toBeTruthy();
+  });
 
-  // it('should use ES plugin and find the new document', async() => {
-  //   const result = await TestModel.esSearch({
-  //     query: {
-  //       match_all : {}
-  //     }
-  //   }, 0, 10);
+  it('should use ES plugin and find the new document', async () => {
+    const result = await TestModel.esSearch(
+      {
+        query: {
+          match_all: {},
+        },
+      },
+      0,
+      10
+    );
 
-  //   expect(result.hits.total).toBeGreaterThan(0);
-  // });
+    expect(result.hits.total).toBeGreaterThan(0);
+  });
 });
 
 afterAll(async () => {
