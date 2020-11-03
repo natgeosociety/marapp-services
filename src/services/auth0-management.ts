@@ -168,6 +168,7 @@ export class Auth0ManagementService implements AuthManagementService {
       tempUser = await this.createPasswordlessUser({
         email: newEmail,
         user_metadata: tempUserMeta,
+        email_verified: false, // force email verified false to send email;
       });
 
       const userMeta = {
