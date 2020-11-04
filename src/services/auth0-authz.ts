@@ -73,6 +73,7 @@ export interface AuthzServiceSpec {
   removeUserFromRoles(userId: string, roleIds: string[]);
   deleteRole(roleId: string);
   calculateGroupMemberships(groupId: string);
+  getAllNestedGroups(groupId: string, filterGroups?: GroupType[], excludeGroups?: GroupType[]);
   getNestedGroups(groupId: string, filterGroups?: GroupType[], excludeGroups?: GroupType[]);
   getNestedGroupMembers(groupId: string, page?: number, perPage?: number);
   getNestedGroupRoles(groupId: string);
@@ -240,14 +241,18 @@ export class Auth0AuthzService implements AuthzServiceSpec {
     return this.authzClient.deleteRole({ roleId });
   }
 
-  async getNestedGroups(groupId: string, filterGroups: GroupType[] = [], excludeGroups: GroupType[] = []) {
-    const exclude: GroupType[] = ['PUBLIC'];
-    exclude.push(...excludeGroups);
+  async getAllNestedGroups(groupId: string, filterGroups: GroupType[] = [], excludeGroups: GroupType[] = []) {
     let nestedGroups = await this.authzClient.getNestedGroups({ groupId });
     if (filterGroups.length) {
       nestedGroups = nestedGroups.filter((g) => filterGroups.every((k) => g.name.endsWith(k)));
     }
-    return nestedGroups.filter((r) => exclude.every((k) => !r.name.endsWith(k)));
+    return nestedGroups.filter((r) => excludeGroups.every((k) => !r.name.endsWith(k)));
+  }
+
+  async getNestedGroups(groupId: string, filterGroups: GroupType[] = [], excludeGroups: GroupType[] = []) {
+    const exclude: GroupType[] = ['PUBLIC'];
+    exclude.push(...excludeGroups);
+    return this.getAllNestedGroups(groupId, filterGroups, exclude);
   }
 
   async getNestedGroupMembers(groupId: string, page: number = 1, perPage: number = 10) {
