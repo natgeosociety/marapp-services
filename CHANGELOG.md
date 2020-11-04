@@ -1,3 +1,11 @@
+## [1.10.2](https://github.com/natgeosociety/marapp-services/compare/v1.10.1...v1.10.2) (2020-11-04)
+
+
+### Bug Fixes
+
+* exclude computed fields on empty collections [EP-3305] ([3afcd63](https://github.com/natgeosociety/marapp-services/commit/3afcd63c096aac7505b7074c6d41f67177420621))
+* include public group on workspace delete [EP-3300] ([5441537](https://github.com/natgeosociety/marapp-services/commit/5441537bd1db1ddf4ec8e0a12c88412ad5294b88))
+
 ## [1.10.1](https://github.com/natgeosociety/marapp-services/compare/v1.10.0...v1.10.1) (2020-11-03)
 
 
