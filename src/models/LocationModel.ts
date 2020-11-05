@@ -31,7 +31,7 @@ import { Metric } from '.';
 import { generateSlugMiddleware, schemaOptions } from './middlewares';
 import esPlugin, { IESPlugin } from './plugins/elasticsearch';
 import slugifyPlugin, { ISlugifyPlugin } from './plugins/slugify';
-import { slugValidator } from './validators';
+import { requireOptionalFields, slugValidator } from './validators';
 
 const logger = getLogger('LocationModel');
 
@@ -86,7 +86,7 @@ const LocationSchema: Schema = new Schema(
     published: { type: Boolean, default: false },
     featured: { type: Boolean, default: false },
     organization: { type: String, required: true },
-    publicResource: { type: Boolean, default: false },
+    publicResource: { type: Boolean, default: false, validate: requireOptionalFields(['published']) },
     version: { type: Number, default: 0 },
     bbox2d: { type: [Number] },
     areaKm2: { type: Number },
