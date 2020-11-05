@@ -19,7 +19,7 @@
 
 import request from 'supertest';
 
-import { globalContext } from '../../src/middlewares/context';
+import { contextHttp } from '../../src/middlewares/context';
 import { expressFactory } from '../../src/middlewares/index';
 import { jwtError, jwtRSA } from '../../src/middlewares/jwt';
 import LocationRouter from '../../src/routers/LocationRouter';
@@ -34,7 +34,7 @@ let newLocation;
 
 beforeAll(() => {
   app = expressFactory(
-    globalContext,
+    contextHttp,
     jwtRSA(false),
     jwtError,
     MetricRouter.getRouter('/'),

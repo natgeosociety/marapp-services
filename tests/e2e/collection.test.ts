@@ -19,7 +19,7 @@
 
 import request from 'supertest';
 
-import { globalContext } from '../../src/middlewares/context';
+import { contextHttp } from '../../src/middlewares/context';
 import { expressFactory } from '../../src/middlewares/index';
 import { jwtError, jwtRSA } from '../../src/middlewares/jwt';
 import CollectionRouter from '../../src/routers/CollectionRouter';
@@ -31,7 +31,7 @@ let newCollection;
 
 beforeAll(() => {
   app = expressFactory(
-    globalContext,
+    contextHttp,
     jwtRSA(false),
     jwtError,
     CollectionRouter.getRouter('/'),

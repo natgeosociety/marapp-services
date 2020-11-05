@@ -19,7 +19,7 @@
 
 import request from 'supertest';
 
-import { globalContext } from '../../src/middlewares/context';
+import { contextHttp } from '../../src/middlewares/context';
 import { expressFactory } from '../../src/middlewares/index';
 import { jwtError, jwtRSA } from '../../src/middlewares/jwt';
 import DashboardRouter from '../../src/routers/DashboardRouter';
@@ -31,7 +31,7 @@ let newDashboard;
 
 beforeAll(() => {
   app = expressFactory(
-    globalContext,
+    contextHttp,
     jwtRSA(false),
     jwtError,
     DashboardRouter.getRouter('/'),

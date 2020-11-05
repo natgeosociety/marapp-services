@@ -50,6 +50,7 @@ export default {
     },
     featured: false,
     published: true,
+    publicResource: true,
     organization: 'MARAPP',
     ...data,
   }),

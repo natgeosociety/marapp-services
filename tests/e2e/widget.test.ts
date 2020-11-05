@@ -19,7 +19,7 @@
 
 import request from 'supertest';
 
-import { globalContext } from '../../src/middlewares/context';
+import { contextHttp } from '../../src/middlewares/context';
 import { expressFactory } from '../../src/middlewares/index';
 import { jwtError, jwtRSA } from '../../src/middlewares/jwt';
 import WidgetRouter from '../../src/routers/WidgetRouter';
@@ -35,7 +35,7 @@ let newWidget;
 
 beforeAll(() => {
   app = expressFactory(
-    globalContext,
+    contextHttp,
     jwtRSA(false),
     jwtError,
     WidgetRouter.getRouter('/'),
