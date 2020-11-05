@@ -45,12 +45,12 @@ export interface SearchService {
   createIndex(indexName: string, indexConfig: ESIndexConfig);
   hasIndex(indexName: string);
   deleteIndex(indexName: string);
-  bulkIndex(indexName: string, docs: MongooseDocument[]);
-  indexById(indexName: string, id: string, doc: MongooseDocument);
+  bulkIndex(indexName: string, docs: MongooseDocument[] | any[]);
+  indexById(indexName: string, id: string, doc: MongooseDocument | any);
   removeById(indexName: string, id: string);
   search(indexName: string, esQuery: object, from?: number, size?: number);
   deleteByQuery(indexName: string, esQuery: object);
-  catIndices();
+  catIndices(options?: object);
 }
 
 export class ElasticSearchService implements SearchService {
@@ -146,7 +146,7 @@ export class ElasticSearchService implements SearchService {
    * @param id: Document ID
    * @param doc: The document
    */
-  async indexById(indexName: string, id: string, doc: MongooseDocument) {
+  async indexById(indexName: string, id: string, doc: MongooseDocument | any) {
     try {
       const res = await this.client.index({
         index: indexName,
@@ -208,10 +208,11 @@ export class ElasticSearchService implements SearchService {
 
   /**
    * Returns high-level information about indices in a cluster.
+   * @param options: Cat indices options
    */
-  async catIndices() {
+  async catIndices(options) {
     try {
-      const res = await this.client.cat.indices();
+      const res = await this.client.cat.indices(options);
       logger.debug('[catIndices] client responded with: %s', res.statusCode);
       return res.body;
     } catch (err) {

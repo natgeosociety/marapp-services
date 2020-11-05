@@ -17,11 +17,21 @@
   specific language governing permissions and limitations under the License.
 */
 
-module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  testPathIgnorePatterns: ['node_modules', 'dist'],
-  setupFiles: [
-    "./tests/setup.ts"
-  ]
+import { Collection, CollectionModel } from '../../../src/models/CollectionModel';
+import { save, removeById } from '../../../src/models/utils/index';
+
+export default {
+  create: (data?: Partial<Collection>): Collection => ({
+    slug: `test-collection-${Math.floor(Math.random() * 100000)}`,
+    name: 'new collection',
+    description: 'new collection description',
+    published: true,
+    featured: false,
+    geojson: {},
+    organization: 'MARAPP',
+    // locations: [''],
+    ...data,
+  }),
+  save: (collection: Collection): Promise<any> => save(CollectionModel, new CollectionModel(collection)),
+  remove: (collectionId: string): Promise<any> => removeById(CollectionModel, collectionId),
 };

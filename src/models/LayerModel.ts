@@ -30,7 +30,7 @@ import { isArrayEmptyValidator, isEmptyValidator, slugValidator } from './valida
 
 const logger = getLogger('LayerModel');
 
-enum LayerTypeEnum {
+export enum LayerTypeEnum {
   RASTER = 'raster',
   VECTOR = 'vector',
   GEOJSON = 'geojson',
@@ -38,14 +38,14 @@ enum LayerTypeEnum {
   VIDEO = 'video',
 }
 
-enum LayerProviderEnum {
+export enum LayerProviderEnum {
   CARTODB = 'cartodb',
   GEE = 'gee',
   MAPBOX = 'mapbox',
   LEAFLET = 'leaflet',
 }
 
-enum LayerCategoryEnum {
+export enum LayerCategoryEnum {
   BIODIVERSITY = 'Biodiversity',
   CLIMATE_CARBON = 'Climate & Carbon',
   ECOSYSTEM_SERVICES = 'Ecosystem Services',
@@ -66,7 +66,7 @@ export interface Layer {
   primary: boolean;
   type: LayerTypeEnum;
   provider: LayerProviderEnum;
-  category: LayerCategoryEnum;
+  category: [LayerCategoryEnum];
   config: object;
   published: boolean;
   organization: string;
