@@ -18,7 +18,7 @@
 */
 
 import { Metric, MetricModel } from '../../../src/models/MetricModel';
-import { save, removeById } from '../../../src/models/utils/index';
+import { removeById, save } from '../../../src/models/utils/index';
 
 export default {
   create: (data?: Partial<Metric>): Metric => ({

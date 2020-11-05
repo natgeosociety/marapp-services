@@ -19,15 +19,14 @@
 
 import request from 'supertest';
 
-import { expressFactory } from '../../src/middlewares/index';
 import { globalContext } from '../../src/middlewares/context';
-import { jwtRSA, jwtError } from '../../src/middlewares/jwt';
-
-import MetricRouter from '../../src/routers/MetricRouter';
+import { expressFactory } from '../../src/middlewares/index';
+import { jwtError, jwtRSA } from '../../src/middlewares/jwt';
 import LocationRouter from '../../src/routers/LocationRouter';
+import MetricRouter from '../../src/routers/MetricRouter';
 
-import metric from './data/metric';
 import location from './data/location';
+import metric from './data/metric';
 
 let app;
 let newMetric;

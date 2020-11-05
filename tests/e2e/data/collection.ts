@@ -18,7 +18,7 @@
 */
 
 import { Collection, CollectionModel } from '../../../src/models/CollectionModel';
-import { save, removeById } from '../../../src/models/utils/index';
+import { removeById, save } from '../../../src/models/utils/index';
 
 export default {
   create: (data?: Partial<Collection>): Collection => ({

@@ -18,7 +18,7 @@
 */
 
 import { Dashboard, DashboardModel } from '../../../src/models/DashboardModel';
-import { save, removeById } from '../../../src/models/utils/index';
+import { removeById, save } from '../../../src/models/utils/index';
 
 export default {
   create: (data?: Partial<Dashboard>): Dashboard => ({

@@ -19,10 +19,9 @@
 
 import request from 'supertest';
 
-import { expressFactory } from '../../src/middlewares/index';
 import { globalContext } from '../../src/middlewares/context';
-import { jwtRSA, jwtError } from '../../src/middlewares/jwt';
-
+import { expressFactory } from '../../src/middlewares/index';
+import { jwtError, jwtRSA } from '../../src/middlewares/jwt';
 import CollectionRouter from '../../src/routers/CollectionRouter';
 
 import collection from './data/collection';

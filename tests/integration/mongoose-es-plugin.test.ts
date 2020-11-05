@@ -17,11 +17,11 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { Document, model, Schema, Model } from 'mongoose';
+import { Document, model, Model, Schema } from 'mongoose';
 
-import esPlugin, { IESPlugin } from '../../src/models/plugins/elasticsearch';
-import { createMongoConnection } from '../../src/helpers/mongoose';
 import { MONGODB_URI } from '../../src/config';
+import { createMongoConnection } from '../../src/helpers/mongoose';
+import esPlugin, { IESPlugin } from '../../src/models/plugins/elasticsearch';
 
 const TestSchema: Schema = new Schema({
   name: { type: String, required: true },

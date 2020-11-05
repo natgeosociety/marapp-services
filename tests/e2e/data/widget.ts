@@ -17,8 +17,8 @@
   specific language governing permissions and limitations under the License.
 */
 
+import { removeById, save } from '../../../src/models/utils/index';
 import { Widget, WidgetModel } from '../../../src/models/WidgetModel';
-import { save, removeById } from '../../../src/models/utils/index';
 
 export default {
   create: (data?: Partial<Widget>): Widget => ({
