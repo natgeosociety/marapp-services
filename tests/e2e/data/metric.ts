@@ -17,10 +17,15 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { Metric } from '../../../src/models/MetricModel';
+import { Metric, MetricModel } from '../../../src/models/MetricModel';
+import { save, removeById } from '../../../src/models/utils/index';
 
-export default (data?: Metric): Metric => ({
-  slug: `tree-loss`,
-  metric: {},
-  ...data,
-});
+export default {
+  create: (data?: Partial<Metric>): Metric => ({
+    slug: `tree-loss`,
+    metric: {},
+    ...data,
+  }),
+  save: (metric: Metric): Promise<any> => save(MetricModel, new MetricModel(metric)),
+  remove: (metricId: string): Promise<any> => removeById(MetricModel, metricId),
+};

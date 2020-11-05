@@ -17,36 +17,42 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { Location, LocationTypeEnum } from '../../../src/models/LocationModel';
+import { Location, LocationModel, LocationTypeEnum } from '../../../src/models/LocationModel';
+import { save, removeById } from '../../../src/models/utils/index';
 
-export default (data?: Location): Location => ({
-  slug: `test-location-${Math.floor(Math.random() * 1000)}`,
-  name: 'test location',
-  description: 'test location description',
-  type: LocationTypeEnum.JURISDICTION,
-  geojson: {
-    type: 'FeatureCollection',
-    features: [
-      {
-        type: 'Feature',
-        properties: {},
-        geometry: {
-          type: 'Polygon',
-          coordinates: [
-            [
-              [22.74169921875, 47.11499982620772],
-              [22.96142578125, 46.37725420510028],
-              [24.3017578125, 46.649436163350245],
-              [24.41162109375, 47.11499982620772],
-              [23.356933593749996, 47.42808726171425],
-              [22.74169921875, 47.11499982620772],
+export default {
+  create: (data?: Partial<Location>): Location => ({
+    slug: `test-location-${Math.floor(Math.random() * 100000)}`,
+    name: 'test location',
+    description: 'test location description',
+    type: LocationTypeEnum.JURISDICTION,
+    geojson: {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'Polygon',
+            coordinates: [
+              [
+                [22.74169921875, 47.11499982620772],
+                [22.96142578125, 46.37725420510028],
+                [24.3017578125, 46.649436163350245],
+                [24.41162109375, 47.11499982620772],
+                [23.356933593749996, 47.42808726171425],
+                [22.74169921875, 47.11499982620772],
+              ],
             ],
-          ],
+          },
         },
-      },
-    ],
-  },
-  featured: false,
-  published: true,
-  ...data,
-});
+      ],
+    },
+    featured: false,
+    published: true,
+    organization: 'MARAPP',
+    ...data,
+  }),
+  save: (location: Location): Promise<any> => save(LocationModel, new LocationModel(location)),
+  remove: (locationId: string): Promise<any> => removeById(LocationModel, locationId),
+};

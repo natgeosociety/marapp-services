@@ -36,7 +36,7 @@ export interface Dashboard {
   slug: string;
   name: string;
   description: string;
-  published: string;
+  published: boolean;
   organization: string;
   // auto-generated;
   createdAt?: Date;

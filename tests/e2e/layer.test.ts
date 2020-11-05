@@ -28,6 +28,7 @@ import LayerRouter from '../../src/routers/LayerRouter';
 import layer from './data/layer';
 
 let app;
+let newLayer;
 
 beforeAll(() => {
   app = expressFactory(
@@ -39,7 +40,24 @@ beforeAll(() => {
   );
 });
 
-const newLayer = layer();
+beforeEach(async (done) => {
+  // skip when no app global context
+  if (!app.locals.redisClient) {
+    return done();
+  }
+
+  newLayer = await layer.save(layer.create());
+
+  done();
+});
+
+afterEach(async (done) => {
+  try {
+    await layer.remove(newLayer.id);
+  } catch (err) {}
+
+  done();
+});
 
 describe('GET /layers', () => {
   it('responds with 200 when params are valid', (done) => {
@@ -87,13 +105,10 @@ describe('POST /management/layers', () => {
   it('responds with 200 when params are valid', (done) => {
     request(app)
       .post(`/management/layers`)
-      .send(newLayer)
+      .send(layer.create())
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect((res) => {
-        newLayer.id = res.body.data.id;
-      })
       .expect(200, done);
   });
 
@@ -148,7 +163,7 @@ describe('PUT /management/layers/:id', () => {
   it('responds with 200 when params are valid', (done) => {
     request(app)
       .put(`/management/layers/${newLayer.id}`)
-      .send(newLayer)
+      .send({ name: 'test' })
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
@@ -158,7 +173,7 @@ describe('PUT /management/layers/:id', () => {
   it('responds with 400 when category is invalid', (done) => {
     request(app)
       .put(`/management/layers/${newLayer.id}`)
-      .send({ ...newLayer, category: ['x'] })
+      .send({ category: ['x'] })
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
@@ -177,7 +192,7 @@ describe('DELETE /management/layers/:id', () => {
 
   it('responds with 404 when id does not exist', (done) => {
     request(app)
-      .delete(`/management/layers/${newLayer.id}`)
+      .delete(`/management/layers/${newLayer.id.split('').reverse().join('')}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
       .expect(404, done);

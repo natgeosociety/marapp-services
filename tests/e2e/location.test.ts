@@ -28,6 +28,7 @@ import LocationRouter from '../../src/routers/LocationRouter';
 import location from './data/location';
 
 let app;
+let newLocation;
 
 beforeAll(() => {
   app = expressFactory(
@@ -39,7 +40,24 @@ beforeAll(() => {
   );
 });
 
-const newLocation = location();
+beforeEach(async (done) => {
+  // skip when no app global context
+  if (!app.locals.redisClient) {
+    return done();
+  }
+
+  newLocation = await location.save(location.create());
+
+  done();
+});
+
+afterEach(async (done) => {
+  try {
+    await location.remove(newLocation.id);
+  } catch (err) {}
+
+  done();
+});
 
 describe('GET /locations', () => {
   it('responds with 200 when params are valid', (done) => {
@@ -87,13 +105,10 @@ describe('POST /management/locations', () => {
   it('responds with 200 when params are valid', (done) => {
     request(app)
       .post(`/management/locations`)
-      .send(newLocation)
+      .send(location.create())
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect((res) => {
-        newLocation.id = res.body.data.id;
-      })
       .expect(200, done);
   });
 
@@ -148,7 +163,7 @@ describe('PUT /management/locations/:id', () => {
   it('responds with 200 when params are valid', (done) => {
     request(app)
       .put(`/management/locations/${newLocation.id}`)
-      .send(newLocation)
+      .send({ name: 'test' })
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
@@ -158,7 +173,7 @@ describe('PUT /management/locations/:id', () => {
   it('responds with 400 when type is invalid', (done) => {
     request(app)
       .put(`/management/locations/${newLocation.id}`)
-      .send({ ...newLocation, type: 'x' })
+      .send({ type: 'x' })
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
@@ -177,7 +192,7 @@ describe('DELETE /management/locations/:id', () => {
 
   it('responds with 404 when id does not exist', (done) => {
     request(app)
-      .delete(`/management/locations/${newLocation.id}`)
+      .delete(`/management/locations/${newLocation.id.split('').reverse().join('')}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
       .expect(404, done);

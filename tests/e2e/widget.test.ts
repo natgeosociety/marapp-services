@@ -25,9 +25,14 @@ import { jwtRSA, jwtError } from '../../src/middlewares/jwt';
 
 import WidgetRouter from '../../src/routers/WidgetRouter';
 
+import location from './data/location';
+import metric from './data/metric';
 import widget from './data/widget';
 
 let app;
+let newLocation;
+let newMetric;
+let newWidget;
 
 beforeAll(() => {
   app = expressFactory(
@@ -39,15 +44,36 @@ beforeAll(() => {
   );
 });
 
-const newWidget = widget();
+beforeEach(async (done) => {
+  // skip when no app global context
+  if (!app.locals.redisClient) {
+    return done();
+  }
 
-xdescribe('GET /widgets', () => {
+  newLocation = await location.save(location.create());
+  newMetric = await metric.save(metric.create({ location: newLocation.id }));
+  newWidget = await widget.save(widget.create());
+
+  done();
+});
+
+afterEach(async (done) => {
+  try {
+    await location.remove(newLocation.id);
+    await metric.remove(newMetric.id);
+    await widget.remove(newWidget.id);
+  } catch (err) {}
+
+  done();
+});
+
+describe('GET /widgets', () => {
   it('responds with 200 when params are valid', (done) => {
     request(app).get('/widgets').set('Accept', 'application/json').expect('Content-Type', /json/).expect(200, done);
   });
 });
 
-xdescribe('GET /management/widgets', () => {
+describe('GET /management/widgets', () => {
   it('responds with 200 when params are valid', (done) => {
     request(app)
       .get(`/management/widgets`)
@@ -57,7 +83,7 @@ xdescribe('GET /management/widgets', () => {
   });
 });
 
-xdescribe('GET /management/widgets/slug', () => {
+describe('GET /management/widgets/slug', () => {
   it('responds with 200 when params are valid', (done) => {
     request(app)
       .get(`/management/widgets/slug?keyword=${newWidget.name}&type=shortid`)
@@ -83,17 +109,14 @@ xdescribe('GET /management/widgets/slug', () => {
   });
 });
 
-xdescribe('POST /management/widgets', () => {
+describe('POST /management/widgets', () => {
   it('responds with 200 when params are valid', (done) => {
     request(app)
       .post(`/management/widgets`)
-      .send(newWidget)
+      .send(widget.create())
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect((res) => {
-        newWidget.id = res.body.data.id;
-      })
       .expect(200, done);
   });
 
@@ -108,7 +131,7 @@ xdescribe('POST /management/widgets', () => {
   });
 });
 
-xdescribe('GET /management/widgets/:id', () => {
+describe('GET /management/widgets/:id', () => {
   it('responds with 200 when params are valid', (done) => {
     request(app)
       .get(`/management/widgets/${newWidget.id}`)
@@ -126,7 +149,7 @@ xdescribe('GET /management/widgets/:id', () => {
   });
 });
 
-xdescribe('GET /widgets/:id', () => {
+describe('GET /widgets/:id', () => {
   it('responds with 200 when params are valid', (done) => {
     request(app)
       .get(`/widgets/${newWidget.id}`)
@@ -144,11 +167,11 @@ xdescribe('GET /widgets/:id', () => {
   });
 });
 
-xdescribe('PUT /management/widgets/:id', () => {
+describe('PUT /management/widgets/:id', () => {
   it('responds with 200 when params are valid', (done) => {
     request(app)
       .put(`/management/widgets/${newWidget.id}`)
-      .send(newWidget)
+      .send({ name: 'test' })
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
@@ -158,7 +181,7 @@ xdescribe('PUT /management/widgets/:id', () => {
   it('responds with 400 when layers are invalid', (done) => {
     request(app)
       .put(`/management/widgets/${newWidget.id}`)
-      .send({ ...newWidget, layers: ['x'] })
+      .send({ layers: ['x'] })
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
@@ -166,7 +189,7 @@ xdescribe('PUT /management/widgets/:id', () => {
   });
 });
 
-xdescribe('DELETE /management/widgets/:id', () => {
+describe('DELETE /management/widgets/:id', () => {
   it('responds with 200 when params are valid', (done) => {
     request(app)
       .delete(`/management/widgets/${newWidget.id}`)
@@ -177,7 +200,7 @@ xdescribe('DELETE /management/widgets/:id', () => {
 
   it('responds with 404 when id does not exist', (done) => {
     request(app)
-      .delete(`/management/widgets/${newWidget.id}`)
+      .delete(`/management/widgets/${newWidget.id.split('').reverse().join('')}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
       .expect(404, done);

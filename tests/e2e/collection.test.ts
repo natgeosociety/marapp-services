@@ -28,6 +28,7 @@ import CollectionRouter from '../../src/routers/CollectionRouter';
 import collection from './data/collection';
 
 let app;
+let newCollection;
 
 beforeAll(() => {
   app = expressFactory(
@@ -39,7 +40,24 @@ beforeAll(() => {
   );
 });
 
-const newCollection = collection();
+beforeEach(async (done) => {
+  // skip when no app global context
+  if (!app.locals.redisClient) {
+    return done();
+  }
+
+  newCollection = await collection.save(collection.create());
+
+  done();
+});
+
+afterEach(async (done) => {
+  try {
+    await collection.remove(newCollection.id);
+  } catch (err) {}
+
+  done();
+});
 
 describe('GET /collections', () => {
   it('responds with 200 when params are valid', (done) => {
@@ -87,13 +105,10 @@ describe('POST /management/collections', () => {
   it('responds with 200 when params are valid', (done) => {
     request(app)
       .post(`/management/collections`)
-      .send(newCollection)
+      .send(collection.create())
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect((res) => {
-        newCollection.id = res.body.data.id;
-      })
       .expect(200, done);
   });
 
@@ -148,7 +163,7 @@ describe('PUT /management/collections/:id', () => {
   it('responds with 200 when params are valid', (done) => {
     request(app)
       .put(`/management/collections/${newCollection.id}`)
-      .send(newCollection)
+      .send({ name: 'test' })
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
@@ -158,7 +173,7 @@ describe('PUT /management/collections/:id', () => {
   it('responds with 400 when location are valid', (done) => {
     request(app)
       .put(`/management/collections/${newCollection.id}`)
-      .send({ ...newCollection, locations: ['x'] })
+      .send({ locations: ['x'] })
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
@@ -177,7 +192,7 @@ describe('DELETE /management/collections/:id', () => {
 
   it('responds with 404 when id does not exist', (done) => {
     request(app)
-      .delete(`/management/collections/${newCollection.id}`)
+      .delete(`/management/collections/${newCollection.id.split('').reverse().join('')}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
       .expect(404, done);

@@ -30,6 +30,8 @@ import metric from './data/metric';
 import location from './data/location';
 
 let app;
+let newMetric;
+let newLocation;
 
 beforeAll(() => {
   app = expressFactory(
@@ -42,33 +44,34 @@ beforeAll(() => {
   );
 });
 
-const newMetric = metric();
-const newLocation = location();
+beforeEach(async (done) => {
+  // skip when no app global context
+  if (!app.locals.redisClient) {
+    return done();
+  }
+
+  newLocation = await location.save(location.create());
+  newMetric = await metric.save(metric.create({ location: newLocation.id }));
+
+  done();
+});
+
+afterEach(async (done) => {
+  try {
+    await location.remove(newLocation.id);
+    await metric.remove(newMetric.id);
+  } catch (err) {}
+
+  done();
+});
 
 xdescribe('POST /management/metrics/:locationId/action', () => {
-  it('creates a location', (done) => {
-    request(app)
-      .post(`/management/locations`)
-      .send(newLocation)
-      .set('Content-Type', 'application/json')
-      .set('Accept', 'application/json')
-      .expect('Content-Type', /json/)
-      .expect((res) => {
-        newLocation.id = res.body.data.id;
-      })
-      .expect(200, done);
-  });
-
   it('responds with 200 when params are valid', (done) => {
     request(app)
       .post(`/management/metrics/${newLocation.id}/action?operationType=calculate`)
-      .send(newMetric)
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect((res) => {
-        newMetric.id = res.body.data.id;
-      })
       .expect(200, done);
   });
 });
@@ -117,13 +120,9 @@ xdescribe('POST /management/metrics/:locationId/:metricId/action', () => {
   it('responds with 200 when params are valid', (done) => {
     request(app)
       .post(`/management/metrics/${newLocation.id}/${newMetric.id}/action`)
-      .send(newMetric)
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect((res) => {
-        newMetric.id = res.body.data.id;
-      })
       .expect(200, done);
   });
 });

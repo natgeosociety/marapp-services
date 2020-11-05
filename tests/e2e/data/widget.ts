@@ -17,26 +17,34 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { Widget } from '../../../src/models/WidgetModel';
+import { Widget, WidgetModel } from '../../../src/models/WidgetModel';
+import { save, removeById } from '../../../src/models/utils/index';
 
-export default (data?: Widget): Widget => ({
-  slug: `test-widget-${Math.floor(Math.random() * 1000)}`,
-  name: 'new widget',
-  config: {
-    widgetConfig: {
-      paramsConfig: [
-        {
-          key: 'slug',
-          required: true,
+export default {
+  create: (data?: Partial<Widget>): Widget => ({
+    slug: `test-widget-${Math.floor(Math.random() * 100000)}`,
+    name: 'new widget',
+    description: 'new widget description',
+    config: {
+      widgetConfig: {
+        paramsConfig: [
+          {
+            key: 'slug',
+            required: true,
+          },
+        ],
+        sentence: {
+          default:
+            'From {start_year} to {end_year}, {location} lost {loss_total_area} of tree cover, equivalent to a {loss_total_perc} decrease in tree cover since {first_year}',
         },
-      ],
-      sentence: {
-        default:
-          'From {start_year} to {end_year}, {location} lost {loss_total_area} of tree cover, equivalent to a {loss_total_perc} decrease in tree cover since {first_year}',
       },
     },
-  },
-  metrics: ['tree-loss'],
-  // layers: ['']
-  ...data,
-});
+    metrics: ['tree-loss'],
+    published: true,
+    organization: 'MARAPP',
+    // layers: ['']
+    ...data,
+  }),
+  save: (widget: Widget): Promise<any> => save(WidgetModel, new WidgetModel(widget)),
+  remove: (widgetId: string): Promise<any> => removeById(WidgetModel, widgetId),
+};

@@ -28,6 +28,7 @@ import DashboardRouter from '../../src/routers/DashboardRouter';
 import dashboard from './data/dashboard';
 
 let app;
+let newDashboard;
 
 beforeAll(() => {
   app = expressFactory(
@@ -39,7 +40,24 @@ beforeAll(() => {
   );
 });
 
-const newDashboard = dashboard();
+beforeEach(async (done) => {
+  // skip when no app global context
+  if (!app.locals.redisClient) {
+    return done();
+  }
+
+  newDashboard = await dashboard.save(dashboard.create());
+
+  done();
+});
+
+afterEach(async (done) => {
+  try {
+    await dashboard.remove(newDashboard.id);
+  } catch (err) {}
+
+  done();
+});
 
 describe('GET /dashboards', () => {
   it('responds with 200 when params are valid', (done) => {
@@ -87,13 +105,10 @@ describe('POST /management/dashboards', () => {
   it('responds with 200 when params are valid', (done) => {
     request(app)
       .post(`/management/dashboards`)
-      .send(newDashboard)
+      .send(dashboard.create())
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect((res) => {
-        newDashboard.id = res.body.data.id;
-      })
       .expect(200, done);
   });
 
@@ -148,7 +163,7 @@ describe('PUT /management/dashboards/:id', () => {
   it('responds with 200 when params are valid', (done) => {
     request(app)
       .put(`/management/dashboards/${newDashboard.id}`)
-      .send(newDashboard)
+      .send({ name: 'test' })
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
@@ -158,7 +173,7 @@ describe('PUT /management/dashboards/:id', () => {
   it('responds with 400 when layers are invalid', (done) => {
     request(app)
       .put(`/management/dashboards/${newDashboard.id}`)
-      .send({ ...newDashboard, layers: ['x'] })
+      .send({ layers: ['x'] })
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
@@ -177,7 +192,7 @@ describe('DELETE /management/dashboards/:id', () => {
 
   it('responds with 404 when id does not exist', (done) => {
     request(app)
-      .delete(`/management/dashboards/${newDashboard.id}`)
+      .delete(`/management/dashboards/${newDashboard.id.split('').reverse().join('')}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
       .expect(404, done);
