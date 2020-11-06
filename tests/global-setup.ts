@@ -17,16 +17,17 @@
   specific language governing permissions and limitations under the License.
 */
 
-module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  testPathIgnorePatterns: ['node_modules', 'dist'],
-  globalSetup: "./tests/global-setup.ts",
-  // globalTeardown: "./teardown.ts",
-  setupFiles: [
-    "./tests/setup.ts"
-  ],
-  testTimeout: 20000,
-  maxConcurrency: 1,
-  verbose: true
+/**
+ * This option allows the use of a custom global setup module which exports an async
+ * function that is triggered once before all test suites.
+ * This function gets Jest's globalConfig object as a parameter.
+ *
+ * Note: Any global variables that are defined through globalSetup can only be read in
+ * globalTeardown. You cannot retrieve globals defined here in your test suites.
+ * @param globalConfig
+ */
+export default async (globalConfig) => {
+  if (globalConfig.silent) {
+    process.env.LOG_LEVEL = null; // disable logging in tests;
+  }
 };

@@ -19,8 +19,8 @@
 
 import request from 'supertest';
 
+import { expressFactory } from '../../src/middlewares';
 import { contextHttp } from '../../src/middlewares/context';
-import { expressFactory } from '../../src/middlewares/index';
 import { jwtError, jwtRSA } from '../../src/middlewares/jwt';
 import WidgetRouter from '../../src/routers/WidgetRouter';
 
@@ -33,7 +33,7 @@ let newLocation;
 let newMetric;
 let newWidget;
 
-beforeAll(() => {
+beforeAll(async () => {
   app = expressFactory(
     contextHttp,
     jwtRSA(false),
@@ -43,165 +43,160 @@ beforeAll(() => {
   );
 });
 
-beforeEach(async (done) => {
+beforeEach(async () => {
   // skip when no app global context
   if (!app.locals.redisClient) {
-    return done();
+    return;
   }
-
   newLocation = await location.save(location.create());
   newMetric = await metric.save(metric.create({ location: newLocation.id }));
   newWidget = await widget.save(widget.create());
-
-  done();
 });
 
-afterEach(async (done) => {
+afterEach(async () => {
   try {
     await location.remove(newLocation.id);
     await metric.remove(newMetric.id);
     await widget.remove(newWidget.id);
   } catch (err) {}
-
-  done();
 });
 
 describe('GET /widgets', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app).get('/widgets').set('Accept', 'application/json').expect('Content-Type', /json/).expect(200, done);
+  it('responds with 200 when params are valid', async () => {
+    await request(app).get('/widgets').set('Accept', 'application/json').expect('Content-Type', /json/).expect(200);
   });
 });
 
 describe('GET /management/widgets', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .get(`/management/widgets`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 });
 
 describe('GET /management/widgets/slug', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .get(`/management/widgets/slug?keyword=${newWidget.name}&type=shortid`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 
-  it('responds with 400 when type param is invalid', (done) => {
-    request(app)
+  it('responds with 400 when type param is invalid', async () => {
+    await request(app)
       .get(`/management/widgets/slug?keyword=${newWidget.name}&type=x`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(400, done);
+      .expect(400);
   });
 
-  it('responds with 400 when keyword param is missing', (done) => {
-    request(app)
+  it('responds with 400 when keyword param is missing', async () => {
+    await request(app)
       .get(`/management/widgets/slug?type=shortid`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(400, done);
+      .expect(400);
   });
 });
 
 describe('POST /management/widgets', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .post(`/management/widgets`)
       .send(widget.create())
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 
-  it('responds with 400 when slug already exists', (done) => {
-    request(app)
+  it('responds with 400 when slug already exists', async () => {
+    await request(app)
       .post(`/management/widgets`)
       .send(newWidget)
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(400, done);
+      .expect(400);
   });
 });
 
 describe('GET /management/widgets/:id', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .get(`/management/widgets/${newWidget.id}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 
-  it('responds with 404 when id does not exist', (done) => {
-    request(app)
+  it('responds with 404 when id does not exist', async () => {
+    await request(app)
       .get(`/management/widgets/${newWidget.id.split('').reverse().join('')}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(404, done);
+      .expect(404);
   });
 });
 
 describe('GET /widgets/:id', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .get(`/widgets/${newWidget.id}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 
-  it('responds with 404 when id does not exist', (done) => {
-    request(app)
+  it('responds with 404 when id does not exist', async () => {
+    await request(app)
       .get(`/widgets/${newWidget.id.split('').reverse().join('')}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(404, done);
+      .expect(404);
   });
 });
 
 describe('PUT /management/widgets/:id', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .put(`/management/widgets/${newWidget.id}`)
       .send({ name: 'test' })
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 
-  it('responds with 400 when layers are invalid', (done) => {
-    request(app)
+  it('responds with 400 when layers are invalid', async () => {
+    await request(app)
       .put(`/management/widgets/${newWidget.id}`)
       .send({ layers: ['x'] })
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(400, done);
+      .expect(400);
   });
 });
 
 describe('DELETE /management/widgets/:id', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .delete(`/management/widgets/${newWidget.id}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 
-  it('responds with 404 when id does not exist', (done) => {
-    request(app)
+  it('responds with 404 when id does not exist', async () => {
+    await request(app)
       .delete(`/management/widgets/${newWidget.id.split('').reverse().join('')}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(404, done);
+      .expect(404);
   });
 });

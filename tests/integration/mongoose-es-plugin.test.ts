@@ -70,7 +70,7 @@ beforeAll(async () => {
   TestModel = model('Test', TestSchema);
 });
 
-xdescribe('Mongoose elasticsearch plugin', () => {
+xdescribe('Mongoose elasticsearch plugin', async () => {
   it('should not find any document', async () => {
     const result = await TestModel.findOne({});
 

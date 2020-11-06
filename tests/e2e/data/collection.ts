@@ -17,8 +17,8 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { Collection, CollectionModel } from '../../../src/models/CollectionModel';
-import { removeById, save } from '../../../src/models/utils/index';
+import { Collection, CollectionModel } from '../../../src/models';
+import { removeById, save } from '../../../src/models/utils';
 
 export default {
   create: (data?: Partial<Collection>): Collection => ({

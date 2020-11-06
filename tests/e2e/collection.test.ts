@@ -19,8 +19,8 @@
 
 import request from 'supertest';
 
+import { expressFactory } from '../../src/middlewares';
 import { contextHttp } from '../../src/middlewares/context';
-import { expressFactory } from '../../src/middlewares/index';
 import { jwtError, jwtRSA } from '../../src/middlewares/jwt';
 import CollectionRouter from '../../src/routers/CollectionRouter';
 
@@ -29,7 +29,7 @@ import collection from './data/collection';
 let app;
 let newCollection;
 
-beforeAll(() => {
+beforeAll(async () => {
   app = expressFactory(
     contextHttp,
     jwtRSA(false),
@@ -39,161 +39,156 @@ beforeAll(() => {
   );
 });
 
-beforeEach(async (done) => {
+beforeEach(async () => {
   // skip when no app global context
   if (!app.locals.redisClient) {
-    return done();
+    return;
   }
-
   newCollection = await collection.save(collection.create());
-
-  done();
 });
 
-afterEach(async (done) => {
+afterEach(async () => {
   try {
     await collection.remove(newCollection.id);
   } catch (err) {}
-
-  done();
 });
 
 describe('GET /collections', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app).get('/collections').set('Accept', 'application/json').expect('Content-Type', /json/).expect(200, done);
+  it('responds with 200 when params are valid', async () => {
+    await request(app).get('/collections').set('Accept', 'application/json').expect('Content-Type', /json/).expect(200);
   });
 });
 
 describe('GET /management/collections', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .get(`/management/collections`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 });
 
 describe('GET /management/collections/slug', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .get(`/management/collections/slug?keyword=${newCollection.name}&type=shortid`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 
-  it('responds with 400 when type param is invalid', (done) => {
-    request(app)
+  it('responds with 400 when type param is invalid', async () => {
+    await request(app)
       .get(`/management/collections/slug?keyword=${newCollection.name}&type=x`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(400, done);
+      .expect(400);
   });
 
-  it('responds with 400 when keyword param is missing', (done) => {
-    request(app)
+  it('responds with 400 when keyword param is missing', async () => {
+    await request(app)
       .get(`/management/collections/slug?type=shortid`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(400, done);
+      .expect(400);
   });
 });
 
 describe('POST /management/collections', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .post(`/management/collections`)
       .send(collection.create())
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 
-  it('responds with 400 when slug already exists', (done) => {
-    request(app)
+  it('responds with 400 when slug already exists', async () => {
+    await request(app)
       .post(`/management/collections`)
       .send(newCollection)
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(400, done);
+      .expect(400);
   });
 });
 
 describe('GET /management/collections/:id', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .get(`/management/collections/${newCollection.id}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 
-  it('responds with 404 when id does not exist', (done) => {
-    request(app)
+  it('responds with 404 when id does not exist', async () => {
+    await request(app)
       .get(`/management/collections/${newCollection.id.split('').reverse().join('')}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(404, done);
+      .expect(404);
   });
 });
 
 describe('GET /collections/:id', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .get(`/collections/${newCollection.id}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 
-  it('responds with 404 when id does not exist', (done) => {
-    request(app)
+  it('responds with 404 when id does not exist', async () => {
+    await request(app)
       .get(`/collections/${newCollection.id.split('').reverse().join('')}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(404, done);
+      .expect(404);
   });
 });
 
 describe('PUT /management/collections/:id', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .put(`/management/collections/${newCollection.id}`)
       .send({ name: 'test' })
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 
-  it('responds with 400 when location are valid', (done) => {
-    request(app)
+  it('responds with 400 when location are valid', async () => {
+    await request(app)
       .put(`/management/collections/${newCollection.id}`)
       .send({ locations: ['x'] })
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(400, done);
+      .expect(400);
   });
 });
 
 describe('DELETE /management/collections/:id', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .delete(`/management/collections/${newCollection.id}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 
-  it('responds with 404 when id does not exist', (done) => {
-    request(app)
+  it('responds with 404 when id does not exist', async () => {
+    await request(app)
       .delete(`/management/collections/${newCollection.id.split('').reverse().join('')}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(404, done);
+      .expect(404);
   });
 });

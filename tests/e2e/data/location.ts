@@ -17,8 +17,8 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { Location, LocationModel, LocationTypeEnum } from '../../../src/models/LocationModel';
-import { removeById, save } from '../../../src/models/utils/index';
+import { Location, LocationModel, LocationTypeEnum } from '../../../src/models';
+import { removeById, save } from '../../../src/models/utils';
 
 export default {
   create: (data?: Partial<Location>): Location => ({

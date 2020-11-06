@@ -17,8 +17,8 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { Metric, MetricModel } from '../../../src/models/MetricModel';
-import { removeById, save } from '../../../src/models/utils/index';
+import { Metric, MetricModel } from '../../../src/models';
+import { removeById, save } from '../../../src/models/utils';
 
 export default {
   create: (data?: Partial<Metric>): Metric => ({

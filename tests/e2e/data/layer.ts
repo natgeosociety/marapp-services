@@ -17,8 +17,8 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { Layer, LayerCategoryEnum, LayerModel, LayerProviderEnum, LayerTypeEnum } from '../../../src/models/LayerModel';
-import { removeById, save } from '../../../src/models/utils/index';
+import { Layer, LayerCategoryEnum, LayerModel, LayerProviderEnum, LayerTypeEnum } from '../../../src/models';
+import { removeById, save } from '../../../src/models/utils';
 
 export default {
   create: (data?: Partial<Layer>): Layer => ({

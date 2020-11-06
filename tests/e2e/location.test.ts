@@ -19,8 +19,8 @@
 
 import request from 'supertest';
 
+import { expressFactory } from '../../src/middlewares';
 import { contextHttp } from '../../src/middlewares/context';
-import { expressFactory } from '../../src/middlewares/index';
 import { jwtError, jwtRSA } from '../../src/middlewares/jwt';
 import LocationRouter from '../../src/routers/LocationRouter';
 
@@ -29,7 +29,7 @@ import location from './data/location';
 let app;
 let newLocation;
 
-beforeAll(() => {
+beforeAll(async () => {
   app = expressFactory(
     contextHttp,
     jwtRSA(false),
@@ -39,161 +39,156 @@ beforeAll(() => {
   );
 });
 
-beforeEach(async (done) => {
+beforeEach(async () => {
   // skip when no app global context
   if (!app.locals.redisClient) {
-    return done();
+    return;
   }
-
   newLocation = await location.save(location.create());
-
-  done();
 });
 
-afterEach(async (done) => {
+afterEach(async () => {
   try {
     await location.remove(newLocation.id);
   } catch (err) {}
-
-  done();
 });
 
 describe('GET /locations', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app).get('/locations').set('Accept', 'application/json').expect('Content-Type', /json/).expect(200, done);
+  it('responds with 200 when params are valid', async () => {
+    await request(app).get('/locations').set('Accept', 'application/json').expect('Content-Type', /json/).expect(200);
   });
 });
 
 describe('GET /management/locations', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .get(`/management/locations`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 });
 
 describe(`GET /management/locations/slug`, () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .get(`/management/locations/slug?keyword=${newLocation.name}&type=shortid`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 
-  it('responds with 400 when type param is invalid', (done) => {
-    request(app)
+  it('responds with 400 when type param is invalid', async () => {
+    await request(app)
       .get(`/management/locations/slug?keyword=${newLocation.name}&type=x`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(400, done);
+      .expect(400);
   });
 
-  it('responds with 400 when keyword param is missing', (done) => {
-    request(app)
+  it('responds with 400 when keyword param is missing', async () => {
+    await request(app)
       .get(`/management/locations/slug?type=shortid`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(400, done);
+      .expect(400);
   });
 });
 
 describe('POST /management/locations', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .post(`/management/locations`)
       .send(location.create())
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 
-  it('responds with 400 when slug already exists', (done) => {
-    request(app)
+  it('responds with 400 when slug already exists', async () => {
+    await request(app)
       .post(`/management/locations`)
       .send(newLocation)
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(400, done);
+      .expect(400);
   });
 });
 
 describe('GET /management/locations/:id', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .get(`/management/locations/${newLocation.id}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 
-  it('responds with 404 when id does not exist', (done) => {
-    request(app)
+  it('responds with 404 when id does not exist', async () => {
+    await request(app)
       .get(`/management/locations/${newLocation.id.split('').reverse().join('')}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(404, done);
+      .expect(404);
   });
 });
 
 describe('GET /locations/:id', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .get(`/locations/${newLocation.id}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 
-  it('responds with 404 when id does not exist', (done) => {
-    request(app)
+  it('responds with 404 when id does not exist', async () => {
+    await request(app)
       .get(`/locations/${newLocation.id.split('').reverse().join('')}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(404, done);
+      .expect(404);
   });
 });
 
 describe('PUT /management/locations/:id', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .put(`/management/locations/${newLocation.id}`)
       .send({ name: 'test' })
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 
-  it('responds with 400 when type is invalid', (done) => {
-    request(app)
+  it('responds with 400 when type is invalid', async () => {
+    await request(app)
       .put(`/management/locations/${newLocation.id}`)
       .send({ type: 'x' })
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(400, done);
+      .expect(400);
   });
 });
 
 describe('DELETE /management/locations/:id', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .delete(`/management/locations/${newLocation.id}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 
-  it('responds with 404 when id does not exist', (done) => {
-    request(app)
+  it('responds with 404 when id does not exist', async () => {
+    await request(app)
       .delete(`/management/locations/${newLocation.id.split('').reverse().join('')}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(404, done);
+      .expect(404);
   });
 });

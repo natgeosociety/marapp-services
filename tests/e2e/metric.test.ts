@@ -19,8 +19,8 @@
 
 import request from 'supertest';
 
+import { expressFactory } from '../../src/middlewares';
 import { contextHttp } from '../../src/middlewares/context';
-import { expressFactory } from '../../src/middlewares/index';
 import { jwtError, jwtRSA } from '../../src/middlewares/jwt';
 import LocationRouter from '../../src/routers/LocationRouter';
 import MetricRouter from '../../src/routers/MetricRouter';
@@ -32,7 +32,7 @@ let app;
 let newMetric;
 let newLocation;
 
-beforeAll(() => {
+beforeAll(async () => {
   app = expressFactory(
     contextHttp,
     jwtRSA(false),
@@ -43,105 +43,100 @@ beforeAll(() => {
   );
 });
 
-beforeEach(async (done) => {
+beforeEach(async () => {
   // skip when no app global context
   if (!app.locals.redisClient) {
-    return done();
+    return;
   }
-
   newLocation = await location.save(location.create());
   newMetric = await metric.save(metric.create({ location: newLocation.id }));
-
-  done();
 });
 
-afterEach(async (done) => {
+afterEach(async () => {
   try {
     await location.remove(newLocation.id);
     await metric.remove(newMetric.id);
   } catch (err) {}
-
-  done();
 });
 
 xdescribe('POST /management/metrics/:locationId/action', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .post(`/management/metrics/${newLocation.id}/action?operationType=calculate`)
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 });
 
 xdescribe('GET /metrics/:locationId', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .get(`/metrics/${newLocation.id}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 });
 
 xdescribe('GET /metrics/:locationId/:metricId', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .get(`/metrics/${newLocation.id}/${newMetric.id}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 });
 
 xdescribe('GET /management/metrics/:locationId', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .get(`/management/metrics/${newLocation.id}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 });
 
 xdescribe('GET /management/metrics/:locationId/:metricId', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .get(`/management/metrics/${newLocation.id}/${newMetric.id}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 });
 
 xdescribe('POST /management/metrics/:locationId/:metricId/action', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .post(`/management/metrics/${newLocation.id}/${newMetric.id}/action`)
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 });
 
 xdescribe('DELETE /management/metrics/:locationId', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .delete(`/management/metrics/${newLocation.id}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 });
 
 xdescribe('DELETE /management/metrics/:locationId/:metricId', () => {
-  it('responds with 200 when params are valid', (done) => {
-    request(app)
+  it('responds with 200 when params are valid', async () => {
+    await request(app)
       .delete(`/management/metrics/${newLocation.id}/:${newMetric.id}`)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(200, done);
+      .expect(200);
   });
 });

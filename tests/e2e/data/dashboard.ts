@@ -17,8 +17,8 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { Dashboard, DashboardModel } from '../../../src/models/DashboardModel';
-import { removeById, save } from '../../../src/models/utils/index';
+import { Dashboard, DashboardModel } from '../../../src/models';
+import { removeById, save } from '../../../src/models/utils';
 
 export default {
   create: (data?: Partial<Dashboard>): Dashboard => ({
