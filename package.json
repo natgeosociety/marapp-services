@@ -8,7 +8,7 @@
     "build": "tsc --build",
     "watch": "tsc --watch",
     "test": "jest --runInBand --passWithNoTests",
-    "docker-compose:test": "docker-compose --project-name marapp -f docker-compose.yml up",
+    "docker-compose:test": "docker-compose --project-name marapp-test -f docker-compose.yml up",
     "test:integration": "jest --silent --runInBand --passWithNoTests --testPathPattern=tests/integration --detectOpenHandles --forceExit",
     "test:e2e": "jest --silent --runInBand --passWithNoTests --testPathPattern=tests/e2e --detectOpenHandles --forceExit",
     "typecheck": "tsc --noEmit",
