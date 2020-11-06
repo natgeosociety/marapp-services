@@ -59,7 +59,7 @@ afterEach(async () => {
   } catch (err) {}
 });
 
-xdescribe('POST /management/metrics/:locationId/action', () => {
+describe('POST /management/metrics/:locationId/action', () => {
   it('responds with 200 when params are valid', async () => {
     await request(app)
       .post(`/management/metrics/${newLocation.id}/action?operationType=calculate`)
@@ -70,7 +70,7 @@ xdescribe('POST /management/metrics/:locationId/action', () => {
   });
 });
 
-xdescribe('GET /metrics/:locationId', () => {
+describe('GET /metrics/:locationId', () => {
   it('responds with 200 when params are valid', async () => {
     await request(app)
       .get(`/metrics/${newLocation.id}`)
@@ -80,7 +80,7 @@ xdescribe('GET /metrics/:locationId', () => {
   });
 });
 
-xdescribe('GET /metrics/:locationId/:metricId', () => {
+describe('GET /metrics/:locationId/:metricId', () => {
   it('responds with 200 when params are valid', async () => {
     await request(app)
       .get(`/metrics/${newLocation.id}/${newMetric.id}`)
@@ -90,7 +90,7 @@ xdescribe('GET /metrics/:locationId/:metricId', () => {
   });
 });
 
-xdescribe('GET /management/metrics/:locationId', () => {
+describe('GET /management/metrics/:locationId', () => {
   it('responds with 200 when params are valid', async () => {
     await request(app)
       .get(`/management/metrics/${newLocation.id}`)
@@ -100,7 +100,7 @@ xdescribe('GET /management/metrics/:locationId', () => {
   });
 });
 
-xdescribe('GET /management/metrics/:locationId/:metricId', () => {
+describe('GET /management/metrics/:locationId/:metricId', () => {
   it('responds with 200 when params are valid', async () => {
     await request(app)
       .get(`/management/metrics/${newLocation.id}/${newMetric.id}`)
@@ -110,7 +110,7 @@ xdescribe('GET /management/metrics/:locationId/:metricId', () => {
   });
 });
 
-xdescribe('POST /management/metrics/:locationId/:metricId/action', () => {
+describe('POST /management/metrics/:locationId/:metricId/action', () => {
   it('responds with 200 when params are valid', async () => {
     await request(app)
       .post(`/management/metrics/${newLocation.id}/${newMetric.id}/action`)
@@ -121,7 +121,7 @@ xdescribe('POST /management/metrics/:locationId/:metricId/action', () => {
   });
 });
 
-xdescribe('DELETE /management/metrics/:locationId', () => {
+describe('DELETE /management/metrics/:locationId', () => {
   it('responds with 200 when params are valid', async () => {
     await request(app)
       .delete(`/management/metrics/${newLocation.id}`)
@@ -131,7 +131,7 @@ xdescribe('DELETE /management/metrics/:locationId', () => {
   });
 });
 
-xdescribe('DELETE /management/metrics/:locationId/:metricId', () => {
+describe('DELETE /management/metrics/:locationId/:metricId', () => {
   it('responds with 200 when params are valid', async () => {
     await request(app)
       .delete(`/management/metrics/${newLocation.id}/:${newMetric.id}`)
