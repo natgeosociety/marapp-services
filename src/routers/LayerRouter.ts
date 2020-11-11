@@ -325,7 +325,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
     `${path}/:id`,
     validate([
       param('id').isString().trim().notEmpty(),
-      body('slug').optional().isString().trim().notEmpty(),
+      body('slug').optional({ nullable: true }).isString().trim().notEmpty(),
       body('name').optional().isString().trim().notEmpty(),
       body('description').optional().isString().trim(),
       body('type').optional().isString().trim().notEmpty(),

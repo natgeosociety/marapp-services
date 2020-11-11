@@ -62,7 +62,7 @@ export const generateSlugMiddleware = function (modelName: string) {
     const name: string = this.get('name');
     const organization: string = this.get('organization');
 
-    if (this.isNew && !slug && name) {
+    if (!slug && name) {
       this.set('slug', await model.getUniqueSlug(name, { organization }));
     }
   };
