@@ -95,19 +95,20 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
       const include = queryParamGroup(<string>req.query.include);
-      const { firstName, lastName } = req.body;
 
       const user = await authMgmtService.getUser(req.identity.sub);
       const userId = get(user, 'user_id');
 
+      const firstName = get(req.body, 'firstName', user?.given_name);
+      const lastName = get(req.body, 'lastName', user?.family_name);
+
       const update = {
-        given_name: firstName && firstName.trim() ? firstName.trim() : user?.given_name,
-        family_name: lastName && lastName.trim() ? lastName.trim() : user?.family_name,
+        given_name: firstName,
+        family_name: lastName,
+        name: `${firstName} ${lastName}`,
       };
-      const userUpdated = await authMgmtService.updateUser(userId, {
-        ...update,
-        name: `${update.given_name} ${update.family_name}`,
-      });
+
+      const userUpdated = await authMgmtService.updateUser(userId, update);
 
       const data = {
         id: userUpdated?.email,
