@@ -104,7 +104,10 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
         given_name: firstName && firstName.trim() ? firstName.trim() : user?.given_name,
         family_name: lastName && lastName.trim() ? lastName.trim() : user?.family_name,
       };
-      const userUpdated = await authMgmtService.updateUser(userId, update);
+      const userUpdated = await authMgmtService.updateUser(userId, {
+        ...update,
+        name: `${update.given_name} ${update.family_name}`,
+      });
 
       const data = {
         id: userUpdated?.email,
