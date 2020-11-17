@@ -67,7 +67,10 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
       const include = queryParamGroup(<string>req.query.include);
 
       const predefined = queryFilters.concat([
-        { key: 'organization', op: 'in', value: req.groups },
+        [
+          { key: 'organization', op: 'in', value: req.groups },
+          { key: 'publicResource', op: '==', value: String(true) },
+        ],
         // { key: '*.published', op: '==', value: String(true) },
         // { key: '*.publicResource', op: '==', value: String(true) },
       ]);
