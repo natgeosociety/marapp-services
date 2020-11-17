@@ -18,7 +18,7 @@ Select AWS, Access AWS services from the service types, and fill in the AWS Acce
 
 Note: The AWS Access Key ID & Secret Access Key pair need to have push access to Amazon SNS. 
 
-![](resources/mongodb-atlas-realm-app.jpg)
+![](resources/mongodb-create-3rd-party-service.jpg)
 
 ## Creating a trigger function
 

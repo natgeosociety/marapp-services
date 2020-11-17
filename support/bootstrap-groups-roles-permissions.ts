@@ -35,6 +35,7 @@ const argv = yargs.options({
   getAllRoles: { type: 'boolean', default: false },
   deletePermissions: { type: 'array', default: [] },
   deleteRoles: { type: 'array', default: [] },
+  createGlobalRoles: { type: 'boolean', default: false },
   updateGroupsConfig: { type: 'boolean', default: false },
 }).argv;
 
@@ -78,6 +79,9 @@ const main = async (): Promise<void> => {
     await forEachAsync(argv.deletePermissions, (permId) => authzService.deletePermission(permId));
   }
 
+  if (argv.createGlobalRoles) {
+    await membershipService.createGlobalRoles();
+  }
   if (argv.updateGroupsConfig) {
     await membershipService.updateWorkspaceConfig();
   }

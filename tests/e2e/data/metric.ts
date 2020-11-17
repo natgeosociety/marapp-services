@@ -17,16 +17,15 @@
   specific language governing permissions and limitations under the License.
 */
 
-module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  testPathIgnorePatterns: ['node_modules', 'dist'],
-  globalSetup: "./tests/global-setup.ts",
-  // globalTeardown: "./teardown.ts",
-  setupFiles: [
-    "./tests/setup.ts"
-  ],
-  testTimeout: 20000,
-  maxConcurrency: 1,
-  verbose: true
+import { Metric, MetricModel } from '../../../src/models';
+import { removeById, save } from '../../../src/models/utils';
+
+export default {
+  create: (data?: Partial<Metric>): Metric => ({
+    slug: `tree-loss`,
+    metric: {},
+    ...data,
+  }),
+  save: (metric: Metric): Promise<any> => save(MetricModel, new MetricModel(metric)),
+  remove: (metricId: string): Promise<any> => removeById(MetricModel, metricId),
 };

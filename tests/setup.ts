@@ -17,16 +17,6 @@
   specific language governing permissions and limitations under the License.
 */
 
-module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  testPathIgnorePatterns: ['node_modules', 'dist'],
-  globalSetup: "./tests/global-setup.ts",
-  // globalTeardown: "./teardown.ts",
-  setupFiles: [
-    "./tests/setup.ts"
-  ],
-  testTimeout: 20000,
-  maxConcurrency: 1,
-  verbose: true
-};
+import { env } from 'custom-env';
+
+env();

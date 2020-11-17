@@ -17,16 +17,20 @@
   specific language governing permissions and limitations under the License.
 */
 
-module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  testPathIgnorePatterns: ['node_modules', 'dist'],
-  globalSetup: "./tests/global-setup.ts",
-  // globalTeardown: "./teardown.ts",
-  setupFiles: [
-    "./tests/setup.ts"
-  ],
-  testTimeout: 20000,
-  maxConcurrency: 1,
-  verbose: true
+import { Dashboard, DashboardModel } from '../../../src/models';
+import { removeById, save } from '../../../src/models/utils';
+
+export default {
+  create: (data?: Partial<Dashboard>): Dashboard => ({
+    slug: `test-dashboard-${Math.floor(Math.random() * 100000)}`,
+    name: 'new dashboard',
+    description: 'new dashboard description',
+    published: true,
+    organization: 'MARAPP',
+    // layers: [''],
+    // widgets: [''],
+    ...data,
+  }),
+  save: (dashboard: Dashboard): Promise<any> => save(DashboardModel, new DashboardModel(dashboard)),
+  remove: (dashboardId: string): Promise<any> => removeById(DashboardModel, dashboardId),
 };

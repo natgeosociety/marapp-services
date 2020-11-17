@@ -17,7 +17,7 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { isEmpty } from 'lodash';
+import { get, isEmpty } from 'lodash';
 import { Model } from 'mongoose';
 
 import { getDistinctValues } from '../utils';
@@ -70,5 +70,18 @@ export const hasUniqueValuesValidator = () => {
       return set.size === v.length;
     },
     message: 'Array contains duplicate values.',
+  };
+};
+
+export const requireOptionalFields = (fieldNames: string[]) => {
+  return {
+    validator: function (v: any) {
+      const optionals = fieldNames.map((f) => get(this, f));
+      if (v) {
+        return optionals.every(Boolean); // check for truthy optionals;
+      }
+      return true;
+    },
+    message: `Additional optional field(s) are required: ${fieldNames.join(', ')}`,
   };
 };
