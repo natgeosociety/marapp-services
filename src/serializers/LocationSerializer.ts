@@ -34,6 +34,7 @@ export const LOCATION_ATTRIBUTES: string[] = [
   'published',
   'featured',
   'organization',
+  'publicResource',
   // computed;
   'bbox2d',
   'areaKm2',

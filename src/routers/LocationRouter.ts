@@ -69,12 +69,8 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
       const predefined = queryFilters.concat([
         { key: 'organization', op: 'in', value: req.groups },
         [
-          { key: '*.published', op: '?', value: String(false) }, // nested documents that do not have the 'published' field;
-          { key: '*.published', op: '==', value: String(true) }, // nested documents that do have 'published' set to true;
-        ],
-        [
-          { key: '*.publicResource', op: '?', value: String(false) }, // nested documents that do not have the 'publicResource' field;
-          { key: '*.publicResource', op: '==', value: String(true) }, // nested documents that do have 'publicResource' set to true;
+          { key: 'publicResource', op: '?', value: String(false) }, // documents that do not have the 'publicResource' field;
+          { key: 'publicResource', op: '==', value: String(true) }, // documents that do have 'publicResource' set to true;
         ],
       ]);
       const queryOptions = parser.parse(req.query, { predefined }, ['search']);
@@ -136,13 +132,7 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
       const id = req.params.id;
       const include = queryParamGroup(<string>req.query.include);
 
-      const predefined = queryFilters.concat([
-        { key: 'organization', op: 'in', value: req.groups },
-        [
-          { key: '*.published', op: '?', value: String(false) }, // nested documents that do not have the 'published' field;
-          { key: '*.published', op: '==', value: String(true) }, // nested documents that do have 'published' set to true;
-        ],
-      ]);
+      const predefined = queryFilters.concat([{ key: 'organization', op: 'in', value: req.groups }]);
       const queryOptions = parser.parse(req.query, { predefined, excludeKeyPrefix: 'intersections' });
 
       const doc = await getById(LocationModel, id, queryOptions, ['slug']);
