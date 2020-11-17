@@ -52,7 +52,7 @@ export const schemaOptions: SchemaOptions = {
  * Auto-generate model slug middleware.
  * @param modelName
  */
-export const generateSlugMiddleware = function (modelName: string) {
+export const generateSlugMw = function (modelName: string) {
   const fn = async function () {
     const model = this.model(modelName);
     if (!model) {
@@ -97,4 +97,22 @@ export const checkWorkspaceRefs = async <T extends Document>(
       throw new DocumentError('Could not save document. Invalid references saved on document.', 400);
     }
   }
+};
+
+/**
+ * Pre-save middleware.
+ *
+ * Handles version bump on document change.
+ */
+export const versionIncOnUpdateMw = function () {
+  const fn = async function () {
+    if (this.isModified()) {
+      logger.debug('[handleVersionOnUpdateMw] schema changes detected, incrementing version');
+
+      const version = this.isNew ? this.get('version') : this.get('version') + 1;
+
+      this.set({ version });
+    }
+  };
+  return fn;
 };
