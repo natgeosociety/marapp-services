@@ -34,7 +34,9 @@ export const MongoError = makeError('ConnectionError');
 
 export type QueryFilterOperators = '==' | '!=' | '>' | '<' | '>=' | '<=' | 'in' | 'nin';
 
-export type MongooseQueryFilter = { key: string; op: QueryFilterOperators; value: string | string[] };
+type BaseMongooseQueryFilter = { key: string; op: QueryFilterOperators; value: string | string[] };
+
+export type MongooseQueryFilter = BaseMongooseQueryFilter | BaseMongooseQueryFilter[];
 
 const logger = getLogger();
 
