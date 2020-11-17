@@ -19,7 +19,7 @@
 
 import { Serializer, SerializerOptions } from 'jsonapi-serializer';
 
-import { Collection, Location, Metric } from '../models';
+import { Location, Metric } from '../models';
 
 import { PaginationLinks } from './index';
 import { METRIC_ATTRIBUTES } from './MetricSerializer';

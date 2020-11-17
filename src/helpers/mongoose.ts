@@ -32,7 +32,7 @@ import { ErrorObject, PaginationCursor } from '../types/response';
 
 export const MongoError = makeError('ConnectionError');
 
-export type QueryFilterOperators = '==' | '!=' | '>' | '<' | '>=' | '<=' | 'in' | 'nin';
+export type QueryFilterOperators = '==' | '!=' | '>' | '<' | '>=' | '<=' | 'in' | 'nin' | '?';
 
 type BaseMongooseQueryFilter = { key: string; op: QueryFilterOperators; value: string | string[] };
 
@@ -447,8 +447,10 @@ export class MongooseQueryParser {
         return ['$nin', value.split(sep)];
       }
       return ['$nin', value];
-    } else if (!op) {
+    } else if (op === '?') {
       return ['$exists', value];
+    } else {
+      throw Error(`Unsupported operand type: ${op}`);
     }
   };
 

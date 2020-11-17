@@ -25,7 +25,7 @@ import { API_BASE, DEFAULT_CONTENT_TYPE } from '../config';
 import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
 import { AuthzRequest } from '../middlewares/authz-guards';
-import { CollectionModel, DashboardModel, LayerModel, LocationModel, WidgetModel } from '../models';
+import { DashboardModel, LayerModel, LocationModel, WidgetModel } from '../models';
 import { createSerializer as createStatusSerializer } from '../serializers/StatusSerializer';
 
 const logger = getLogger();
@@ -39,7 +39,7 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/operations
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       logger.debug('reindexing es records');
 
-      const models = [LocationModel, CollectionModel, LayerModel, WidgetModel, DashboardModel];
+      const models = [LocationModel, LayerModel, WidgetModel, DashboardModel];
       await forEachAsync(models, async (model) => model.esSync());
 
       const code = 200;

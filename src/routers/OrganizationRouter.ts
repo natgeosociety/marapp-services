@@ -30,7 +30,7 @@ import { PaginationHelper } from '../helpers/paginator';
 import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
 import { AuthzGuards, AuthzRequest, guard } from '../middlewares/authz-guards';
-import { CollectionModel, DashboardModel, LayerModel, LocationModel, WidgetModel } from '../models';
+import { DashboardModel, LayerModel, LocationModel, WidgetModel } from '../models';
 import { countByQuery } from '../models/utils';
 import { createSerializer } from '../serializers/OrganizationSerializer';
 import { createSerializer as createStatsSerializer } from '../serializers/StatsSerializer';
@@ -120,8 +120,8 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       }
       const group = groups.groups[0];
 
-      const [locations, collections, layers, widgets, dashboards] = await forEachAsync(
-        [LocationModel, CollectionModel, LayerModel, WidgetModel, DashboardModel],
+      const [locations, layers, widgets, dashboards] = await forEachAsync(
+        [LocationModel, LayerModel, WidgetModel, DashboardModel],
         async (model) => countByQuery(model, queryOptions.filter)
       );
 
@@ -130,7 +130,6 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         slug: group?.name,
         name: group?.description,
         locations,
-        collections,
         layers,
         widgets,
         dashboards,

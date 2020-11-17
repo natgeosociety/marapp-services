@@ -67,12 +67,15 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
       const include = queryParamGroup(<string>req.query.include);
 
       const predefined = queryFilters.concat([
+        { key: 'organization', op: 'in', value: req.groups },
         [
-          { key: 'organization', op: 'in', value: req.groups },
-          { key: 'publicResource', op: '==', value: String(true) },
+          { key: '*.published', op: '?', value: String(false) }, // nested documents that do not have the 'published' field;
+          { key: '*.published', op: '==', value: String(true) }, // nested documents that do have 'published' set to true;
         ],
-        // { key: '*.published', op: '==', value: String(true) },
-        // { key: '*.publicResource', op: '==', value: String(true) },
+        [
+          { key: '*.publicResource', op: '?', value: String(false) }, // nested documents that do not have the 'publicResource' field;
+          { key: '*.publicResource', op: '==', value: String(true) }, // nested documents that do have 'publicResource' set to true;
+        ],
       ]);
       const queryOptions = parser.parse(req.query, { predefined }, ['search']);
 
@@ -135,8 +138,10 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
 
       const predefined = queryFilters.concat([
         { key: 'organization', op: 'in', value: req.groups },
-        // { key: '*.published', op: '==', value: String(true) },
-        // { key: '*.publicResource', op: '==', value: String(true) },
+        [
+          { key: '*.published', op: '?', value: String(false) }, // nested documents that do not have the 'published' field;
+          { key: '*.published', op: '==', value: String(true) }, // nested documents that do have 'published' set to true;
+        ],
       ]);
       const queryOptions = parser.parse(req.query, { predefined, excludeKeyPrefix: 'intersections' });
 
@@ -173,7 +178,7 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
       body('slug').optional({ nullable: true }).isString().trim().notEmpty(),
       body('name').isString().trim().notEmpty(),
       body('description').optional().isString().trim(),
-      body('type').isString().trim().isIn([LocationTypeEnum.COLLECTION]), // enforce only COLLECTION type;
+      body('type').isString().trim().isIn([LocationTypeEnum.COLLECTION]), // enforce type;
       body('published').not().exists(),
       body('publicResource').not().exists(),
       body('featured').not().exists(),
@@ -213,7 +218,7 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
       body('slug').optional({ nullable: true }).isString().trim().notEmpty(),
       body('name').optional().isString().trim().notEmpty(),
       body('description').optional().isString().trim().notEmpty(),
-      body('type').optional().isString().trim().isIn([LocationTypeEnum.COLLECTION]), // enforce only COLLECTION type;
+      body('type').optional().isString().trim().isIn([LocationTypeEnum.COLLECTION]), // enforce type;
       body('published').not().exists(),
       body('publicResource').not().exists(),
       body('featured').not().exists(),
