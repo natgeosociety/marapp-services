@@ -98,7 +98,11 @@ const LocationSchema: Schema = new Schema(
     published: { type: Boolean, default: false },
     featured: { type: Boolean, default: false },
     organization: { type: String, required: true },
-    publicResource: { type: Boolean, default: false, validate: requireOptionalFields(['published']) },
+    publicResource: {
+      type: Boolean,
+      default: undefined, // allow "empty" data;
+      validate: requireOptionalFields(['published']),
+    },
     version: { type: Number, default: 0 },
     bbox2d: { type: [Number] },
     areaKm2: { type: Number },
