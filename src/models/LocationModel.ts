@@ -28,7 +28,7 @@ import { getLogger } from '../logging';
 import { Metric } from '.';
 import { generateSlugMw, schemaOptions } from './middlewares';
 import {
-  checkCollectionRefsMw,
+  checkRefLinksOnUpdateMw,
   computeCollectionGeoJSONMw,
   computeGeoJSONOnChangeMw,
   removeRefLinksOnDeleteMw,
@@ -185,7 +185,7 @@ LocationSchema.plugin(slugifyPlugin, { uniqueField: 'slug', separator: '-' });
 // Middlewares;
 LocationSchema.pre('validate', generateSlugMw('Location'));
 LocationSchema.pre('save', computeGeoJSONOnChangeMw());
-LocationSchema.pre('save', checkCollectionRefsMw());
+LocationSchema.pre('save', checkRefLinksOnUpdateMw());
 LocationSchema.post('save', removeRefLinksOnUpdateMw());
 LocationSchema.post('remove', removeRefLinksOnDeleteMw());
 LocationSchema.post('find', computeCollectionGeoJSONMw());

@@ -30,7 +30,8 @@ export const computeGeoJSONOnChangeMw = function () {
     if (type === LocationTypeEnum.COLLECTION) {
       // exclude saving computed fields;
       this.set({ geojson: undefined, bbox2d: undefined, areaKm2: undefined, centroid: undefined });
-    } else if (!isEmpty(geoJSON) && this.isModified('geojson')) {
+    }
+    if (geoJSON && !isEmpty(geoJSON) && this.isModified('geojson')) {
       logger.debug('[computeGeoJSONOnChangeMw] shape changes detected, recomputing: bbox, centroid, areaKm2');
 
       const geojson = normalizeGeojson(geoJSON);
@@ -51,7 +52,7 @@ export const computeGeoJSONOnChangeMw = function () {
  *
  * Validate collection IDs from nested references.
  */
-export const checkCollectionRefsMw = function () {
+export const checkRefLinksOnUpdateMw = function () {
   const fn = async function () {
     const locations: string[] = this.get('locations');
     const organization: string = this.get('organization');
@@ -68,10 +69,10 @@ export const checkCollectionRefsMw = function () {
  */
 export const removeRefLinksOnUpdateMw = function () {
   const fn = async function () {
-    const publicResource: boolean = this.get('publicResource');
     const published: boolean = this.get('published');
+    const publicResource: boolean = this.get('publicResource');
 
-    if ((!published && this.isModified('published')) || (!publicResource && this.isModified('publicResource'))) {
+    if (!published || !publicResource) {
       const id: string = this.get('id');
       const res = await this.model('Location').updateMany(
         { locations: { $in: [id] } },
