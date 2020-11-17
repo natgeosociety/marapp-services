@@ -24,7 +24,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { getLogger } from '../logging';
 
 import { Layer, MetricModel } from '.';
-import { checkWorkspaceRefs, generateSlugMiddleware, schemaOptions } from './middlewares';
+import { generateSlugMw, schemaOptions, versionIncOnUpdateMw } from './middlewares';
+import { checkRefLinksOnUpdateMw, removeRefLinksOnDeleteMw } from './middlewares/widgets';
 import esPlugin, { IESPlugin } from './plugins/elasticsearch';
 import slugifyPlugin, { ISlugifyPlugin } from './plugins/slugify';
 import { getDistinctValues } from './utils';
@@ -84,6 +85,12 @@ const WidgetSchema: Schema = new Schema(
 // Unique compound index;
 WidgetSchema.index({ slug: 1, organization: 1 }, { unique: true });
 
+// Create "text" index for text search;
+WidgetSchema.index({ name: 'text' });
+
+// Create single field index for sorting;
+WidgetSchema.index({ name: 1 });
+
 // Ensure referenced object id(s) exist;
 WidgetSchema.plugin(mongooseIdValidator, { allowDuplicates: false });
 
@@ -122,13 +129,7 @@ WidgetSchema.plugin(esPlugin, {
   },
 });
 
-// Create "text" index for text search;
-WidgetSchema.index({ name: 'text' });
-
-// Create single field index for sorting;
-WidgetSchema.index({ name: 1 });
-
-// Slugify plugin;
+// Create unique slugname plugin;
 WidgetSchema.plugin(slugifyPlugin, { uniqueField: 'slug', separator: '-' });
 
 // Dynamic enum options resolver;
@@ -138,38 +139,11 @@ WidgetSchema.statics.enumOptionsResolver = function () {
   };
 };
 
-/**
- * Pre-validate middleware, handles slug auto-generation.
- */
-WidgetSchema.pre('validate', generateSlugMiddleware('Widget'));
-
-/**
- * Pre-save middleware, handles validation & versioning.
- */
-WidgetSchema.pre('save', async function () {
-  const layers: string[] = this.get('layers');
-  const organization: string = this.get('organization');
-
-  await checkWorkspaceRefs(this.model('Layer'), layers, organization);
-
-  if (this.isModified()) {
-    logger.debug('schema changes detected, incrementing version');
-
-    const version = this.isNew ? this.get('version') : this.get('version') + 1;
-
-    this.set({ version });
-  }
-});
-
-/**
- * Post-remove middleware, removes references from other documents.
- */
-WidgetSchema.post('remove', async function () {
-  const id: string = this.get('id');
-
-  const resDashboard = await this.model('Dashboard').updateMany({ widgets: { $in: [id] } }, { $pull: { widgets: id } });
-  logger.debug(`removed reference: ${id} from ${resDashboard.nModified} dashboard(s)`);
-});
+// Middlewares;
+WidgetSchema.pre('validate', generateSlugMw('Widget'));
+WidgetSchema.pre('save', checkRefLinksOnUpdateMw());
+WidgetSchema.pre('save', versionIncOnUpdateMw());
+WidgetSchema.post('remove', removeRefLinksOnDeleteMw());
 
 interface IWidgetModel extends Model<WidgetDocument>, IESPlugin, ISlugifyPlugin {}
 

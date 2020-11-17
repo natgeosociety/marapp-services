@@ -19,7 +19,7 @@
 
 import { Serializer, SerializerOptions } from 'jsonapi-serializer';
 
-import { Location, Metric } from '../models';
+import { Collection, Location, Metric } from '../models';
 
 import { PaginationLinks } from './index';
 import { METRIC_ATTRIBUTES } from './MetricSerializer';
@@ -34,7 +34,6 @@ export const LOCATION_ATTRIBUTES: string[] = [
   'published',
   'featured',
   'organization',
-  'publicResource',
   // computed;
   'bbox2d',
   'areaKm2',
@@ -43,6 +42,7 @@ export const LOCATION_ATTRIBUTES: string[] = [
   'updatedAt',
   'version',
   // relationships;
+  'locations',
   'intersections',
   'metrics',
   // extra;
@@ -60,7 +60,16 @@ export const createSerializer = (
     keyForAttribute: (attribute: any) => {
       return attribute;
     },
-    pluralizeType: false,
+    locations: {
+      included: include && include.includes('locations'),
+      ref: (parent: Location, location: Location) => {
+        if (location) {
+          return typeof location === 'string' ? location : location.id;
+        }
+      },
+      attributes: LOCATION_ATTRIBUTES,
+      pluralizeType: false,
+    },
     metrics: {
       included: include && include.includes('metrics'),
       ref: (loc: Location, metric: Metric) => {
@@ -81,6 +90,7 @@ export const createSerializer = (
       attributes: LOCATION_ATTRIBUTES,
       pluralizeType: false,
     },
+    pluralizeType: false,
     topLevelLinks: pagination,
     meta: meta,
     ...opts,

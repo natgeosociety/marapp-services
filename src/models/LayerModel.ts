@@ -23,7 +23,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getLogger } from '../logging';
 
-import { checkWorkspaceRefs, generateSlugMiddleware, schemaOptions } from './middlewares';
+import { generateSlugMw, schemaOptions, versionIncOnUpdateMw } from './middlewares';
+import { checkRefLinksOnUpdateMw, removeRefLinksOnDeleteMw } from './middlewares/layers';
 import esPlugin, { IESPlugin } from './plugins/elasticsearch';
 import slugifyPlugin, { ISlugifyPlugin } from './plugins/slugify';
 import { isArrayEmptyValidator, isEmptyValidator, slugValidator } from './validators';
@@ -156,56 +157,14 @@ LayerSchema.index({ name: 'text', type: 'text' });
 // Create single field index for sorting;
 LayerSchema.index({ name: 1 });
 
-// Slugify plugin;
+// Create unique slugname plugin;
 LayerSchema.plugin(slugifyPlugin, { uniqueField: 'slug', separator: '-' });
 
-/**
- * Pre-validate middleware, handles slug auto-generation.
- */
-LayerSchema.pre('validate', generateSlugMiddleware('Layer'));
-
-/**
- * Pre-save middleware, handles validation & versioning.
- */
-LayerSchema.pre('save', async function () {
-  const references: string[] = this.get('references');
-  const organization: string = this.get('organization');
-
-  await checkWorkspaceRefs(this.model('Layer'), references, organization);
-
-  if (this.isModified()) {
-    logger.debug('schema changes detected, incrementing version');
-
-    const version = this.isNew ? this.get('version') : this.get('version') + 1;
-
-    this.set({ version });
-  }
-});
-
-/**
- * Post-remove middleware, removes references from other documents.
- */
-LayerSchema.post('remove', async function () {
-  const id: string = this.get('id');
-
-  const resWidget = await this.model('Widget').updateMany(
-    { layers: { $in: [id] } },
-    { $pull: { layers: { $in: [id] } } }
-  );
-  logger.debug(`removed reference: ${id} from ${resWidget.nModified} widget(s)`);
-
-  const resDashboard = await this.model('Dashboard').updateMany(
-    { layers: { $in: [id] } },
-    { $pull: { layers: { $in: [id] } } }
-  );
-  logger.debug(`removed reference: ${id} from ${resDashboard.nModified} dashboard(s)`);
-
-  const resLayer = await this.model('Layer').updateMany(
-    { references: { $in: [id] } },
-    { $pull: { references: { $in: [id] } } }
-  );
-  logger.debug(`removed reference: ${id} from ${resLayer.nModified} layer(s)`);
-});
+// Middlewares;
+LayerSchema.pre('validate', generateSlugMw('Layer'));
+LayerSchema.pre('save', checkRefLinksOnUpdateMw());
+LayerSchema.pre('save', versionIncOnUpdateMw());
+LayerSchema.post('remove', removeRefLinksOnDeleteMw());
 
 interface ILayerModel extends Model<LayerDocument>, IESPlugin, ISlugifyPlugin {}
 
