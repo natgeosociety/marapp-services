@@ -17,16 +17,19 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { boolean } from 'boolean';
 import { Document, model, Model, Schema } from 'mongoose';
 import mongooseIdValidator from 'mongoose-id-validator';
 import { v4 as uuidv4 } from 'uuid';
 
-import { KEEP_METRIC_VERSIONS } from '../config';
 import { getLogger } from '../logging';
 
 import { Location } from '.';
 import { schemaOptions } from './middlewares';
+import {
+  metricRemoveRefLinksOnDeleteMw,
+  metricUpdateRefLinksOnUpdateMw,
+  metricVersionIncOnUpdateMw,
+} from './middlewares/metrics';
 
 const logger = getLogger('MetricModel');
 
@@ -64,62 +67,10 @@ MetricSchema.index({ version: -1 });
 // Unique compound index, enforce a unique constraint on compound indexes;
 MetricSchema.index({ slug: 1, location: 1, version: 1 }, { unique: true });
 
-/**
- * Pre-save middleware, handles versioning.
- */
-MetricSchema.pre('save', async function () {
-  const parent: string = this.get('location');
-  const slug: string = this.get('slug');
-
-  const res = await this.model('Metric').findOne({ location: parent, slug: slug }).sort('-version').select('version');
-  if (res) {
-    const version = res['version'] + 1; // inc previous version;
-    this.set({ version });
-  }
-});
-
-/**
- * Post-save middleware, saves child references to parent document.
- */
-MetricSchema.post('save', async function () {
-  const id: string = this.get('id');
-  const slug: string = this.get('slug');
-  const parent: string = this.get('location');
-
-  // find previous versions;
-  const ids = await this.model('Metric')
-    .find({ _id: { $nin: [id] }, location: parent, slug: slug })
-    .distinct('_id');
-
-  if (ids.length && !boolean(KEEP_METRIC_VERSIONS)) {
-    logger.debug(`removing previous versions: ${ids.join(', ')} for parent: ${id}`);
-
-    await this.model('Metric').deleteMany({ _id: { $in: ids } });
-  }
-
-  logger.debug(`handling references for parent: ${parent} saved: ${id} removed: ${ids.join(', ')}`);
-
-  const bulkOps = [
-    // atomically adds a value to an array unless the value is already present;
-    { updateOne: { filter: { _id: parent }, update: { $addToSet: { metrics: [id] } } } },
-    // atomically removes all instances of a value or values that match a specified condition;
-    { updateOne: { filter: { _id: parent }, update: { $pull: { metrics: { $in: ids } } } } },
-  ];
-  await this.model('Location').bulkWrite(bulkOps, { ordered: false });
-});
-
-/**
- * Post-remove middleware, remove child reference from parent doc when child is deleted.
- */
-MetricSchema.post('remove', async function () {
-  const id: string = this.get('id');
-  const parent: string = this.get('location');
-
-  logger.debug(`removing reference: ${id} from parent: ${parent}`);
-
-  // atomically removes all instances of a value or values that match a specified condition;
-  await this.model('Location').findByIdAndUpdate({ _id: parent }, { $pull: { metrics: { $in: [id] } } });
-});
+// Middlewares;
+MetricSchema.pre('save', metricVersionIncOnUpdateMw());
+MetricSchema.post('save', metricUpdateRefLinksOnUpdateMw());
+MetricSchema.post('remove', metricRemoveRefLinksOnDeleteMw());
 
 interface IMetricModel extends Model<MetricDocument> {}
 

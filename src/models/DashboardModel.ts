@@ -24,7 +24,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { getLogger } from '../logging';
 
 import { Layer, Widget } from '.';
-import { checkWorkspaceRefs, generateSlugMiddleware, schemaOptions } from './middlewares';
+import { generateSlugMw, schemaOptions, versionIncOnUpdateMw } from './middlewares';
+import { checkRefLinksOnUpdateMw } from './middlewares/dashboards';
 import esPlugin, { IESPlugin } from './plugins/elasticsearch';
 import slugifyPlugin, { ISlugifyPlugin } from './plugins/slugify';
 import { slugValidator } from './validators';
@@ -71,6 +72,12 @@ const DashboardSchema: Schema = new Schema(
 // Unique compound index;
 DashboardSchema.index({ slug: 1, organization: 1 }, { unique: true });
 
+// Create "text" index for text search;
+DashboardSchema.index({ name: 'text' });
+
+// Create single field index for sorting;
+DashboardSchema.index({ name: 1 });
+
 // Ensure referenced object id(s) exist;
 DashboardSchema.plugin(mongooseIdValidator, { allowDuplicates: false });
 
@@ -109,41 +116,13 @@ DashboardSchema.plugin(esPlugin, {
   },
 });
 
-// Create "text" index for text search;
-DashboardSchema.index({ name: 'text' });
-
-// Create single field index for sorting;
-DashboardSchema.index({ name: 1 });
-
-// Slugify plugin;
+// Create unique slugname plugin;
 DashboardSchema.plugin(slugifyPlugin, { uniqueField: 'slug', separator: '-' });
 
-/**
- * Pre-validate middleware, handles slug auto-generation.
- */
-DashboardSchema.pre('validate', generateSlugMiddleware('Dashboard'));
-
-/**
- * Pre-save middleware, handles validation & versioning.
- */
-DashboardSchema.pre('save', async function () {
-  const layers: string[] = this.get('layers');
-  const widgets: string[] = this.get('widgets');
-  const organization: string = this.get('organization');
-
-  await Promise.all([
-    checkWorkspaceRefs(this.model('Layer'), layers, organization),
-    checkWorkspaceRefs(this.model('Widget'), widgets, organization),
-  ]);
-
-  if (this.isModified()) {
-    logger.debug('schema changes detected, incrementing version');
-
-    const version = this.isNew ? this.get('version') : this.get('version') + 1;
-
-    this.set({ version });
-  }
-});
+// Middlewares;
+DashboardSchema.pre('validate', generateSlugMw('Dashboard'));
+DashboardSchema.pre('save', checkRefLinksOnUpdateMw());
+DashboardSchema.pre('save', versionIncOnUpdateMw());
 
 interface IDashboardModel extends Model<DashboardDocument>, IESPlugin, ISlugifyPlugin {}
 

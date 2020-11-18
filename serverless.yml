@@ -119,28 +119,6 @@ functions:
           path: services/api/v1/management/locations/{any+}
           method: any
           cors: true
-  collections:
-    handler: src/handlers/CollectionHandler.openHandler
-    events:
-      - http:
-          path: services/api/v1/collections
-          method: any
-          cors: true
-      - http:
-          path: services/api/v1/collections/{any+}
-          method: any
-          cors: true
-  collections-management:
-    handler: src/handlers/CollectionHandler.managementHandler
-    events:
-      - http:
-          path: services/api/v1/management/collections
-          method: any
-          cors: true
-      - http:
-          path: services/api/v1/management/collections/{any+}
-          method: any
-          cors: true
   metrics:
     handler: src/handlers/MetricHandler.openHandler
     events:
