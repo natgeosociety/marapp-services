@@ -45,8 +45,8 @@ const getRouter = (basePath: string = '/', routePath: string = '/dashboards') =>
   const path = urljoin(basePath, routePath);
 
   const queryFilters: MongooseQueryFilter[] = [
-    { key: 'published', op: '==', value: String(true) },
-    { key: '*.published', op: '==', value: String(true) },
+    { key: 'published', op: '==', value: true },
+    { key: '*.published', op: '==', value: true },
   ];
   const parser = new MongooseQueryParser();
 
