@@ -46,7 +46,7 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
   const path = urljoin(basePath, routePath);
 
   const parser = new MongooseQueryParser();
-  const queryFilters: MongooseQueryFilter[] = [{ key: 'published', op: '==', value: String(true) }];
+  const queryFilters: MongooseQueryFilter[] = [{ key: 'published', op: '==', value: true }];
 
   router.get(
     path,
@@ -70,7 +70,7 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
 
       let query: MongooseQueryFilter[] = [{ key: 'organization', op: 'in', value: req.groups }];
       if (boolean(req.query.public)) {
-        query = [query.concat([{ key: 'publicResource', op: '==', value: String(true) }])] as MongooseQueryFilter[];
+        query = [query.concat([{ key: 'publicResource', op: '==', value: true }])] as MongooseQueryFilter[];
       }
       const predefined = queryFilters.concat(query);
       const queryOptions = parser.parse(req.query, { predefined }, ['search']);
@@ -305,7 +305,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
       let query: MongooseQueryFilter[] = [{ key: 'organization', op: 'in', value: req.groups }];
       if (boolean(req.query.public)) {
-        query = [query.concat([{ key: 'publicResource', op: '==', value: String(true) }])] as MongooseQueryFilter[];
+        query = [query.concat([{ key: 'publicResource', op: '==', value: true }])] as MongooseQueryFilter[];
       }
       const predefined = queryFilters.concat(query);
       const queryOptions = parser.parse(req.query, { predefined }, ['search']);
