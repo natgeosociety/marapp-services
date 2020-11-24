@@ -17,6 +17,7 @@
   specific language governing permissions and limitations under the License.
 */
 
+import { boolean } from 'boolean';
 import { Response, Router } from 'express';
 import asyncHandler from 'express-async-handler';
 import { body, param, query } from 'express-validator';
@@ -59,6 +60,7 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
       query('page[size]').optional().isInt({ min: 0 }),
       query('page[cursor]').optional().isString().trim(),
       query('group').optional().isString().trim(),
+      query('public').optional().isBoolean(),
     ]),
     guard.enforcePrimaryGroup(false, true),
     AuthzGuards.readLocationsGuard,
@@ -66,13 +68,11 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
       const search = <string>req.query.search;
       const include = queryParamGroup(<string>req.query.include);
 
-      const predefined = queryFilters.concat([
-        { key: 'organization', op: 'in', value: req.groups },
-        [
-          { key: 'publicResource', op: '?', value: String(false) }, // documents that do not have the 'publicResource' field;
-          { key: 'publicResource', op: '==', value: String(true) }, // documents that do have 'publicResource' set to true;
-        ],
-      ]);
+      let query: MongooseQueryFilter[] = [{ key: 'organization', op: 'in', value: req.groups }];
+      if (boolean(req.query.public)) {
+        query = [query.concat([{ key: 'publicResource', op: '==', value: String(true) }])] as MongooseQueryFilter[];
+      }
+      const predefined = queryFilters.concat(query);
       const queryOptions = parser.parse(req.query, { predefined }, ['search']);
 
       const searchResult = await LocationModel.esSearchOnlyIds(search, { organization: req.groups, published: true });
@@ -295,6 +295,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       query('page[size]').optional().isInt({ min: 0 }),
       query('page[cursor]').optional().isString().trim(),
       query('group').optional().isString().trim(),
+      query('public').optional().isBoolean(),
     ]),
     guard.enforcePrimaryGroup(),
     AuthzGuards.readLocationsGuard,
@@ -302,7 +303,11 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const search = <string>req.query.search;
       const include = queryParamGroup(<string>req.query.include);
 
-      const predefined = queryFilters.concat([{ key: 'organization', op: 'in', value: req.groups }]);
+      let query: MongooseQueryFilter[] = [{ key: 'organization', op: 'in', value: req.groups }];
+      if (boolean(req.query.public)) {
+        query = [query.concat([{ key: 'publicResource', op: '==', value: String(true) }])] as MongooseQueryFilter[];
+      }
+      const predefined = queryFilters.concat(query);
       const queryOptions = parser.parse(req.query, { predefined }, ['search']);
 
       const searchResult = await LocationModel.esSearchOnlyIds(search, { organization: req.groups });

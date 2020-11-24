@@ -412,7 +412,7 @@ export class MongooseQueryParser {
     op: string,
     value: string | string[],
     sep: string = ';'
-  ): [string, string | string[]] => {
+  ): [string, string | string[] | boolean] => {
     if (op === '==') {
       // special case for multiple equalities;
       if (Array.isArray(value)) {
@@ -448,7 +448,7 @@ export class MongooseQueryParser {
       }
       return ['$nin', value];
     } else if (op === '?') {
-      return ['$exists', value];
+      return ['$exists', boolean(value)];
     } else {
       throw Error(`Unsupported operand type: ${op}`);
     }

@@ -143,6 +143,14 @@
             "description": "Primary group name. Required when multiple primary groups included in the token.",
             "required": false,
             "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "public",
+            "description": "Include global public assets in query results.",
+            "required": false,
+            "type": "boolean",
+            "default": false
           }
         ],
         "responses": {
@@ -523,6 +531,14 @@
             "description": "Primary group name. Required when multiple primary groups included in the token.",
             "required": false,
             "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "public",
+            "description": "Include global public assets in query results.",
+            "required": false,
+            "type": "boolean",
+            "default": false
           }
         ],
         "responses": {
