@@ -21,7 +21,7 @@ import { Serializer, SerializerOptions } from 'jsonapi-serializer';
 
 import { PaginationLinks } from '.';
 
-export const STATUS_ATTRIBUTES: string[] = ['success'];
+export const STATUS_ATTRIBUTES: string[] = ['success', 'errors'];
 
 export const createSerializer = (
   include: string[] = [],
