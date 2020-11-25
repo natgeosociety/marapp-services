@@ -47,6 +47,10 @@ exports = function (changeEvent) {
     const doc = changeEvent['fullDocument'];
     const payload = { id: docId, eventType: operationType, version: doc.version };
 
+    if (doc.type === 'Collection') {
+      console.log('Skipping for collections.');
+      return;
+    }
     if (operationType === 'update') {
       const updatedFields = changeEvent['updateDescription']['updatedFields'];
 
@@ -56,6 +60,7 @@ exports = function (changeEvent) {
         return;
       }
     }
+
     const params = {
       Message: JSON.stringify(payload),
       TopicArn: SNS_TOPIC_ARN,

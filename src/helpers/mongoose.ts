@@ -32,9 +32,11 @@ import { ErrorObject, PaginationCursor } from '../types/response';
 
 export const MongoError = makeError('ConnectionError');
 
-export type QueryFilterOperators = '==' | '!=' | '>' | '<' | '>=' | '<=' | 'in' | 'nin';
+export type QueryFilterOperators = '==' | '!=' | '>' | '<' | '>=' | '<=' | 'in' | 'nin' | '?';
 
-export type MongooseQueryFilter = { key: string; op: QueryFilterOperators; value: string | string[] };
+type BaseMongooseQueryFilter = { key: string; op: QueryFilterOperators; value: string | string[] };
+
+export type MongooseQueryFilter = BaseMongooseQueryFilter | BaseMongooseQueryFilter[];
 
 const logger = getLogger();
 
@@ -222,13 +224,31 @@ export class MongooseQueryParser {
     }, []);
 
     if (context.predefined && context.predefined.length) {
-      const predefined = context.predefined.filter((f) => !isNil(f.value));
+      const predefined = context.predefined.filter((f) => Array.isArray(f) || !isNil(f.value));
       filters = filters.concat(predefined);
     }
 
-    const queryCond = filters.reduce((acc, { key, op, value }) => {
-      const [operator, parsed] = this.parseFilterQueryOperators(op, value);
-      set(acc, [key, operator], parsed);
+    const queryCond = filters.reduce((acc, filter) => {
+      if (Array.isArray(filter)) {
+        const orFilters = filter.reduce((result, orFilter) => {
+          const { key, op, value } = orFilter;
+          const [operator, parsed] = this.parseFilterQueryOperators(op, value);
+
+          result.push({
+            [key]: {
+              [operator]: parsed,
+            },
+          });
+
+          return result;
+        }, []);
+
+        set(acc, '$or', orFilters);
+      } else {
+        const { key, op, value } = filter;
+        const [operator, parsed] = this.parseFilterQueryOperators(op, value);
+        set(acc, [key, operator], parsed);
+      }
       return acc;
     }, {});
 
@@ -392,7 +412,7 @@ export class MongooseQueryParser {
     op: string,
     value: string | string[],
     sep: string = ';'
-  ): [string, string | string[]] => {
+  ): [string, string | string[] | boolean] => {
     if (op === '==') {
       // special case for multiple equalities;
       if (Array.isArray(value)) {
@@ -427,8 +447,10 @@ export class MongooseQueryParser {
         return ['$nin', value.split(sep)];
       }
       return ['$nin', value];
-    } else if (!op) {
-      return ['$exists', value];
+    } else if (op === '?') {
+      return ['$exists', boolean(value)];
+    } else {
+      throw Error(`Unsupported operand type: ${op}`);
     }
   };
 

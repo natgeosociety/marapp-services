@@ -17,16 +17,15 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { Handler } from 'aws-lambda';
+import { Metric, MetricModel } from '../../../src/models';
+import { removeById, save } from '../../../src/models/utils';
 
-import { API_BASE } from '../config';
-import { getLogger } from '../logging';
-import CollectionRouter from '../routers/CollectionRouter';
-
-import { anonymousHttpHandler, authHttpHandler } from '.';
-
-const logger = getLogger();
-
-export const openHandler: Handler = anonymousHttpHandler(CollectionRouter.getRouter(API_BASE));
-
-export const managementHandler: Handler = authHttpHandler(CollectionRouter.getAdminRouter(API_BASE));
+export default {
+  create: (data?: Partial<Metric>): Metric => ({
+    slug: `tree-loss`,
+    metric: {},
+    ...data,
+  }),
+  save: (metric: Metric): Promise<any> => save(MetricModel, new MetricModel(metric)),
+  remove: (metricId: string): Promise<any> => removeById(MetricModel, metricId),
+};

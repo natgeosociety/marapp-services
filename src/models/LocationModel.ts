@@ -19,29 +19,34 @@
 
 require('mongoose-geojson-schema'); // required by mongoose;
 
-import { isEmpty } from 'lodash';
 import { Document, model, Model, Schema } from 'mongoose';
 import mongooseIdValidator from 'mongoose-id-validator';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getLogger } from '../logging';
-import { computeAreaKm2, computeShapeBbox, computeShapeCentroid, normalizeGeojson } from '../services/geospatial';
 
 import { Metric } from '.';
-import { generateSlugMiddleware, schemaOptions } from './middlewares';
+import { generateSlugMw, schemaOptions } from './middlewares';
+import {
+  checkRefLinksOnUpdateMw,
+  computeCollectionGeoJSONMw,
+  computeGeoJSONOnChangeMw,
+  removeRefLinksOnDeleteMw,
+  removeRefLinksOnUpdateMw,
+} from './middlewares/locations';
 import esPlugin, { IESPlugin } from './plugins/elasticsearch';
 import slugifyPlugin, { ISlugifyPlugin } from './plugins/slugify';
-import { slugValidator } from './validators';
+import { requireOptionalFields, slugValidator } from './validators';
 
 const logger = getLogger('LocationModel');
 
 export enum LocationTypeEnum {
-  // CONTINENT = 'Continent',
   COUNTRY = 'Country',
   JURISDICTION = 'Jurisdiction',
   BIOME = 'Biome',
   PROTECTED_AREA = 'Protected Area',
   SPECIES_AREA = 'Species Area',
+  COLLECTION = 'Collection',
 }
 
 export interface Location {
@@ -50,7 +55,7 @@ export interface Location {
   name: string;
   description: string;
   type: LocationTypeEnum;
-  geojson: object;
+  geojson?: object;
   published: boolean;
   featured: boolean;
   organization: string;
@@ -64,6 +69,7 @@ export interface Location {
   updatedAt?: Date;
   version?: number;
   // relationships;
+  locations?: string[] | Location[];
   metrics?: string[] | Metric[];
   // calculated;
   intersections?: Location[];
@@ -82,15 +88,30 @@ const LocationSchema: Schema = new Schema(
     name: { type: String, required: true },
     description: { type: String },
     type: { type: String, enum: Object.values(LocationTypeEnum), required: true },
-    geojson: { type: Schema.Types.GeoJSON, required: true, minimize: false }, // keep empty objects;
+    geojson: {
+      type: Schema.Types.GeoJSON,
+      minimize: false, // keep empty objects;
+      required: function () {
+        return this.type !== LocationTypeEnum.COLLECTION;
+      },
+    },
     published: { type: Boolean, default: false },
     featured: { type: Boolean, default: false },
     organization: { type: String, required: true },
-    publicResource: { type: Boolean, default: false },
+    publicResource: { type: Boolean, default: false, validate: requireOptionalFields(['published']) },
     version: { type: Number, default: 0 },
     bbox2d: { type: [Number] },
     areaKm2: { type: Number },
     centroid: { type: Object },
+    locations: [
+      {
+        type: Schema.Types.String,
+        ref: 'Location',
+        required: function () {
+          return this.type === LocationTypeEnum.COLLECTION;
+        },
+      },
+    ],
     metrics: [{ type: Schema.Types.String, ref: 'Metric' }],
   },
   schemaOptions
@@ -154,68 +175,17 @@ LocationSchema.plugin(esPlugin, {
   },
 });
 
-// Slugify plugin;
+// Create unique slugname plugin;
 LocationSchema.plugin(slugifyPlugin, { uniqueField: 'slug', separator: '-' });
 
-/**
- * Pre-validate middleware, handles slug auto-generation.
- */
-LocationSchema.pre('validate', generateSlugMiddleware('Location'));
-
-/**
- * Pre-save middleware, handles versioning and computes area related measurements when shape changes.
- */
-LocationSchema.pre('save', async function () {
-  if (!isEmpty(this.get('geojson')) && this.isModified('geojson')) {
-    logger.debug('shape changes detected, recomputing: bbox, centroid, areaKm2');
-
-    const geojson = normalizeGeojson(this.get('geojson'));
-    const bbox2d = computeShapeBbox(geojson);
-    const areaKm2 = computeAreaKm2(geojson);
-    const centroid = computeShapeCentroid(geojson);
-
-    const version = this.isNew ? this.get('version') : this.get('version') + 1;
-
-    this.set({ geojson, bbox2d, areaKm2, centroid, version });
-  }
-});
-
-/**
- * Post-save middleware, handles delete all child docs when parent doc is changed.
- */
-LocationSchema.post('save', async function () {
-  const isPublicResource: boolean = this.get('publicResource');
-  const isPubllished: boolean = this.get('published');
-
-  if (!isPublicResource || !isPubllished) {
-    const id: string = this.get('id');
-    const resCollection = await this.model('Collection').updateMany(
-      { locations: { $in: [id] } },
-      { $pull: { locations: { $in: [id] } } }
-    );
-    logger.debug(`removed reference: ${id} from ${resCollection.nModified} collection(s)`);
-  }
-});
-
-/**
- * Post-remove middleware, delete all child docs when parent doc is removed.
- */
-LocationSchema.post('remove', async function () {
-  const id: string = this.get('id');
-  const metrics: string[] = this.get('metrics');
-
-  if (metrics.length) {
-    await this.model('Metric').deleteMany({ _id: { $in: metrics } });
-
-    logger.debug(`removed docs from parent refs: ${metrics.join(',')}`);
-  }
-
-  const resCollection = await this.model('Collection').updateMany(
-    { locations: { $in: [id] } },
-    { $pull: { locations: { $in: [id] } } }
-  );
-  logger.debug(`removed reference: ${id} from ${resCollection.nModified} collection(s)`);
-});
+// Middlewares;
+LocationSchema.pre('validate', generateSlugMw('Location'));
+LocationSchema.pre('save', computeGeoJSONOnChangeMw());
+LocationSchema.pre('save', checkRefLinksOnUpdateMw());
+LocationSchema.post('save', removeRefLinksOnUpdateMw());
+LocationSchema.post('remove', removeRefLinksOnDeleteMw());
+LocationSchema.post('find', computeCollectionGeoJSONMw());
+LocationSchema.post('findOne', computeCollectionGeoJSONMw());
 
 interface ILocationModel extends Model<LocationDocument>, IESPlugin, ISlugifyPlugin {}
 

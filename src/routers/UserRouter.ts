@@ -95,15 +95,19 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
       const authMgmtService: AuthManagementService = req.app.locals.authManagementService;
 
       const include = queryParamGroup(<string>req.query.include);
-      const { firstName, lastName } = req.body;
 
       const user = await authMgmtService.getUser(req.identity.sub);
       const userId = get(user, 'user_id');
 
+      const firstName = get(req.body, 'firstName', user?.given_name);
+      const lastName = get(req.body, 'lastName', user?.family_name);
+
       const update = {
-        given_name: firstName && firstName.trim() ? firstName.trim() : user?.given_name,
-        family_name: lastName && lastName.trim() ? lastName.trim() : user?.family_name,
+        given_name: firstName,
+        family_name: lastName,
+        name: `${firstName} ${lastName}`,
       };
+
       const userUpdated = await authMgmtService.updateUser(userId, update);
 
       const data = {
@@ -318,6 +322,9 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
       const userId = req.identity.sub;
       const groupMembership = await authzService.calculateGroupMemberships(userId);
 
+      const errors = [];
+      const groupsToLeave = [];
+
       await forEachAsync(organizations, async (organization) => {
         const groupId = authzService.findPrimaryGroupId(groupMembership, organization);
 
@@ -326,10 +333,25 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
           groupMembership.find((g: any) => g._id === group._id)
         );
 
-        return Promise.all(
-          availableNestedGroups.map((group: any) => authzService.deleteGroupMembers(group._id, [userId]))
-        );
+        if (availableNestedGroups.find((group: any) => group.name.endsWith('OWNER') && group.members.length === 1)) {
+          errors.push({
+            code: 400,
+            detail: `You can't leave ${organization} because you're the only owner of it.`,
+          });
+        } else {
+          groupsToLeave.push(...availableNestedGroups);
+        }
       });
+
+      if (errors.length > 0) {
+        const code = 400;
+        const response = createStatusSerializer().serialize({ success: false, errors });
+
+        res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+        return res.status(code).send(response);
+      }
+
+      await Promise.all(groupsToLeave.map((group: any) => authzService.deleteGroupMembers(group._id, [userId])));
 
       const success = true;
 

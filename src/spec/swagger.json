@@ -19,14 +19,6 @@
       "description": "Location management"
     },
     {
-      "name": "collections",
-      "description": "Collection public"
-    },
-    {
-      "name": "collections-management",
-      "description": "Collection management"
-    },
-    {
       "name": "metrics",
       "description": "Metric public"
     },
@@ -151,6 +143,14 @@
             "description": "Primary group name. Required when multiple primary groups included in the token.",
             "required": false,
             "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "public",
+            "description": "Include global public assets in query results.",
+            "required": false,
+            "type": "boolean",
+            "default": false
           }
         ],
         "responses": {
@@ -463,8 +463,8 @@
     "/locations": {
       "get": {
         "tags": ["locations"],
-        "summary": "Retrieve all locations",
-        "operationId": "getLocations",
+        "summary": "Retrieve all public locations",
+        "operationId": "getPublicLocations",
         "parameters": [
           {
             "in": "query",
@@ -531,6 +531,14 @@
             "description": "Primary group name. Required when multiple primary groups included in the token.",
             "required": false,
             "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "public",
+            "description": "Include global public assets in query results.",
+            "required": false,
+            "type": "boolean",
+            "default": false
           }
         ],
         "responses": {
@@ -559,6 +567,171 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [],
+            "Bearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": ["locations"],
+        "summary": "Add a new public location",
+        "description": "",
+        "operationId": "addPublicLocation",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Location"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "select",
+            "description": "Comma separated field names.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "group",
+            "description": "Primary group name. Required when multiple primary groups included in the token.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [],
+            "Bearer": []
+          }
+        ]
+      },
+      "put": {
+        "tags": ["locations"],
+        "summary": "Update a public location by ID",
+        "description": "",
+        "operationId": "updatePublicLocationById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Location ID or slug.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "description": "",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Location"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "select",
+            "description": "Comma separated field names.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "group",
+            "description": "Primary group name. Required when multiple primary groups included in the token.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [],
+            "Bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": ["locations"],
+        "summary": "Delete a public location by ID",
+        "description": "",
+        "operationId": "deletePublicLocation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Location ID or slug.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "group",
+            "description": "Primary group name. Required when multiple primary groups included in the token.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           },
           "400": {
             "description": "Bad Request"
@@ -626,549 +799,6 @@
             "description": "OK",
             "schema": {
               "$ref": "#/definitions/Location"
-            }
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "default": {
-            "description": "Internal Server Error"
-          }
-        },
-        "security": [
-          {
-            "ApiKey": [],
-            "Bearer": []
-          }
-        ]
-      }
-    },
-    "/management/collections": {
-      "get": {
-        "tags": ["collections-management"],
-        "summary": "Retrieve all collections",
-        "operationId": "getCollections",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "search",
-            "description": "Search query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "include",
-            "description": "Comma separated relationship paths.",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "select",
-            "description": "Comma separated field names.",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "sort",
-            "description": "Comma separated field names. The sort order of each path is ascending unless the path name is prefixed with \"-\".",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "page[number]",
-            "description": "Page number.",
-            "required": false,
-            "type": "number",
-            "default": 1
-          },
-          {
-            "in": "query",
-            "name": "page[size]",
-            "description": "Results per page.",
-            "required": false,
-            "type": "number",
-            "default": 10
-          },
-          {
-            "in": "query",
-            "name": "page[cursor]",
-            "description": "Page cursor. To retrieve cursored results, you initially pass a cursor with a value of -1.",
-            "required": false,
-            "type": "string",
-            "default": null
-          },
-          {
-            "in": "query",
-            "name": "group",
-            "description": "Primary group name. Required when multiple primary groups included in the token.",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "default": {
-            "description": "Internal Server Error"
-          }
-        },
-        "security": [
-          {
-            "ApiKey": [],
-            "Bearer": []
-          }
-        ]
-      },
-      "post": {
-        "tags": ["collections-management"],
-        "summary": "Add a new collection",
-        "description": "",
-        "operationId": "addCollection",
-        "parameters": [
-          {
-            "in": "body",
-            "name": "body",
-            "description": "",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/Collection"
-            }
-          },
-          {
-            "in": "query",
-            "name": "include",
-            "description": "Comma separated relationship paths.",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "select",
-            "description": "Comma separated field names.",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "group",
-            "description": "Primary group name. Required when multiple primary groups included in the token.",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "default": {
-            "description": "Internal Server Error"
-          }
-        },
-        "security": [
-          {
-            "ApiKey": [],
-            "Bearer": []
-          }
-        ]
-      }
-    },
-    "/management/collections/slug": {
-      "get": {
-        "tags": ["collections-management"],
-        "summary": "Generate a unique slug.",
-        "description": "",
-        "operationId": "getCollectionSlug",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "keyword",
-            "description": "Text string.",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "type",
-            "description": "Increment type. Supported options are: \"counter\", \"shortid\"",
-            "required": true,
-            "enum": ["counter", "shortid"],
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "group",
-            "description": "Primary group name. Required when multiple primary groups included in the token.",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "default": {
-            "description": "Internal Server Error"
-          }
-        },
-        "security": [
-          {
-            "ApiKey": [],
-            "Bearer": []
-          }
-        ]
-      }
-    },
-    "/management/collections/{id}": {
-      "get": {
-        "tags": ["collections-management"],
-        "summary": "Find a collection by ID",
-        "description": "",
-        "operationId": "getCollectionById",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "Collection ID or slug.",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "include",
-            "description": "Comma separated relationship paths.",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "select",
-            "description": "Comma separated field names.",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "sort",
-            "description": "Comma separated field names. The sort order of each path is ascending unless the path name is prefixed with \"-\".",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "group",
-            "description": "Primary group name. Required when multiple primary groups included in the token.",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/Collection"
-            }
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "default": {
-            "description": "Internal Server Error"
-          }
-        },
-        "security": [
-          {
-            "ApiKey": [],
-            "Bearer": []
-          }
-        ]
-      },
-      "put": {
-        "tags": ["collections-management"],
-        "summary": "Update a collection by ID",
-        "description": "",
-        "operationId": "updateCollectionById",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "Collection ID or slug.",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "in": "body",
-            "name": "body",
-            "description": "",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/Collection"
-            }
-          },
-          {
-            "in": "query",
-            "name": "include",
-            "description": "Comma separated relationship paths.",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "select",
-            "description": "Comma separated field names.",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "group",
-            "description": "Primary group name. Required when multiple primary groups included in the token.",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "default": {
-            "description": "Internal Server Error"
-          }
-        },
-        "security": [
-          {
-            "ApiKey": [],
-            "Bearer": []
-          }
-        ]
-      },
-      "delete": {
-        "tags": ["collections-management"],
-        "summary": "Delete a collection by ID",
-        "description": "",
-        "operationId": "deleteCollection",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "Collection ID or slug.",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "group",
-            "description": "Primary group name. Required when multiple primary groups included in the token.",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "default": {
-            "description": "Internal Server Error"
-          }
-        },
-        "security": [
-          {
-            "ApiKey": [],
-            "Bearer": []
-          }
-        ]
-      }
-    },
-    "/collections": {
-      "get": {
-        "tags": ["collections"],
-        "summary": "Retrieve all collections",
-        "operationId": "getCollections",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "search",
-            "description": "Search query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "filter",
-            "description": "Comma separated field, operator, value pairs. Supported operators are: \"==\", \"!=\", \">=\", \"<=\", \">\", \"<\".",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "include",
-            "description": "Comma separated relationship paths.",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "select",
-            "description": "Comma separated field names.",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "sort",
-            "description": "Comma separated field names. The sort order of each path is ascending unless the path name is prefixed with \"-\".",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "page[number]",
-            "description": "Page number.",
-            "required": false,
-            "type": "number",
-            "default": 1
-          },
-          {
-            "in": "query",
-            "name": "page[size]",
-            "description": "Results per page.",
-            "required": false,
-            "type": "number",
-            "default": 10
-          },
-          {
-            "in": "query",
-            "name": "page[cursor]",
-            "description": "Page cursor. To retrieve cursored results, you initially pass a cursor with a value of -1.",
-            "required": false,
-            "type": "string",
-            "default": null
-          },
-          {
-            "in": "query",
-            "name": "group",
-            "description": "Primary group name. Required when multiple primary groups included in the token.",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "default": {
-            "description": "Internal Server Error"
-          }
-        },
-        "security": [
-          {
-            "ApiKey": [],
-            "Bearer": []
-          }
-        ]
-      }
-    },
-    "/collections/{id}": {
-      "get": {
-        "tags": ["collections"],
-        "summary": "Find a collection by ID",
-        "description": "",
-        "operationId": "getCollectionById",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "Collection ID or slug.",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "include",
-            "description": "Comma separated relationship paths.",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "select",
-            "description": "Comma separated field names.",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "sort",
-            "description": "Comma separated field names. The sort order of each path is ascending unless the path name is prefixed with \"-\".",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "group",
-            "description": "Primary group name. Required when multiple primary groups included in the token.",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/Collection"
             }
           },
           "400": {
@@ -4431,6 +4061,12 @@
         "geojson": {
           "type": "object"
         },
+        "locations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "published": {
           "type": "boolean",
           "default": false
@@ -4445,40 +4081,6 @@
         "featured": {
           "type": "boolean",
           "default": false
-        }
-      },
-      "xml": {
-        "name": "Location"
-      }
-    },
-    "Collection": {
-      "type": "object",
-      "properties": {
-        "slug": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "published": {
-          "type": "boolean",
-          "default": false
-        },
-        "organization": {
-          "type": "string"
-        },
-        "featured": {
-          "type": "boolean",
-          "default": false
-        },
-        "locations": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
         }
       },
       "xml": {

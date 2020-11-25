@@ -5,7 +5,7 @@ import { performance } from 'perf_hooks';
 import { MongooseQueryFilter, MongooseQueryParser } from '../helpers/mongoose';
 import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
-import { CollectionModel, DashboardModel, LayerModel, LocationModel, WidgetModel } from '../models';
+import { DashboardModel, LayerModel, LocationModel, WidgetModel } from '../models';
 import { IESPlugin } from '../models/plugins/elasticsearch';
 import { getAllStream, removeByQuery } from '../models/utils';
 import { SNSWipeDataEvent } from '../services/sns';
@@ -28,7 +28,7 @@ export const wipeDataTaskHandler: Handler = contextEventHandler(async (event: SN
 
   try {
     const parser = new MongooseQueryParser();
-    const models: Model<any>[] = [LocationModel, CollectionModel, LayerModel, WidgetModel, DashboardModel];
+    const models: Model<any>[] = [LocationModel, LayerModel, WidgetModel, DashboardModel];
 
     const predefined: MongooseQueryFilter[] = [{ key: 'organization', op: 'in', value: organizationName }];
     const queryOptions = parser.parse(null, { predefined });

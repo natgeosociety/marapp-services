@@ -17,6 +17,7 @@
   specific language governing permissions and limitations under the License.
 */
 
+import { boolean } from 'boolean';
 import { Response, Router } from 'express';
 import asyncHandler from 'express-async-handler';
 import { body, param, query } from 'express-validator';
@@ -29,7 +30,7 @@ import { MongooseQueryFilter, MongooseQueryParser } from '../helpers/mongoose';
 import { PaginationHelper } from '../helpers/paginator';
 import { getLogger } from '../logging';
 import { AuthzGuards, AuthzRequest, guard } from '../middlewares/authz-guards';
-import { LocationModel } from '../models';
+import { LocationModel, LocationTypeEnum } from '../models';
 import { getAll, getByGeometryIntersection, getById, getByIds, remove, save, update } from '../models/utils';
 import { createSerializer } from '../serializers/LocationSerializer';
 import { createSerializer as createSlugSerializer } from '../serializers/SlugSerializer';
@@ -59,6 +60,7 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
       query('page[size]').optional().isInt({ min: 0 }),
       query('page[cursor]').optional().isString().trim(),
       query('group').optional().isString().trim(),
+      query('public').optional().isBoolean(),
     ]),
     guard.enforcePrimaryGroup(false, true),
     AuthzGuards.readLocationsGuard,
@@ -66,7 +68,11 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
       const search = <string>req.query.search;
       const include = queryParamGroup(<string>req.query.include);
 
-      const predefined = queryFilters.concat([{ key: 'organization', op: 'in', value: req.groups }]);
+      let query: MongooseQueryFilter[] = [{ key: 'organization', op: 'in', value: req.groups }];
+      if (boolean(req.query.public)) {
+        query = [query.concat([{ key: 'publicResource', op: '==', value: String(true) }])] as MongooseQueryFilter[];
+      }
+      const predefined = queryFilters.concat(query);
       const queryOptions = parser.parse(req.query, { predefined }, ['search']);
 
       const searchResult = await LocationModel.esSearchOnlyIds(search, { organization: req.groups, published: true });
@@ -156,6 +162,117 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
     })
   );
 
+  router.post(
+    path,
+    validate([
+      body('slug').optional({ nullable: true }).isString().trim().notEmpty(),
+      body('name').isString().trim().notEmpty(),
+      body('description').optional().isString().trim(),
+      body('type').isString().trim().isIn([LocationTypeEnum.COLLECTION]), // enforce type;
+      body('published').not().exists(),
+      body('publicResource').not().exists(),
+      body('featured').not().exists(),
+      body('geojson').optional().exists(),
+      body('locations').optional().isArray(),
+      body('locations.*').optional().isString().trim().notEmpty(),
+      query('include').optional().isString().trim(),
+      query('select').optional().isString().trim(),
+      query('group').optional().isString().trim(),
+    ]),
+    guard.enforcePrimaryGroup(true),
+    AuthzGuards.writeCollectionsGuard,
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const include = queryParamGroup(<string>req.query.include);
+      const queryOptions = parser.parse(req.query);
+
+      const body = req.body;
+      const data = merge(body, {
+        published: true, // public resources are published by default;
+        organization: req.groups[0], // enforce a single primary group;
+      });
+
+      const doc = await save(LocationModel, data, queryOptions);
+
+      const code = 200;
+      const response = createSerializer(include).serialize(doc);
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
+
+  router.put(
+    `${path}/:id`,
+    validate([
+      param('id').isString().trim().notEmpty(),
+      body('slug').optional({ nullable: true }).isString().trim().notEmpty(),
+      body('name').optional().isString().trim().notEmpty(),
+      body('description').optional().isString().trim().notEmpty(),
+      body('type').optional().isString().trim().isIn([LocationTypeEnum.COLLECTION]), // enforce type;
+      body('published').not().exists(),
+      body('publicResource').not().exists(),
+      body('featured').not().exists(),
+      body('geojson').optional().exists(),
+      body('locations').optional().isArray(),
+      body('locations.*').optional().isString().trim().notEmpty(),
+      body('organization').optional().isString().trim(),
+      query('include').optional().isString().trim(),
+      query('select').optional().isString().trim(),
+      query('group').optional().isString().trim(),
+    ]),
+    guard.enforcePrimaryGroup(true),
+    AuthzGuards.writeCollectionsGuard,
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const id = req.params.id;
+      const body = req.body;
+
+      const include = queryParamGroup(<string>req.query.include);
+
+      const predefined = queryFilters.concat([{ key: 'organization', op: 'in', value: req.groups }]);
+      const queryOptions = parser.parse(null, { predefined });
+
+      const doc = await getById(LocationModel, id, queryOptions, ['slug']);
+      if (!doc) {
+        throw new RecordNotFound(`Could not retrieve document.`, 404);
+      }
+      const data = merge(body, { organization: req.groups[0] }); // enforce a single primary group;
+
+      const queryOptionsGet = parser.parse(req.query, { predefined });
+      const updated = await update(LocationModel, doc, data, queryOptionsGet);
+
+      const code = 200;
+      const response = createSerializer(include).serialize(updated);
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
+
+  router.delete(
+    `${path}/:id`,
+    validate([param('id').isString().trim().notEmpty(), query('group').optional().isString().trim()]),
+    guard.enforcePrimaryGroup(),
+    AuthzGuards.writeCollectionsGuard,
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const id = req.params.id;
+
+      const predefined: MongooseQueryFilter[] = [{ key: 'organization', op: 'in', value: req.groups }];
+      const queryOptions = parser.parse(req.query, { predefined });
+
+      const doc = await getById(LocationModel, id, queryOptions, ['slug']);
+      if (!doc) {
+        throw new RecordNotFound(`Could not retrieve document.`, 404);
+      }
+      const success = await remove(LocationModel, doc);
+
+      const code = 200;
+      const response = createStatusSerializer().serialize({ success });
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
+
   return router;
 };
 
@@ -178,6 +295,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       query('page[size]').optional().isInt({ min: 0 }),
       query('page[cursor]').optional().isString().trim(),
       query('group').optional().isString().trim(),
+      query('public').optional().isBoolean(),
     ]),
     guard.enforcePrimaryGroup(),
     AuthzGuards.readLocationsGuard,
@@ -185,7 +303,11 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const search = <string>req.query.search;
       const include = queryParamGroup(<string>req.query.include);
 
-      const predefined = queryFilters.concat([{ key: 'organization', op: 'in', value: req.groups }]);
+      let query: MongooseQueryFilter[] = [{ key: 'organization', op: 'in', value: req.groups }];
+      if (boolean(req.query.public)) {
+        query = [query.concat([{ key: 'publicResource', op: '==', value: String(true) }])] as MongooseQueryFilter[];
+      }
+      const predefined = queryFilters.concat(query);
       const queryOptions = parser.parse(req.query, { predefined }, ['search']);
 
       const searchResult = await LocationModel.esSearchOnlyIds(search, { organization: req.groups });
@@ -342,7 +464,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
     `${path}/:id`,
     validate([
       param('id').isString().trim().notEmpty(),
-      body('slug').optional().isString().trim().notEmpty(),
+      body('slug').optional({ nullable: true }).isString().trim().notEmpty(),
       body('name').optional().isString().trim().notEmpty(),
       body('description').optional().isString().trim().notEmpty(),
       body('type').optional().isString().trim().notEmpty(),
