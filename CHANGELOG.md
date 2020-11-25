@@ -1,3 +1,22 @@
+# [1.11.0](https://github.com/natgeosociety/marapp-services/compare/v1.10.2...v1.11.0) (2020-11-25)
+
+
+### Bug Fixes
+
+* allow storing "empty" data for public resource field ([ccfd1ee](https://github.com/natgeosociety/marapp-services/commit/ccfd1ee901d66aa16a68b12cb1801594e2464ceb))
+* filter global public resources for locations [EP-3452] ([e984905](https://github.com/natgeosociety/marapp-services/commit/e98490561e689ab46c9b5371f71fcee5c6041504))
+* re-generate slugname on null values ([41367e0](https://github.com/natgeosociety/marapp-services/commit/41367e07879abfb4d75eca9e105fda90087c0697))
+* update query condition ([b6b0e71](https://github.com/natgeosociety/marapp-services/commit/b6b0e71fb27f3a5eb8f456aecfe5489edf81b10b))
+* update user's name [EP-3434] ([#84](https://github.com/natgeosociety/marapp-services/issues/84)) ([74d19b5](https://github.com/natgeosociety/marapp-services/commit/74d19b56a1cda56d7d3ccf97eba129a7a816899a))
+
+
+### Features
+
+* allow owner to leave when others are available [EP-3255] ([#90](https://github.com/natgeosociety/marapp-services/issues/90)) ([#93](https://github.com/natgeosociety/marapp-services/issues/93)) ([1c021a7](https://github.com/natgeosociety/marapp-services/commit/1c021a7bc725e3dfda84033e3dfa763b2db8abdd))
+* consolidate collection & location types [EP-3400] ([e7ee570](https://github.com/natgeosociety/marapp-services/commit/e7ee570c6c4d435327534a51da2772d74198c365))
+* enforce optional fields based on condition ([#83](https://github.com/natgeosociety/marapp-services/issues/83)) ([433aa30](https://github.com/natgeosociety/marapp-services/commit/433aa30f0e9078ddf5b78f3677a90e6324c9bad8))
+* support exists operator in query, remove collection types ([4ddb1da](https://github.com/natgeosociety/marapp-services/commit/4ddb1da24f6976c39f5c825d69be7cf1f4f0e3f7))
+
 ## [1.10.2](https://github.com/natgeosociety/marapp-services/compare/v1.10.1...v1.10.2) (2020-11-04)
 
 
