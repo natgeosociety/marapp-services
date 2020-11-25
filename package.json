@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@elastic/elasticsearch": "^6.8.8",
-    "@google/earthengine": "^0.1.236",
+    "@google/earthengine": "^0.1.243",
     "@mapbox/geojson-merge": "^1.1.1",
     "@mapbox/geojson-normalize": "0.0.1",
     "@natgeosociety/auth0-authorization": "^1.1.2",
