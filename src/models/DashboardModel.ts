@@ -122,7 +122,7 @@ DashboardSchema.plugin(slugifyPlugin, { uniqueField: 'slug', separator: '-' });
 // Middlewares;
 DashboardSchema.pre('validate', generateSlugMw('Dashboard'));
 DashboardSchema.pre('save', checkRefLinksOnUpdateMw());
-DashboardSchema.pre('save', versionIncOnUpdateMw());
+DashboardSchema.pre('save', versionIncOnUpdateMw('Dashboard'));
 
 interface IDashboardModel extends Model<DashboardDocument>, IESPlugin, ISlugifyPlugin {}
 

@@ -39,9 +39,7 @@ export const computeGeoJSONOnChangeMw = function () {
       const areaKm2 = computeAreaKm2(geojson);
       const centroid = computeShapeCentroid(geojson);
 
-      const version = this.isNew ? this.get('version') : this.get('version') + 1;
-
-      this.set({ geojson, bbox2d, areaKm2, centroid, version });
+      this.set({ geojson, bbox2d, areaKm2, centroid });
     }
   };
   return fn;

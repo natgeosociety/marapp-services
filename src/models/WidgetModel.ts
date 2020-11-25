@@ -142,7 +142,7 @@ WidgetSchema.statics.enumOptionsResolver = function () {
 // Middlewares;
 WidgetSchema.pre('validate', generateSlugMw('Widget'));
 WidgetSchema.pre('save', checkRefLinksOnUpdateMw());
-WidgetSchema.pre('save', versionIncOnUpdateMw());
+WidgetSchema.pre('save', versionIncOnUpdateMw('Widget'));
 WidgetSchema.post('remove', removeRefLinksOnDeleteMw());
 
 interface IWidgetModel extends Model<WidgetDocument>, IESPlugin, ISlugifyPlugin {}
