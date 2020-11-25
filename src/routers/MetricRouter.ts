@@ -47,7 +47,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/metrics') => {
   const path = urljoin(basePath, routePath);
 
   const parser = new MongooseQueryParser();
-  const queryFilters: MongooseQueryFilter[] = [{ key: 'published', op: '==', value: String(true) }];
+  const queryFilters: MongooseQueryFilter[] = [{ key: 'published', op: '==', value: true }];
 
   router.get(
     `${path}/:locationId`,

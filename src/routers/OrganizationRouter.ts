@@ -52,8 +52,8 @@ const getRouter = (basePath: string = '/', routePath: string = '/organizations')
 
   const parser = new MongooseQueryParser();
   const queryFilters: MongooseQueryFilter[] = [
-    { key: 'published', op: '==', value: String(true) },
-    { key: '*.published', op: '==', value: String(true) },
+    { key: 'published', op: '==', value: true },
+    { key: '*.published', op: '==', value: true },
   ];
 
   router.get(
@@ -67,7 +67,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/organizations')
         { model: LocationModel, query: queryFilters },
         {
           model: LayerModel,
-          query: queryFilters.concat([{ key: 'primary', op: '==', value: String(true) }]),
+          query: queryFilters.concat([{ key: 'primary', op: '==', value: true }]),
         },
       ];
 
