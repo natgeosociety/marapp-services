@@ -33,6 +33,7 @@ export class ExposedError extends Error {
 }
 
 export const DocumentError = makeError('DocumentError', ExposedError);
+export const DocumentVersionError = makeError('DocumentVersionError', ExposedError);
 export const RecordNotFound = makeError('RecordNotFound', ExposedError);
 export const AlreadyExistsError = makeError('AlreadyExistsError', ExposedError);
 export const ParameterRequiredError = makeError('ParameterRequiredError', ExposedError);

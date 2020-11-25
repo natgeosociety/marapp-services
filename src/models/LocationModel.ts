@@ -26,7 +26,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getLogger } from '../logging';
 
 import { Metric } from '.';
-import { generateSlugMw, schemaOptions } from './middlewares';
+import { concurrencyControlOnUpdateMw, generateSlugMw, schemaOptions, versionIncOnUpdateMw } from './middlewares';
 import {
   checkRefLinksOnUpdateMw,
   computeCollectionGeoJSONMw,
@@ -180,8 +180,10 @@ LocationSchema.plugin(slugifyPlugin, { uniqueField: 'slug', separator: '-' });
 
 // Middlewares;
 LocationSchema.pre('validate', generateSlugMw('Location'));
+LocationSchema.pre('save', concurrencyControlOnUpdateMw('Location'));
 LocationSchema.pre('save', computeGeoJSONOnChangeMw());
 LocationSchema.pre('save', checkRefLinksOnUpdateMw());
+LocationSchema.pre('save', versionIncOnUpdateMw('Location'));
 LocationSchema.post('save', removeRefLinksOnUpdateMw());
 LocationSchema.post('remove', removeRefLinksOnDeleteMw());
 LocationSchema.post('find', computeCollectionGeoJSONMw());

@@ -163,7 +163,7 @@ LayerSchema.plugin(slugifyPlugin, { uniqueField: 'slug', separator: '-' });
 // Middlewares;
 LayerSchema.pre('validate', generateSlugMw('Layer'));
 LayerSchema.pre('save', checkRefLinksOnUpdateMw());
-LayerSchema.pre('save', versionIncOnUpdateMw());
+LayerSchema.pre('save', versionIncOnUpdateMw('Layer'));
 LayerSchema.post('remove', removeRefLinksOnDeleteMw());
 
 interface ILayerModel extends Model<LayerDocument>, IESPlugin, ISlugifyPlugin {}
