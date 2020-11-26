@@ -819,6 +819,92 @@
         ]
       }
     },
+    "/metrics/slugs": {
+      "get": {
+        "tags": ["metrics"],
+        "summary": "Get all available metric slugs",
+        "description": "",
+        "operationId": "getMetricSlugs",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Metric"
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [],
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/metrics/:id/collection": {
+      "get": {
+        "tags": ["metrics"],
+        "summary": "Get available metrics for a collection",
+        "description": "",
+        "operationId": "getMetricsForCollection",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Location (Collection) ID or slug.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "metrics",
+            "in": "query",
+            "description": "Metric slugs (comma separated)",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "group",
+            "in": "query",
+            "description": "Primary group name. Required when multiple primary groups included in the token.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Metric"
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [],
+            "Bearer": []
+          }
+        ]
+      }
+    },
     "/metrics/{location}": {
       "get": {
         "tags": ["metrics"],

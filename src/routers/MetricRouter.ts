@@ -32,7 +32,7 @@ import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
 import { AuthzGuards, AuthzRequest, guard } from '../middlewares/authz-guards';
 import { LocationModel, MetricModel } from '../models';
-import { exists, getAll, getById, getOne, remove, removeById } from '../models/utils';
+import { exists, getAll, getById, getOne, remove, removeById, aggregateCount } from '../models/utils';
 import { createSerializer } from '../serializers/MetricSerializer';
 import { createSerializer as createStatusSerializer } from '../serializers/StatusSerializer';
 import { OperationTypeEnum, SNSComputeMetricEvent, triggerComputeMetricEvent } from '../services/sns';
@@ -48,6 +48,57 @@ const getRouter = (basePath: string = '/', routePath: string = '/metrics') => {
 
   const parser = new MongooseQueryParser();
   const queryFilters: MongooseQueryFilter[] = [{ key: 'published', op: '==', value: true }];
+
+  router.get(
+    `${path}/slugs`,
+    validate([]),
+    guard.enforcePrimaryGroup(true, true),
+    AuthzGuards.readMetricsGuard,
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const metrics = await aggregateCount(MetricModel, {}, 'slug');
+
+      const code = 200;
+      const response = createSerializer().serialize(metrics.map((metric) => ({ slug: metric.value })));
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
+
+  router.get(
+    `${path}/:id/collection`,
+    validate([query('metrics').isString().trim().notEmpty(), query('group').optional().isString().trim()]),
+    guard.enforcePrimaryGroup(true, true),
+    AuthzGuards.readMetricsGuard,
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const id = req.params.id;
+      const metrics = queryParamGroup(<string>req.query.metrics);
+      const include = queryParamGroup(<string>req.query.include);
+
+      const predefined = queryFilters.concat([{ key: 'organization', op: 'in', value: req.groups }]);
+      const queryOptions = parser.parse(req.query, { predefined });
+
+      const doc = await getById(LocationModel, id, queryOptions, ['slug']);
+
+      if (!doc) {
+        throw new RecordNotFound(`Could not retrieve document.`, 404);
+      }
+
+      const predefined2: MongooseQueryFilter[] = [
+        { key: 'location', op: 'in', value: doc.locations as string[] },
+        { key: 'slug', op: 'in', value: metrics },
+      ];
+      const queryOptions2 = parser.parse(req.query, { predefined: predefined2 });
+
+      const { docs } = await getAll(MetricModel, queryOptions2);
+
+      const code = 200;
+      const response = createSerializer(include).serialize(docs);
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
 
   router.get(
     `${path}/:locationId`,
