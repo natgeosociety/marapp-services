@@ -70,7 +70,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/metrics') => {
       const include = queryParamGroup(<string>req.query.include);
 
       const predefined = queryFilters.concat([{ key: 'organization', op: 'in', value: req.groups }]);
-      const queryOptions = parser.parse(req.query, { predefined }, ['search']);
+      const queryOptions = parser.parse(null, { predefined }, ['search']);
 
       const parentId = await exists(LocationModel, locationId, queryOptions, ['slug']);
       if (!parentId) {
@@ -184,7 +184,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const include = queryParamGroup(<string>req.query.include);
 
       const predefined = queryFilters.concat([{ key: 'organization', op: 'in', value: req.groups }]);
-      const queryOptions = parser.parse(req.query, { predefined });
+      const queryOptions = parser.parse(null, { predefined });
 
       const parentId = await exists(LocationModel, locationId, queryOptions, ['slug']);
       if (!parentId) {
