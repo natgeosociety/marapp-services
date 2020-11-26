@@ -326,6 +326,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       body('layers.*').optional().isString().trim().notEmpty(),
       body('widgets').optional().isArray(),
       body('widgets.*').optional().isString().trim().notEmpty(),
+      body('version').optional().isNumeric(),
       query('include').optional().isString().trim(),
       query('select').optional().isString().trim(),
       query('group').optional().isString().trim(),

@@ -24,7 +24,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getLogger } from '../logging';
 
 import { Layer, Widget } from '.';
-import { generateSlugMw, schemaOptions, versionIncOnUpdateMw } from './middlewares';
+import { generateSlugMw, optimisticVersionControlOnUpdateMw, schemaOptions, versionIncOnUpdateMw } from './middlewares';
 import { checkRefLinksOnUpdateMw } from './middlewares/dashboards';
 import esPlugin, { IESPlugin } from './plugins/elasticsearch';
 import slugifyPlugin, { ISlugifyPlugin } from './plugins/slugify';
@@ -121,6 +121,7 @@ DashboardSchema.plugin(slugifyPlugin, { uniqueField: 'slug', separator: '-' });
 
 // Middlewares;
 DashboardSchema.pre('validate', generateSlugMw('Dashboard'));
+DashboardSchema.pre('save', optimisticVersionControlOnUpdateMw('Dashboard'));
 DashboardSchema.pre('save', checkRefLinksOnUpdateMw());
 DashboardSchema.pre('save', versionIncOnUpdateMw('Dashboard'));
 
