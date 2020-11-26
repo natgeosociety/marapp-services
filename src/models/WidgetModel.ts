@@ -24,7 +24,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getLogger } from '../logging';
 
 import { Layer, MetricModel } from '.';
-import { generateSlugMw, schemaOptions, versionIncOnUpdateMw } from './middlewares';
+import { generateSlugMw, optimisticVersionControlOnUpdateMw, schemaOptions, versionIncOnUpdateMw } from './middlewares';
 import { checkRefLinksOnUpdateMw, removeRefLinksOnDeleteMw } from './middlewares/widgets';
 import esPlugin, { IESPlugin } from './plugins/elasticsearch';
 import slugifyPlugin, { ISlugifyPlugin } from './plugins/slugify';
@@ -141,6 +141,7 @@ WidgetSchema.statics.enumOptionsResolver = function () {
 
 // Middlewares;
 WidgetSchema.pre('validate', generateSlugMw('Widget'));
+WidgetSchema.pre('save', optimisticVersionControlOnUpdateMw('Widget'));
 WidgetSchema.pre('save', checkRefLinksOnUpdateMw());
 WidgetSchema.pre('save', versionIncOnUpdateMw('Widget'));
 WidgetSchema.post('remove', removeRefLinksOnDeleteMw());

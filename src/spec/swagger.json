@@ -4167,6 +4167,9 @@
         "featured": {
           "type": "boolean",
           "default": false
+        },
+        "version": {
+          "type": "number"
         }
       },
       "xml": {
@@ -4226,6 +4229,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "version": {
+          "type": "number"
         }
       },
       "xml": {
@@ -4273,6 +4279,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "version": {
+          "type": "number"
         }
       },
       "xml": {
@@ -4309,6 +4318,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "version": {
+          "type": "number"
         }
       },
       "xml": {

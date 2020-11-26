@@ -17,7 +17,7 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { isNil } from 'lodash';
+import { get, isNil } from 'lodash';
 import { Model, SchemaOptions } from 'mongoose';
 import { Document } from 'mongoose';
 
@@ -121,10 +121,10 @@ export const versionIncOnUpdateMw = function (modelName: string) {
 /**
  * Pre-save middleware.
  *
- * Handles optimistic concurrency control using a version key.
+ * Handles optimistic version control on updates using a version key.
  * Compares client version and system version if version field present in update.
  */
-export const concurrencyControlOnUpdateMw = function (modelName: string, versionKey: string = 'version') {
+export const optimisticVersionControlOnUpdateMw = function (modelName: string, versionKey: string = 'version') {
   const fn = async function () {
     const model = this.model(modelName);
     if (!model) {
@@ -135,14 +135,21 @@ export const concurrencyControlOnUpdateMw = function (modelName: string, version
 
     // check versions if explicitly sent by client in update;
     if (!isNil(clientVersion)) {
-      logger.debug('[concurrencyControlOnUpdateMw] checking version for: %s', id);
+      logger.debug('[optimisticVersionControlOnUpdateMw] checking version for: %s', id);
 
       const res = await model.findOne({ _id: id }).select([versionKey]);
       if (res) {
+        const serverVersion = get(res, versionKey);
+        logger.debug(
+          '[optimisticVersionControlOnUpdateMw] comparing version for: %s [clientVer: %s, serverVer: %s]',
+          id,
+          clientVersion,
+          serverVersion
+        );
+
         // condition for the versions matching;
-        const systemVersion = res.version;
-        if (clientVersion !== systemVersion) {
-          throw new DocumentVersionError(`Version conflict on document update, current version: ${systemVersion}`, 400);
+        if (clientVersion !== serverVersion) {
+          throw new DocumentVersionError('The client version does not match the server version.', 400);
         }
       }
     }
