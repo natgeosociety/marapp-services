@@ -819,6 +819,38 @@
         ]
       }
     },
+    "/metrics/slugs": {
+      "get": {
+        "tags": ["metrics"],
+        "summary": "Get all available metric slugs",
+        "description": "",
+        "operationId": "getMetricSlugs",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Metric"
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [],
+            "Bearer": []
+          }
+        ]
+      }
+    },
     "/metrics/{location}": {
       "get": {
         "tags": ["metrics"],
