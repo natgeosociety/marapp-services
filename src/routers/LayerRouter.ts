@@ -46,8 +46,8 @@ const getRouter = (basePath: string = '/', routePath: string = '/layers') => {
   const path = urljoin(basePath, routePath);
 
   const queryFilters: MongooseQueryFilter[] = [
-    { key: 'published', op: '==', value: String(true) },
-    { key: '*.published', op: '==', value: String(true) },
+    { key: 'published', op: '==', value: true },
+    { key: '*.published', op: '==', value: true },
   ];
   const parser = new MongooseQueryParser();
 
@@ -337,6 +337,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       body('organization').optional().isString().trim(),
       body('references').optional({ nullable: true }).isArray(),
       body('references.*').optional().isString().trim().notEmpty(),
+      body('version').optional().isNumeric(),
       query('include').optional().isString().trim(),
       query('select').optional().isString().trim(),
       query('group').optional().isString().trim(),

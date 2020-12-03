@@ -17,10 +17,11 @@
   specific language governing permissions and limitations under the License.
 */
 
+import { get, isNil } from 'lodash';
 import { Model, SchemaOptions } from 'mongoose';
 import { Document } from 'mongoose';
 
-import { DocumentError } from '../../errors';
+import { DocumentError, DocumentVersionError } from '../../errors';
 import { getLogger } from '../../logging';
 
 const logger = getLogger();
@@ -102,16 +103,55 @@ export const checkWorkspaceRefs = async <T extends Document>(
 /**
  * Pre-save middleware.
  *
- * Handles version bump on document change.
+ * Handles version increment on document change.
  */
-export const versionIncOnUpdateMw = function () {
+export const versionIncOnUpdateMw = function (modelName: string) {
   const fn = async function () {
     if (this.isModified()) {
-      logger.debug('[handleVersionOnUpdateMw] schema changes detected, incrementing version');
+      const id: string = this.get('id');
 
-      const version = this.isNew ? this.get('version') : this.get('version') + 1;
+      logger.debug('[versionIncOnUpdateMw] schema changes detected, inc version for: %s', id);
 
-      this.set({ version });
+      await this.model(modelName).findOneAndUpdate({ _id: id }, { $inc: { version: 1 } });
+    }
+  };
+  return fn;
+};
+
+/**
+ * Pre-save middleware.
+ *
+ * Handles optimistic version control on updates using a version key.
+ * Compares client version and system version if version field present in update.
+ */
+export const optimisticVersionControlOnUpdateMw = function (modelName: string, versionKey: string = 'version') {
+  const fn = async function () {
+    const model = this.model(modelName);
+    if (!model) {
+      throw new Error(`Model not found for name: ${modelName}`);
+    }
+    const id = this.get('id');
+    const clientVersion = this.get(versionKey);
+
+    // check versions if explicitly sent by client in update;
+    if (!isNil(clientVersion)) {
+      logger.debug('[optimisticVersionControlOnUpdateMw] checking version for: %s', id);
+
+      const res = await model.findOne({ _id: id }).select([versionKey]);
+      if (res) {
+        const serverVersion = get(res, versionKey);
+        logger.debug(
+          '[optimisticVersionControlOnUpdateMw] comparing version for: %s [clientVer: %s, serverVer: %s]',
+          id,
+          clientVersion,
+          serverVersion
+        );
+
+        // condition for the versions matching;
+        if (clientVersion !== serverVersion) {
+          throw new DocumentVersionError('The client version does not match the server version.', 400);
+        }
+      }
     }
   };
   return fn;

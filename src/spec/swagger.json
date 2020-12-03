@@ -642,6 +642,74 @@
             "Bearer": []
           }
         ]
+      }
+    },
+    "/locations/{id}": {
+      "get": {
+        "tags": ["locations"],
+        "summary": "Find a location by ID",
+        "description": "",
+        "operationId": "getLocationById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Location ID or slug.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "description": "Comma separated relationship paths.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "select",
+            "description": "Comma separated field names.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "description": "Comma separated field names. The sort order of each path is ascending unless the path name is prefixed with \"-\".",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "group",
+            "description": "Primary group name. Required when multiple primary groups included in the token.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Location"
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [],
+            "Bearer": []
+          }
+        ]
       },
       "put": {
         "tags": ["locations"],
@@ -751,54 +819,18 @@
         ]
       }
     },
-    "/locations/{id}": {
+    "/metrics/slugs": {
       "get": {
-        "tags": ["locations"],
-        "summary": "Find a location by ID",
+        "tags": ["metrics"],
+        "summary": "Get all available metric slugs",
         "description": "",
-        "operationId": "getLocationById",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "Location ID or slug.",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "include",
-            "description": "Comma separated relationship paths.",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "select",
-            "description": "Comma separated field names.",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "sort",
-            "description": "Comma separated field names. The sort order of each path is ascending unless the path name is prefixed with \"-\".",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "group",
-            "description": "Primary group name. Required when multiple primary groups included in the token.",
-            "required": false,
-            "type": "string"
-          }
-        ],
+        "operationId": "getMetricSlugs",
+        "parameters": [],
         "responses": {
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/Location"
+              "$ref": "#/definitions/Metric"
             }
           },
           "400": {
@@ -4081,6 +4113,9 @@
         "featured": {
           "type": "boolean",
           "default": false
+        },
+        "version": {
+          "type": "number"
         }
       },
       "xml": {
@@ -4140,6 +4175,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "version": {
+          "type": "number"
         }
       },
       "xml": {
@@ -4187,6 +4225,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "version": {
+          "type": "number"
         }
       },
       "xml": {
@@ -4223,6 +4264,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "version": {
+          "type": "number"
         }
       },
       "xml": {
