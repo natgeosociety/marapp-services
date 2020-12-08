@@ -29,6 +29,7 @@ export const RequestError = makeError('RequestError');
 
 interface StreamResponse {
   stream: Readable;
+  headers: any;
   contentType: string;
 }
 
@@ -48,9 +49,10 @@ export const fetchURLToStream = async (url: string): Promise<StreamResponse> => 
     if (!contentType) {
       throw new RequestError(`Missing Content-Type Header on resource: ${url}`);
     }
-    logger.debug(`streaming request ${response.statusText}`);
 
-    return { stream: response.data, contentType };
+    logger.debug('[fetchURLToStream] %s streaming request headers: %O', response.statusText, response.headers);
+
+    return { stream: response.data, headers: response.headers, contentType };
   } catch (err) {
     logger.error(err);
     if (err.response) {

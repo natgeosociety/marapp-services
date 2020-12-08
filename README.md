@@ -79,7 +79,7 @@ For more details, see: https://www.serverless.com/framework/docs/providers/aws/g
 Start required services. 
 
 ```bash
-$ docker-compose -f docker-compose.yml up
+$ ./support/start-docker-services.sh
 ```
 
 Start the lambda functions locally.
