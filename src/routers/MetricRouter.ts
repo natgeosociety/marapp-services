@@ -52,7 +52,6 @@ const getRouter = (basePath: string = '/', routePath: string = '/metrics') => {
   router.get(
     `${path}/slugs`,
     validate([]),
-    guard.enforcePrimaryGroup(true, true),
     AuthzGuards.readMetricsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const metrics = await aggregateCount(MetricModel, {}, 'slug');
@@ -79,7 +78,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/metrics') => {
       query('page[cursor]').optional().isString().trim(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(false, true),
+    guard.enforcePrimaryGroup({ multiple: true }),
     AuthzGuards.readMetricsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const locationId = req.params.locationId;
@@ -144,7 +143,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/metrics') => {
       query('sort').optional().isString().trim(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(false, true),
+    guard.enforcePrimaryGroup({ multiple: true }),
     AuthzGuards.readMetricsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const locationId = req.params.locationId;

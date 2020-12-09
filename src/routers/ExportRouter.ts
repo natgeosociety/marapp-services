@@ -21,16 +21,17 @@ import { Response, Router } from 'express';
 import asyncHandler from 'express-async-handler';
 import { body, param, query } from 'express-validator';
 import { get, isEmpty } from 'lodash';
-import stream from 'stream';
 import urljoin from 'url-join';
 
+import { DEFAULT_CONTENT_TYPE } from '../config';
 import { ParameterRequiredError, RecordNotFound, UnsupportedOperationType } from '../errors';
+import { MongooseQueryFilter, MongooseQueryParser } from '../helpers/mongoose';
 import { getLogger } from '../logging';
-import { AuthzRequest } from '../middlewares/authz-guards';
+import { AuthzGuards, AuthzRequest, guard } from '../middlewares/authz-guards';
 import { LayerModel, LocationModel } from '../models';
 import { getById } from '../models/utils';
+import { createSerializer as createExportSerializer } from '../serializers/ExportSerializer';
 import { exportImageToDownloadURL, exportImageToThumbnailURL, ExportType } from '../services/earthengine';
-import { fetchURLToStream } from '../services/fetch';
 
 import { validate } from '.';
 
@@ -40,28 +41,37 @@ const getRouter = (basePath: string = '/', routePath: string = '/export') => {
   const router: Router = Router();
   const path = urljoin(basePath, routePath);
 
+  const parser = new MongooseQueryParser();
+  const queryFilters: MongooseQueryFilter[] = [{ key: 'published', op: '==', value: true }];
+
   router.get(
     `${path}/raster/:layerId/:locationId/`,
     validate([
       param('layerId').isString().trim().notEmpty(),
       param('locationId').isString().trim().notEmpty(),
       query('exportType').trim().isIn(Object.values(ExportType)),
+      query('group').optional().isString().trim(),
     ]),
+    guard.enforcePrimaryGroup({ multiple: true }),
+    AuthzGuards.readExportsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const layerId = req.params.layerId;
       const locationId = req.params.locationId;
       const exportType = req.query.exportType;
 
+      const predefined = queryFilters.concat([{ key: 'organization', op: 'in', value: req.groups }]);
+      const queryOptions = parser.parse(req.query, { predefined });
+
       if (!Object.values(ExportType).includes(<any>exportType)) {
-        throw new UnsupportedOperationType(`Unsupported export type.`, 400);
+        throw new UnsupportedOperationType('Unsupported export type.', 400);
       }
-      const layer = await getById(LayerModel, layerId, {}, ['slug']);
+      const layer = await getById(LayerModel, layerId, queryOptions, ['slug']);
       if (!layer) {
-        throw new RecordNotFound(`Could not retrieve layer.`, 404);
+        throw new RecordNotFound('Could not retrieve layer.', 404);
       }
-      const location = await getById(LocationModel, locationId, {}, ['slug']);
+      const location = await getById(LocationModel, locationId, queryOptions, ['slug']);
       if (!location) {
-        throw new RecordNotFound(`Could not retrieve location.`, 404);
+        throw new RecordNotFound('Could not retrieve location.', 404);
       }
 
       const source = get(layer.config, 'source');
@@ -81,29 +91,11 @@ const getRouter = (basePath: string = '/', routePath: string = '/export') => {
         downloadURL = await exportImageToThumbnailURL(assetId, location.geojson, style);
       }
 
-      // const code = 200;
-      // const response = createExportSerializer().serialize({ downloadURL });
-      //
-      // res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
-      // return res.status(code).send(response);
+      const code = 200;
+      const response = createExportSerializer().serialize({ downloadURL });
 
-      const dataToStream = await fetchURLToStream(downloadURL);
-      const passThrough = new stream.PassThrough();
-
-      res.setHeader('Content-Type', get(dataToStream.headers, 'content-type'));
-      res.setHeader('Content-Disposition', get(dataToStream.headers, 'content-disposition', 'attachment;'));
-
-      stream.pipeline(dataToStream.stream, passThrough, (err) => {
-        if (err) {
-          logger.error(err);
-          throw err;
-        } else {
-          logger.debug('pipeline succeeded.');
-          const code = 200;
-          res.status(code).end();
-        }
-      });
-      dataToStream.stream.pipe(res);
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
     })
   );
 

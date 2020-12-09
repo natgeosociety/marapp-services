@@ -4105,6 +4105,13 @@
             "required": true,
             "type": "string",
             "enum": ["geotiff", "thumbnail"]
+          },
+          {
+            "in": "query",
+            "name": "group",
+            "description": "Primary group name. Required when multiple primary groups included in the token.",
+            "required": false,
+            "type": "string"
           }
         ],
         "responses": {

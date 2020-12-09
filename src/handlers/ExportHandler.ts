@@ -24,8 +24,8 @@ import { getLogger } from '../logging';
 import { eeContextHttp } from '../middlewares/context';
 import ExportRouter from '../routers/ExportRouter';
 
-import { authHttpHandler, openHttpHandler } from '.';
+import { authHttpHandler } from '.';
 
 const logger = getLogger();
 
-export const managementHandler: Handler = openHttpHandler(eeContextHttp, ExportRouter.getRouter(API_BASE));
+export const managementHandler: Handler = authHttpHandler(eeContextHttp, ExportRouter.getRouter(API_BASE));
