@@ -59,7 +59,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/organizations')
   router.get(
     `${path}/stats`,
     validate([query('group').isString().trim()]),
-    guard.enforcePrimaryGroup(false, true),
+    guard.enforcePrimaryGroup({ multiple: true }),
     AuthzGuards.readLocationsGuard,
     AuthzGuards.readLayersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -104,7 +104,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
   router.get(
     `${path}/stats`,
     validate([query('include').optional().isString().trim(), query('group').isString().trim()]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.readStatsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;

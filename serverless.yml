@@ -273,6 +273,17 @@ functions:
           path: services/api/v1/tiles/{any+}
           method: any
           cors: true
+  export:
+    handler: src/handlers/ExportHandler.managementHandler
+    events:
+      - http:
+          path: services/api/v1/export
+          method: any
+          cors: true
+      - http:
+          path: services/api/v1/export/{any+}
+          method: any
+          cors: true
   swagger:
     handler: src/handlers/SwaggerHandler.openHandler
     events:

@@ -42,7 +42,6 @@ export const TaskError = makeError('TaskError', ExposedError);
 export const UnauthorizedError = makeError('UnauthorizedError', ExposedError);
 export const InvalidParameterError = makeError('InvalidParameterError', ExposedError);
 export const UserNotFoundError = makeError('UserNotFoundError', ExposedError);
-export const NotImplementedError = makeError('NotImplementedError', ExposedError);
 export const TileGenerationError = makeError('TileGenerationError', ExposedError);
 export const PasswordStrengthError = makeError('PasswordStrengthError', ExposedError);
 

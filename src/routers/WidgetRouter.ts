@@ -63,7 +63,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/widgets') => {
       query('page[cursor]').optional().isString().trim(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(false, true),
+    guard.enforcePrimaryGroup({ multiple: true }),
     AuthzGuards.readWidgetsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const search = <string>req.query.search;
@@ -123,7 +123,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/widgets') => {
       query('sort').optional().isString().trim(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(false, true),
+    guard.enforcePrimaryGroup({ multiple: true }),
     AuthzGuards.readWidgetsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const id = req.params.id;
@@ -226,7 +226,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       query('type').trim().isIn(['counter', 'shortid']),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.readLocationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const keyword = <string>req.query.keyword;
@@ -297,7 +297,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       query('select').optional().isString().trim(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.writeWidgetsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const include = queryParamGroup(<string>req.query.include);
@@ -337,7 +337,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       query('select').optional().isString().trim(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.writeWidgetsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const id = req.params.id;
