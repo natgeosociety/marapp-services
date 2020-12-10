@@ -51,6 +51,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/metrics') => {
 
   router.get(
     `${path}/slugs`,
+    guard.enforcePrimaryGroup({ multiple: true }),
     validate([]),
     AuthzGuards.readMetricsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
