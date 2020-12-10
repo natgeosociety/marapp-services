@@ -252,7 +252,10 @@ export class MongooseQueryParser {
       return acc;
     }, {});
 
-    const queryWrapper = { $and: Object.keys(queryCond).reduce((a, c) => a.concat({ [c]: queryCond[c] }), []) };
+    const queryWrapper =
+      '$or' in queryCond
+        ? { $and: Object.keys(queryCond).reduce((a, c) => a.concat({ [c]: queryCond[c] }), []) }
+        : queryCond;
 
     logger.debug(`resolved query: ${JSON.stringify(queryWrapper)}`);
 
