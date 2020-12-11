@@ -378,7 +378,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       query('page[size]').optional().isInt({ min: 0 }),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.readUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
@@ -441,7 +441,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
   router.get(
     `${path}/groups`,
     validate([query('include').optional().isString().trim(), query('group').optional().isString().trim()]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.readUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
@@ -475,7 +475,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       query('include').optional().isString().trim(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.readUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
@@ -513,7 +513,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       query('include').optional().isString().trim(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.writeUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
@@ -583,7 +583,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       body('groups.*').isString().trim().notEmpty(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.writeUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
@@ -682,7 +682,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       body('groups.*').isString().trim().notEmpty(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.writeUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
@@ -744,7 +744,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
   router.delete(
     `${path}/:email`,
     validate([param('email').trim().isEmail(), query('group').optional().isString().trim()]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.writeUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;

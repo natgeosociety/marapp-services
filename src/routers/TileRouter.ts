@@ -26,7 +26,7 @@ import { get, isEmpty } from 'lodash';
 import urljoin from 'url-join';
 
 import { API_MAP_TILES_TTL } from '../config';
-import { InvalidParameterError, ParameterRequiredError, RecordNotFound, TileGenerationError } from '../errors';
+import { ParameterRequiredError, RecordNotFound, TileGenerationError } from '../errors';
 import { getLogger } from '../logging';
 import { LayerModel } from '../models';
 import { getById } from '../models/utils';

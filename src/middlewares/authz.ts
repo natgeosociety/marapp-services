@@ -33,6 +33,12 @@ interface GuardOptions {
   jwtPermissionKey?: string;
 }
 
+interface EnforceGroupOptions {
+  multiple?: boolean; // allow multiple groups delimited by sep;
+  serviceAccounts?: boolean; // require a primary group for operations with service accounts (apiKeys);
+  sep?: string; // group value separator;
+}
+
 export class AuthzGuard {
   readonly defaults: GuardOptions = {
     reqIdentityKey: 'identity',
@@ -129,26 +135,21 @@ export class AuthzGuard {
    * The JWT must have a `group` claim and it must either be a string of space-separated
    * groups or an array of strings.
    *
-   * @param includeServiceAccounts: require a primary group for operations with Service Accounts (apiKeys).
-   * @param allowMultiple: allow multiple groups delimited by sep.
-   * @param sep: group value separator.
+   * @param options
    */
-  public enforcePrimaryGroup(
-    includeServiceAccounts: boolean = false,
-    allowMultiple: boolean = false,
-    sep: string = ','
-  ): Handler {
+  public enforcePrimaryGroup(options: EnforceGroupOptions = {}): Handler {
+    const opts: EnforceGroupOptions = { multiple: false, serviceAccounts: false, sep: ',', ...options };
     return (req: Request, res: Response, next: NextFunction) => {
       const { isAnonymousAllowed, isServiceAccount } = res.locals;
 
       if (isServiceAccount) {
-        if (includeServiceAccounts) {
+        if (opts.serviceAccounts) {
           if (!req.query.group) {
             return next(
               new UnauthorizedError('Permission denied. Service accounts need to specify a primary group.', 403)
             );
           }
-          const groups: string[] = (req.query.group as string).split(sep);
+          const groups: string[] = (req.query.group as string).split(opts.sep);
           set(req, this.options.reqGroupKey, groups);
         }
         return next();
@@ -184,11 +185,11 @@ export class AuthzGuard {
       if (!req.query.group) {
         return next(new UnauthorizedError('Permission denied. No primary groups specified for user', 403));
       }
-      const groups: string[] = (req.query.group as string).split(sep);
+      const groups: string[] = (req.query.group as string).split(opts.sep);
       if (!groups.every((group) => primaryGroups.includes(group))) {
         return next(new UnauthorizedError('Permission denied. Invalid primary groups specified for user', 403));
       }
-      if (!allowMultiple && groups.length > 1) {
+      if (!opts.multiple && groups.length > 1) {
         return next(new UnauthorizedError('Permission denied. Multiple primary groups specified for user', 403));
       }
       set(req, this.options.reqGroupKey, groups);

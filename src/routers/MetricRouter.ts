@@ -31,8 +31,8 @@ import { PaginationHelper } from '../helpers/paginator';
 import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
 import { AuthzGuards, AuthzRequest, guard } from '../middlewares/authz-guards';
-import { LocationModel, MetricModel, LocationTypeEnum } from '../models';
-import { exists, getAll, getById, getOne, remove, removeById, aggregateCount } from '../models/utils';
+import { LocationModel, LocationTypeEnum, MetricModel } from '../models';
+import { aggregateCount, exists, getAll, getById, getOne, remove, removeById } from '../models/utils';
 import { createSerializer } from '../serializers/MetricSerializer';
 import { createSerializer as createStatusSerializer } from '../serializers/StatusSerializer';
 import { OperationTypeEnum, SNSComputeMetricEvent, triggerComputeMetricEvent } from '../services/sns';
@@ -51,8 +51,8 @@ const getRouter = (basePath: string = '/', routePath: string = '/metrics') => {
 
   router.get(
     `${path}/slugs`,
+    guard.enforcePrimaryGroup({ multiple: true }),
     validate([]),
-    guard.enforcePrimaryGroup(true, true),
     AuthzGuards.readMetricsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const metrics = await aggregateCount(MetricModel, {}, 'slug');
@@ -79,7 +79,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/metrics') => {
       query('page[cursor]').optional().isString().trim(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(false, true),
+    guard.enforcePrimaryGroup({ multiple: true }),
     AuthzGuards.readMetricsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const locationId = req.params.locationId;
@@ -144,7 +144,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/metrics') => {
       query('sort').optional().isString().trim(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(false, true),
+    guard.enforcePrimaryGroup({ multiple: true }),
     AuthzGuards.readMetricsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const locationId = req.params.locationId;

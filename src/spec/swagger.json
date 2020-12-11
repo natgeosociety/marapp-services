@@ -67,6 +67,10 @@
       "description": "Tile map service"
     },
     {
+      "name": "export",
+      "description": "Export layers"
+    },
+    {
       "name": "profile",
       "description": "User profile"
     }
@@ -4049,6 +4053,65 @@
             "description": "Map Y coordinate.",
             "required": true,
             "type": "number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "ApiKey": [],
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/export/raster/{layerId}/{locationId}": {
+      "get": {
+        "tags": ["export"],
+        "summary": "Export a raster layer",
+        "description": "",
+        "operationId": "exportRasterLayer",
+        "parameters": [
+          {
+            "name": "layerId",
+            "in": "path",
+            "description": "Layer ID or slug.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "locationId",
+            "in": "path",
+            "description": "Location ID or slug.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "exportType",
+            "description": "Export type.",
+            "required": true,
+            "type": "string",
+            "enum": ["geotiff", "thumbnail"]
+          },
+          {
+            "in": "query",
+            "name": "group",
+            "description": "Primary group name. Required when multiple primary groups included in the token.",
+            "required": false,
+            "type": "string"
           }
         ],
         "responses": {
