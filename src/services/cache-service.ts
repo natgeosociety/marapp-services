@@ -107,7 +107,7 @@ export class RedisCacheService implements CacheService {
   }
 
   /**
-   * Scan keys based on pattern to search.
+   * Delete keys based on pattern to search.
    * @param keyPrefix: example 'prefix*'
    */
   async deleteKeysByPrefix(keyPrefix: string): Promise<string[]> {

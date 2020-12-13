@@ -23,7 +23,6 @@ import { Redis } from 'ioredis';
 import { get, merge, set } from 'lodash';
 import makeError from 'make-error';
 
-import { REDIS_CACHE_TTL } from '../config';
 import { AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET, AUTH0_DOMAIN, AUTH0_EXTENSION_URL } from '../config/auth0';
 import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
