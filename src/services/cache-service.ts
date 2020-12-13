@@ -27,7 +27,7 @@ const logger = getLogger();
 export interface CacheService {
   get(key: string): Promise<any>;
   set(key: string, value: any, ttl?: number): Promise<string>;
-  del(key: string): Promise<number>;
+  delete(...keys: string[]): Promise<number>;
   exists(key: string): Promise<number>;
   getKeysByPrefix(keyPrefix: string): Promise<string[]>;
   deleteKeysByPrefix(keyPrefix: string): Promise<string[]>;
@@ -51,13 +51,13 @@ export class RedisCacheService implements CacheService {
   /**
    * Delete a key.
    * Removes the specified keys. A key is ignored if it does not exist.
-   * @param key
    * @return The number of keys that were removed.
+   * @param keys
    */
-  async del(key: string): Promise<number> {
-    logger.debug('[del] cache key: %s', key);
+  async delete(...keys: string[]): Promise<number> {
+    logger.debug('[del] cache key: %s', keys.join(','));
 
-    return this.redisClient.del(key);
+    return this.redisClient.del(keys);
   }
 
   /**

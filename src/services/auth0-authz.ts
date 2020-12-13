@@ -356,8 +356,8 @@ export class Auth0AuthzService extends WithCache implements AuthzServiceSpec {
   async addUserToRoles(userId: string, roleIds: string[]) {
     const response = await this.authzClient.addUserToRoles({ userId, roleIds });
     await Promise.all([
-      await this.removeCache(this.mkCacheKey(CacheKeys.ROLES)),
-      ...roleIds.map((roleId: string) => this.removeCache(this.mkCacheKey(CacheKeys.ROLES, roleId))),
+      this.removeCache(this.mkCacheKey(CacheKeys.ROLES)),
+      this.removeCache(...roleIds.map((roleId: string) => this.mkCacheKey(CacheKeys.ROLES, roleId))),
     ]);
 
     return response;
@@ -366,8 +366,8 @@ export class Auth0AuthzService extends WithCache implements AuthzServiceSpec {
   async removeUserFromRoles(userId: string, roleIds: string[]) {
     const response = await this.authzClient.removeUserFromRoles({ userId, roleIds });
     await Promise.all([
-      await this.removeCache(this.mkCacheKey(CacheKeys.ROLES)),
-      ...roleIds.map((roleId: string) => this.removeCache(this.mkCacheKey(CacheKeys.ROLES, roleId))),
+      this.removeCache(this.mkCacheKey(CacheKeys.ROLES)),
+      this.removeCache(...roleIds.map((roleId: string) => this.mkCacheKey(CacheKeys.ROLES, roleId))),
     ]);
 
     return response;
@@ -444,7 +444,7 @@ export class Auth0AuthzService extends WithCache implements AuthzServiceSpec {
       this.removeCache(this.mkCacheKey(CacheKeys.NESTED_GROUPS_ROLES, groupId)),
       this.removeCachePrefix(this.mkCacheKey(CacheKeys.NESTED_GROUPS, '*')),
       this.removeCachePrefix(this.mkCacheKey(CacheKeys.NESTED_GROUPS_MEMBERS, '*')),
-      ...userIds.map((userId: string) => this.removeCache(this.mkCacheKey(CacheKeys.GROUP_MEMBERSHIP, userId))),
+      this.removeCache(...userIds.map((userId: string) => this.mkCacheKey(CacheKeys.GROUP_MEMBERSHIP, userId))),
     ]);
 
     return response;
@@ -456,7 +456,7 @@ export class Auth0AuthzService extends WithCache implements AuthzServiceSpec {
       this.removeCache(this.mkCacheKey(CacheKeys.NESTED_GROUPS_ROLES, groupId)),
       this.removeCachePrefix(this.mkCacheKey(CacheKeys.NESTED_GROUPS, '*')),
       this.removeCachePrefix(this.mkCacheKey(CacheKeys.NESTED_GROUPS_MEMBERS, '*')),
-      ...userIds.map((userId: string) => this.removeCache(this.mkCacheKey(CacheKeys.GROUP_MEMBERSHIP, userId))),
+      this.removeCache(...userIds.map((userId: string) => this.mkCacheKey(CacheKeys.GROUP_MEMBERSHIP, userId))),
     ]);
 
     return response;

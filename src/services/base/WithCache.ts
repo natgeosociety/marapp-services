@@ -9,7 +9,7 @@ const logger = getLogger();
 interface WithCacheSpec {
   fromCache(cacheKey: string): Promise<any>;
   toCache(cacheKey: string, value: any): Promise<void>;
-  removeCache(cacheKey: string): Promise<void>;
+  removeCache(...cacheKeys: string[]): Promise<void>;
   mkCacheKey(...keys: any[]): string;
 }
 
@@ -42,10 +42,10 @@ export abstract class WithCache implements WithCacheSpec {
     }
   }
 
-  async removeCache(cacheKey: string): Promise<void> {
+  async removeCache(...cacheKeys: string[]): Promise<void> {
     if (this.cacheTTL > 0 && this.cacheService) {
-      await this.cacheService.del(cacheKey);
-      logger.debug('[removeCache] cache-remove: %s', cacheKey);
+      await this.cacheService.delete(...cacheKeys);
+      logger.debug('[removeCache] cache-remove: %s', cacheKeys.join(','));
     }
   }
 
