@@ -19,13 +19,16 @@
 
 import { AuthorizationClient } from '@natgeosociety/auth0-authorization';
 import { User } from 'auth0';
-import { get, set } from 'lodash';
+import { Redis } from 'ioredis';
+import { get, merge, set } from 'lodash';
 import makeError from 'make-error';
 
+import { REDIS_CACHE_TTL } from '../config';
 import { AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET, AUTH0_DOMAIN, AUTH0_EXTENSION_URL } from '../config/auth0';
 import { forEachAsync } from '../helpers/util';
 import { getLogger } from '../logging';
 
+import { WithCache } from './base/WithCache';
 import { GlobalRoleEnum } from './membership-service';
 
 export const Auth0Error = makeError('Auth0Error');
@@ -33,6 +36,17 @@ export const Auth0Error = makeError('Auth0Error');
 const logger = getLogger();
 
 type GroupType = 'OWNER' | 'ADMIN' | 'EDITOR' | 'VIEWER' | 'PUBLIC';
+
+enum CacheKeys {
+  GROUPS = 'GROUPS',
+  NESTED_GROUPS = 'NESTED_GROUPS',
+  NESTED_GROUPS_MEMBERS = 'NESTED_GROUPS_MEMBERS',
+  USER_GROUPS = 'USER_GROUPS',
+  ROLES = 'ROLES',
+  NESTED_GROUPS_ROLES = 'NESTED_GROUPS_ROLES',
+  PERMISSIONS = 'PERMISSIONS',
+  GROUP_MEMBERSHIP = 'GROUP_MEMBERSHIP',
+}
 
 export interface AuthzServiceSpec {
   getGroup(id: string);
@@ -84,38 +98,74 @@ export interface AuthzServiceSpec {
   getMemberGroups(userId: string, primaryGroups: string[]);
 }
 
-export class Auth0AuthzService implements AuthzServiceSpec {
-  authzClient: AuthorizationClient;
+export class Auth0AuthzService extends WithCache implements AuthzServiceSpec {
+  readonly authzClient: AuthorizationClient;
 
-  constructor(
-    clientId: string = AUTH0_CLIENT_ID,
-    clientSecret: string = AUTH0_CLIENT_SECRET,
-    domain: string = AUTH0_DOMAIN,
-    extensionUrl: string = AUTH0_EXTENSION_URL
-  ) {
-    const options = { clientId, clientSecret, domain, extensionUrl };
+  constructor(config?: {
+    connection?: {
+      clientId?: string;
+      clientSecret?: string;
+      domain?: string;
+      extensionUrl?: string;
+    };
+    cache?: Redis;
+    cacheTTL?: number;
+  }) {
+    super(config?.cache, config?.cacheTTL);
+    let options = {
+      clientId: AUTH0_CLIENT_ID,
+      clientSecret: AUTH0_CLIENT_SECRET,
+      domain: AUTH0_DOMAIN,
+      extensionUrl: AUTH0_EXTENSION_URL,
+    };
+    if (config?.connection) {
+      options = merge(options, config.connection);
+    }
     this.authzClient = new AuthorizationClient(options);
   }
 
   async getGroups(filterGroups: string[] = []) {
-    let groups = await this.authzClient.getGroups();
-    if (filterGroups.length) {
-      groups.groups = groups.groups.filter((g) => filterGroups.every((k) => g.name === k));
-      groups.total = groups.groups.length;
+    const cacheKey = this.mkCacheKey(CacheKeys.GROUPS);
+    let response = await this.fromCache(cacheKey);
+    if (!response) {
+      response = await this.authzClient.getGroups();
+      await this.toCache(cacheKey, response);
     }
-    return groups;
+    if (filterGroups.length) {
+      const groups = response.groups.filter((group: any) => filterGroups.every((k) => group.name === k));
+      const total = response.groups.length;
+
+      return { groups, total };
+    }
+    return response;
   }
 
-  async getGroup(id: string) {
-    return this.authzClient.getGroup({ groupId: id });
+  async getGroup(groupId: string) {
+    const cacheKey = this.mkCacheKey(CacheKeys.GROUPS, groupId);
+    const hit = await this.fromCache(cacheKey);
+    if (hit) {
+      return hit;
+    }
+    const response = await this.authzClient.getGroup({ groupId });
+    await this.toCache(cacheKey, response);
+
+    return response;
   }
 
-  async getUserGroups(id: string) {
-    return this.authzClient.getUserGroups({ userId: id });
+  async getUserGroups(userId: string) {
+    const cacheKey = this.mkCacheKey(CacheKeys.USER_GROUPS, userId);
+    const hit = await this.fromCache(cacheKey);
+    if (hit) {
+      return hit;
+    }
+    const response = await this.authzClient.getUserGroups({ userId });
+    await this.toCache(cacheKey, response);
+
+    return response;
   }
 
-  async getGroupOwners(id: string, onlyIds: boolean = false): Promise<string[] | User[]> {
-    const groups = await this.getNestedGroups(id, ['OWNER']);
+  async getGroupOwners(groupId: string, onlyIds: boolean = false): Promise<string[] | User[]> {
+    const groups = await this.getNestedGroups(groupId, ['OWNER']);
     if (!groups.length) {
       return [];
     }
@@ -162,43 +212,103 @@ export class Auth0AuthzService implements AuthzServiceSpec {
   }
 
   async createGroup(name: string, description: string, members?: string[]) {
-    return this.authzClient.createGroup({ name, description, members });
+    const response = await this.authzClient.createGroup({ name, description, members });
+    await this.removeCache(this.mkCacheKey(CacheKeys.GROUPS));
+
+    return response;
   }
 
   async updateGroup(id: string, name: string, description: string, members?: string[]) {
-    return this.authzClient.updateGroup({ _id: id, name, description, members });
+    const response = await this.authzClient.updateGroup({ _id: id, name, description, members });
+    await Promise.all([
+      this.removeCache(this.mkCacheKey(CacheKeys.GROUPS, id)),
+      this.removeCache(this.mkCacheKey(CacheKeys.GROUPS)),
+    ]);
+
+    return response;
   }
 
   async addNestedGroups(groupId: string, nestedGroupIds: string[]) {
-    return this.authzClient.addNestedGroups({ groupId, nestedGroupIds });
+    const response = await this.authzClient.addNestedGroups({ groupId, nestedGroupIds });
+    await Promise.all([
+      this.removeCache(this.mkCacheKey(CacheKeys.GROUPS, groupId)),
+      this.removeCache(this.mkCacheKey(CacheKeys.GROUPS)),
+    ]);
+
+    return response;
   }
 
   async deleteNestedGroups(groupId: string, nestedGroupIds: string[]) {
-    return this.authzClient.deleteNestedGroups({ groupId, nestedGroupIds });
+    const response = await this.authzClient.deleteNestedGroups({ groupId, nestedGroupIds });
+    await Promise.all([
+      this.removeCache(this.mkCacheKey(CacheKeys.GROUPS, groupId)),
+      this.removeCache(this.mkCacheKey(CacheKeys.GROUPS)),
+    ]);
+
+    return response;
   }
 
   async addGroupRoles(groupId: string, roleIds: string[]) {
-    return this.authzClient.addGroupRoles({ groupId, roleIds });
+    const response = await this.authzClient.addGroupRoles({ groupId, roleIds });
+    await Promise.all([
+      this.removeCache(this.mkCacheKey(CacheKeys.GROUPS)),
+      this.removeCache(this.mkCacheKey(CacheKeys.GROUPS, groupId)),
+    ]);
+
+    return response;
   }
 
   async getPermissions() {
-    return this.authzClient.getPermissions();
+    const cacheKey = this.mkCacheKey(CacheKeys.PERMISSIONS);
+    const hit = await this.fromCache(cacheKey);
+    if (hit) {
+      return hit;
+    }
+    const response = await this.authzClient.getPermissions();
+    await this.toCache(cacheKey, response);
+
+    return response;
   }
 
   async createPermission(name: string, description: string, applicationId: string, applicationType: string = 'client') {
-    return this.authzClient.createPermission({ name, description, applicationId, applicationType });
+    const response = await this.authzClient.createPermission({ name, description, applicationId, applicationType });
+    await this.removeCache(this.mkCacheKey(CacheKeys.PERMISSIONS));
+
+    return response;
   }
 
   async deletePermission(permissionId: string) {
-    return this.authzClient.deletePermission({ permissionId });
+    const response = await this.authzClient.deletePermission({ permissionId });
+    await Promise.all([
+      this.removeCache(this.mkCacheKey(CacheKeys.PERMISSIONS, permissionId)),
+      this.removeCache(this.mkCacheKey(CacheKeys.PERMISSIONS)),
+    ]);
+
+    return response;
   }
 
   async getRole(roleId: string) {
-    return this.authzClient.getRole({ roleId });
+    const cacheKey = this.mkCacheKey(CacheKeys.ROLES, roleId);
+    const hit = await this.fromCache(cacheKey);
+    if (hit) {
+      return hit;
+    }
+    const response = await this.authzClient.getRole({ roleId });
+    await this.toCache(cacheKey, response);
+
+    return response;
   }
 
   async getRoles() {
-    return this.authzClient.getRoles();
+    const cacheKey = this.mkCacheKey(CacheKeys.ROLES);
+    const hit = await this.fromCache(cacheKey);
+    if (hit) {
+      return hit;
+    }
+    const response = await this.authzClient.getRoles();
+    await this.toCache(cacheKey, response);
+
+    return response;
   }
 
   async createRole(
@@ -208,7 +318,16 @@ export class Auth0AuthzService implements AuthzServiceSpec {
     permissions: string[] = [],
     applicationType: string = 'client'
   ) {
-    return this.authzClient.createRole({ name, description, applicationId, applicationType, permissions });
+    const response = await this.authzClient.createRole({
+      name,
+      description,
+      applicationId,
+      applicationType,
+      permissions,
+    });
+    await this.removeCache(this.mkCacheKey(CacheKeys.ROLES));
+
+    return response;
   }
 
   async updateRole(
@@ -219,7 +338,7 @@ export class Auth0AuthzService implements AuthzServiceSpec {
     permissions: string[],
     applicationType: string = 'client'
   ) {
-    return this.authzClient.updateRole({
+    const response = await this.authzClient.updateRole({
       _id: id,
       name,
       description,
@@ -227,26 +346,49 @@ export class Auth0AuthzService implements AuthzServiceSpec {
       applicationType,
       permissions,
     });
+    await Promise.all([
+      this.removeCache(this.mkCacheKey(CacheKeys.ROLES, id)),
+      this.removeCache(this.mkCacheKey(CacheKeys.ROLES)),
+    ]);
+
+    return response;
   }
 
   async addUserToRoles(userId: string, roleIds: string[]) {
-    return this.authzClient.addUserToRoles({ userId, roleIds });
+    const response = await this.authzClient.addUserToRoles({ userId, roleIds });
+    await this.removeCache(this.mkCacheKey(CacheKeys.ROLES));
+
+    return response;
   }
 
   async removeUserFromRoles(userId: string, roleIds: string[]) {
-    return this.authzClient.removeUserFromRoles({ userId, roleIds });
+    const response = await this.authzClient.removeUserFromRoles({ userId, roleIds });
+    await this.removeCache(this.mkCacheKey(CacheKeys.ROLES));
+
+    return response;
   }
 
   async deleteRole(roleId: string) {
-    return this.authzClient.deleteRole({ roleId });
+    const response = await this.authzClient.deleteRole({ roleId });
+    await Promise.all([
+      this.removeCache(this.mkCacheKey(CacheKeys.ROLES, roleId)),
+      this.removeCache(this.mkCacheKey(CacheKeys.ROLES)),
+    ]);
+
+    return response;
   }
 
   async getAllNestedGroups(groupId: string, filterGroups: GroupType[] = [], excludeGroups: GroupType[] = []) {
-    let nestedGroups = await this.authzClient.getNestedGroups({ groupId });
-    if (filterGroups.length) {
-      nestedGroups = nestedGroups.filter((g) => filterGroups.every((k) => g.name.endsWith(k)));
+    const cacheKey = this.mkCacheKey(CacheKeys.NESTED_GROUPS, groupId);
+    let response = await this.fromCache(cacheKey);
+    if (!response) {
+      response = await this.authzClient.getNestedGroups({ groupId });
+      await this.toCache(cacheKey, response);
     }
-    return nestedGroups.filter((r) => excludeGroups.every((k) => !r.name.endsWith(k)));
+    if (filterGroups.length) {
+      response = response.filter((g: any) => filterGroups.every((k) => g.name.endsWith(k)));
+    }
+    return response.filter((r: any) => excludeGroups.every((k) => !r.name.endsWith(k)));
   }
 
   async getNestedGroups(groupId: string, filterGroups: GroupType[] = [], excludeGroups: GroupType[] = []) {
@@ -256,28 +398,75 @@ export class Auth0AuthzService implements AuthzServiceSpec {
   }
 
   async getNestedGroupMembers(groupId: string, page: number = 1, perPage: number = 10) {
-    const { nested, total } = await this.authzClient.getNestedGroupMembers({ groupId }, { page, perPage });
-    return { docs: nested, total };
+    const cacheKey = this.mkCacheKey(CacheKeys.NESTED_GROUPS_MEMBERS, groupId, page, perPage);
+    const hit = await this.fromCache(cacheKey);
+    if (hit) {
+      return { docs: hit.nested, total: hit.total };
+    }
+    const response = await this.authzClient.getNestedGroupMembers({ groupId }, { page, perPage });
+    await this.toCache(cacheKey, response);
+
+    return { docs: response.nested, total: response.total };
   }
 
   async getNestedGroupRoles(groupId: string) {
-    return this.authzClient.getNestedGroupRoles({ groupId });
+    const cacheKey = this.mkCacheKey(CacheKeys.NESTED_GROUPS_ROLES, groupId);
+    const hit = await this.fromCache(cacheKey);
+    if (hit) {
+      return hit;
+    }
+    const response = await this.authzClient.getNestedGroupRoles({ groupId });
+    await this.toCache(cacheKey, response);
+
+    return response;
   }
 
   async calculateGroupMemberships(userId: string) {
-    return this.authzClient.calculateGroupMemberships({ userId });
+    const cacheKey = this.mkCacheKey(CacheKeys.GROUP_MEMBERSHIP, userId);
+    const hit = await this.fromCache(cacheKey);
+    if (hit) {
+      return hit;
+    }
+    const response = await this.authzClient.calculateGroupMemberships({ userId });
+    await this.toCache(cacheKey, response);
+
+    return response;
   }
 
   async addGroupMembers(groupId: string, userIds: string[]) {
-    return this.authzClient.addGroupMembers({ groupId, userIds });
+    const response = await this.authzClient.addGroupMembers({ groupId, userIds });
+    await Promise.all([
+      this.removeCache(this.mkCacheKey(CacheKeys.NESTED_GROUPS_ROLES, groupId)),
+      this.removeCachePrefix(this.mkCacheKey(CacheKeys.NESTED_GROUPS, '*')),
+      this.removeCachePrefix(this.mkCacheKey(CacheKeys.NESTED_GROUPS_MEMBERS, '*')),
+      ...userIds.map((userId: string) => this.removeCache(this.mkCacheKey(CacheKeys.GROUP_MEMBERSHIP, userId))),
+    ]);
+
+    return response;
   }
 
   async deleteGroupMembers(groupId: string, userIds: string[]) {
-    return this.authzClient.deleteGroupMembers({ groupId, userIds });
+    const response = await this.authzClient.deleteGroupMembers({ groupId, userIds });
+    await Promise.all([
+      this.removeCache(this.mkCacheKey(CacheKeys.NESTED_GROUPS_ROLES, groupId)),
+      this.removeCachePrefix(this.mkCacheKey(CacheKeys.NESTED_GROUPS, '*')),
+      this.removeCachePrefix(this.mkCacheKey(CacheKeys.NESTED_GROUPS_MEMBERS, '*')),
+      ...userIds.map((userId: string) => this.removeCache(this.mkCacheKey(CacheKeys.GROUP_MEMBERSHIP, userId))),
+    ]);
+
+    return response;
   }
 
   async deleteGroup(groupId: string) {
-    return this.authzClient.deleteGroup({ groupId });
+    const response = await this.authzClient.deleteGroup({ groupId });
+    await Promise.all([
+      this.removeCachePrefix(this.mkCacheKey(CacheKeys.NESTED_GROUPS_MEMBERS, groupId, '*')),
+      this.removeCache(this.mkCacheKey(CacheKeys.NESTED_GROUPS_ROLES, groupId)),
+      this.removeCache(this.mkCacheKey(CacheKeys.GROUPS, groupId)),
+      this.removeCache(this.mkCacheKey(CacheKeys.GROUPS)),
+    ]);
+
+    return response;
   }
 
   async getMemberGroups(userId: string, primaryGroups: string[]) {

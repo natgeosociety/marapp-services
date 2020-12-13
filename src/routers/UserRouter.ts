@@ -404,8 +404,8 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const groupRoles = authzService.mapNestedGroupRoles(nestedGroupRoles);
 
       const members = docs.map((user) => {
-        const userId = get(user, 'user.user_id');
-        const groups = groupRoles.filter((groupRole: any) => get(groupRole, 'members', []).includes(userId));
+        const groupId = get(user, 'group._id');
+        const groups = groupRoles.filter((group: any) => group.id === groupId);
 
         return {
           id: get(user, 'user.email'),

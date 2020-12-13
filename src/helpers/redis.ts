@@ -17,8 +17,8 @@
   specific language governing permissions and limitations under the License.
 */
 
+import IORedis, { Redis, RedisOptions } from 'ioredis';
 import makeError from 'make-error';
-import redis, { ClientOpts, RedisClient } from 'redis';
 
 import { getLogger } from '../logging';
 
@@ -32,12 +32,12 @@ const logger = getLogger('redis');
  * @param options
  * @return connection client
  */
-export const createRedisConnection = async (redisURI: string, options: ClientOpts = {}): Promise<RedisClient> => {
+export const createRedisConnection = async (redisURI: string, options: RedisOptions = {}): Promise<Redis> => {
   return new Promise(async (resolve, reject) => {
     try {
       logger.info('Establishing connection to Redis');
 
-      const client = redis.createClient({ url: redisURI, ...options });
+      const client = new IORedis(redisURI, options);
 
       client.on('ready', () => {
         logger.warn('Redis connection successful');
