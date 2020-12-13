@@ -250,8 +250,8 @@ export class Auth0AuthzService extends WithCache implements AuthzServiceSpec {
   async addGroupRoles(groupId: string, roleIds: string[]) {
     const response = await this.authzClient.addGroupRoles({ groupId, roleIds });
     await Promise.all([
-      this.removeCache(this.mkCacheKey(CacheKeys.GROUPS)),
       this.removeCache(this.mkCacheKey(CacheKeys.GROUPS, groupId)),
+      this.removeCache(this.mkCacheKey(CacheKeys.GROUPS)),
     ]);
 
     return response;
@@ -355,14 +355,20 @@ export class Auth0AuthzService extends WithCache implements AuthzServiceSpec {
 
   async addUserToRoles(userId: string, roleIds: string[]) {
     const response = await this.authzClient.addUserToRoles({ userId, roleIds });
-    await this.removeCache(this.mkCacheKey(CacheKeys.ROLES));
+    await Promise.all([
+      await this.removeCache(this.mkCacheKey(CacheKeys.ROLES)),
+      ...roleIds.map((roleId: string) => this.removeCache(this.mkCacheKey(CacheKeys.ROLES, roleId))),
+    ]);
 
     return response;
   }
 
   async removeUserFromRoles(userId: string, roleIds: string[]) {
     const response = await this.authzClient.removeUserFromRoles({ userId, roleIds });
-    await this.removeCache(this.mkCacheKey(CacheKeys.ROLES));
+    await Promise.all([
+      await this.removeCache(this.mkCacheKey(CacheKeys.ROLES)),
+      ...roleIds.map((roleId: string) => this.removeCache(this.mkCacheKey(CacheKeys.ROLES, roleId))),
+    ]);
 
     return response;
   }
