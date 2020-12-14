@@ -352,10 +352,9 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
       let success = true;
       try {
-        const tasks = Object.entries(groupsToLeave).map(([groupId, nested]) =>
-          nested.map((group: any) => authzService.deleteGroupMembers(groupId, group._id, [userId]))
+        await forEachAsync(Object.entries(groupsToLeave), async ([groupId, nested]) =>
+          forEachAsync(nested, async (group: any) => authzService.deleteGroupMembers(groupId, group._id, [userId]))
         );
-        await Promise.all(tasks);
       } catch (err) {
         success = false;
       }
