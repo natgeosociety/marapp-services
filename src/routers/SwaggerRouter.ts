@@ -17,10 +17,12 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { Router } from 'express';
+import { Request, Response, Router } from 'express';
+import redoc from 'redoc-express';
 import swaggerUi from 'swagger-ui-express';
 import urljoin from 'url-join';
 const swaggerDocument = require('../spec/swagger.json');
+const packageJson = require('../../package.json');
 
 import { API_BASE } from '../config';
 import { getLogger } from '../logging';
@@ -30,6 +32,18 @@ const logger = getLogger();
 const getRouter = (basePath: string = API_BASE, routePath: string = '/docs') => {
   const router: Router = Router();
   const path = urljoin(basePath, routePath);
+
+  router.get(`${path}/redoc/swagger.json`, (req: Request, res: Response) => {
+    res.json(swaggerDocument);
+  });
+
+  router.get(
+    `${path}/redoc`,
+    redoc({
+      title: packageJson.description,
+      specUrl: `${path}/redoc/swagger.json`,
+    })
+  );
 
   const req: any = {};
   const res: any = { send: () => {} };
