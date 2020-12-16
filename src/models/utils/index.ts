@@ -52,6 +52,9 @@ export const save = async <T extends Document, L extends keyof T>(
 ): Promise<T> => {
   const obj = omit(data, omitPaths);
   const doc = new model(obj);
+  if (obj.id) {
+    doc._id = obj.id;
+  }
   try {
     await doc.save();
     return getById(model, doc.id, mongooseOptions, uniqueIndexFields);
