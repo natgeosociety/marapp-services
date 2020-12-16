@@ -47,7 +47,7 @@ export const save = async <T extends Document, L extends keyof T>(
   data: T,
   mongooseOptions: QueryOptions = {},
   uniqueIndexFields: L[] = [],
-  omitPaths: string[] = ['id', 'createdAt', 'updatedAt'],
+  omitPaths: string[] = ['createdAt', 'updatedAt'],
   raiseError: boolean = true
 ): Promise<T> => {
   const obj = omit(data, omitPaths);
