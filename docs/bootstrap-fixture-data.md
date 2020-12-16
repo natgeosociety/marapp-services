@@ -12,11 +12,11 @@ Management endpoints are available for all data model types.
 
 ## Adding Location data
 
-- endpoint : `/services/api/v1/docs/#/locations-management/addLocation`
+- endpoint: `/services/api/v1/docs/#/locations-management/addLocation`
 
 ![](resources/adding-locations.png)
 
-#### Required format
+### Required format
 
 ```
 {
@@ -40,14 +40,60 @@ curl -X POST '<HOSTNAME>/services/api/v1/management/locations?group=<GROUP>' \
 ```
 - HOSTNAME: API hostname.
 - TOKEN: Bearer token
-- GROUP: Group/organization to assign the content.
+- GROUP: Workspace to assign the content.
 
 Note: `ApiKey` authorization can be used instead of the Bearer token via `-H 'apiKey: <APIKEY>`
 
-#### Uploading content via local script
+### Uploading content via local script
 
 Required format
 - same as above, but in JSONL format (see: http://jsonlines.org)
 ```
 $ cat example.jsonl | ./support/bootstrap-fixture-data.ts --apiKey <APIKEY> --organization <GROUP>
+```
+
+# Adding Layer data
+
+- endpoint: `/services/api/v1/docs/#/layers-management/addLayer`
+
+![](resources/adding-layers.png)
+
+### Required format
+
+```
+{
+    "id": string;             (optional, autogenerate)
+    "name": string;           (required)
+    "slug": string;           (optional, autogenerate based on name)
+    "description": string;    (optional)
+    "primary": boolean;       (optional, defaults to false)
+    "published": boolean;     (optional, defaults to false)
+    "type": string;           (required, choices: raster|vector|geojson|group|video)
+    "provider": string;       (required, choices: cartodb|gee|mapbox|leaflet)
+    "category": string[];     (required, choices: Biodiversity|Climate & Carbon|Ecosystem Services|Human Impact|Land Cover|Marine|Natural Hazards|Protected Areas|Restoration|Socio-Economic)
+    "config": object;         (required)
+    "references": string[]    (optional)
+}
+```
+
+Sample request:
+```
+curl -X POST '<HOSTNAME>/services/api/v1/management/layers?group=<GROUP>' \
+  -H 'authorization: Bearer <TOKEN>' \
+  -H 'content-type: application/json;charset=UTF-8' \
+  --data-binary '{"id":"0d716cf9-e614-46da-9c10-fa7e7da4b425","name":"Biodiversity Intactness 2015","slug":"biodiversity-intactness","primary":true,"published":true,"type":"raster","category":"Biodiversity","provider":"gee","config":{"source":{"type":"raster","assetId":"<ASSET_ID>","sldValue":"<RasterSymbolizer> <ColorMap type=\"ramp\" extended=\"false\"> <ColorMapEntry color=\"#efffd1\" quantity=\"0.0\" opacity=\"1\" /> <ColorMapEntry color=\"#235c1a\" quantity=\"1.0\" /> </ColorMap> </RasterSymbolizer>","styleType":"sld","tiles":["https://<API-HOST>/services/api/v1/tiles/0d716cf9-e614-46da-9c10-fa7e7da4b425/{z}/{x}/{y}"]},"legendConfig":{"items":[{"color":"#efffd1","value":"0"},{"color":"#235c1a","value":"100"}],"type":"gradient"},"interactionConfig":{"type":"","config":{"url":""},"output":[{"column":"","property":"","type":"","format":""}]},"applicationConfig":{},"staticImageConfig":{}}}' \
+  --compressed
+```
+- HOSTNAME: API hostname.
+- TOKEN: Bearer token
+- GROUP: Workspace to assign the content.
+
+Note: `ApiKey` authorization can be used instead of the Bearer token via `-H 'apiKey: <APIKEY>`
+
+### Uploading content via local script
+
+Required format
+- same as above, but in JSONL format (see: http://jsonlines.org)
+```
+TODO:
 ```

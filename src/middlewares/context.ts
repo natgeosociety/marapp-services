@@ -17,14 +17,14 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { Context, Handler, SNSEvent } from 'aws-lambda';
+import { Context, SNSEvent } from 'aws-lambda';
 import { NextFunction, Request, Response } from 'express';
 import asyncHandler from 'express-async-handler';
+import { Redis } from 'ioredis';
 import { Connection } from 'mongoose';
 import { performance } from 'perf_hooks';
-import { RedisClient } from 'redis';
 
-import { MONGODB_URI, REDIS_URI } from '../config';
+import { MONGODB_URI, REDIS_CACHE_TTL, REDIS_URI } from '../config';
 import { createMongoConnection } from '../helpers/mongoose';
 import { createRedisConnection } from '../helpers/redis';
 import { forEachAsync } from '../helpers/util';
@@ -38,7 +38,7 @@ const logger = getLogger();
 
 export interface SharedContext {
   mongoConn?: Promise<Connection>;
-  redisClient?: Promise<RedisClient>;
+  redisClient?: Promise<Redis>;
 }
 
 export interface EESharedContext {
@@ -76,7 +76,10 @@ export const contextHttp = asyncHandler(async (req: Request, res: Response, next
   // set-up app locals;
   req.app.locals.redisClient = await sharedContextHttp.redisClient;
   req.app.locals.cacheService = new RedisCacheService(await sharedContextHttp.redisClient);
-  req.app.locals.authzService = new Auth0AuthzService();
+  req.app.locals.authzService = new Auth0AuthzService({
+    cache: await sharedContextHttp.redisClient,
+    cacheTTL: Number(REDIS_CACHE_TTL),
+  });
   req.app.locals.authManagementService = new Auth0ManagementService();
 
   const end = performance.now();
