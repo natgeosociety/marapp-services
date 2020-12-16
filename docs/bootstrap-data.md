@@ -20,6 +20,7 @@ Management endpoints are available for all data model types.
 
 ```
 {
+    "id": string;           (optional UUIDV4, auto-generate)
     slug: string;           (required, unique)
     name: string;           (required)
     description: string;    (optional)
@@ -62,9 +63,9 @@ $ cat example.jsonl | ./support/bootstrap-fixture-data.ts --apiKey <APIKEY> --or
 
 ```
 {
-    "id": string;             (optional, autogenerate)
+    "id": string;             (optional UUIDV4, auto-generate)
     "name": string;           (required)
-    "slug": string;           (optional, autogenerate based on name)
+    "slug": string;           (optional, auto-generate from name)
     "description": string;    (optional)
     "primary": boolean;       (optional, defaults to false)
     "published": boolean;     (optional, defaults to false)
