@@ -20,14 +20,14 @@ Management endpoints are available for all data model types.
 
 ```
 {
-    "id": string;           (optional UUIDV4, auto-generate)
-    slug: string;           (required, unique)
-    name: string;           (required)
-    description: string;    (optional)
-    type: string;           (required, choices: Continent|Country|Jurisdiction|Biome|Protected Area|Species Area)
-    geojson: object;        (required, see: https://tools.ietf.org/html/rfc7946)
-    published: boolean;     (required)
-    featured: boolean;      (required)
+    id: string              (optional UUIDV4, auto-generated)
+    slug: string            (required, unique)
+    name: string            (required)
+    description: string     (optional)
+    type: string            (required, choices: Continent|Country|Jurisdiction|Biome|Protected Area|Species Area)
+    geojson: object         (required, see: https://tools.ietf.org/html/rfc7946)
+    published: boolean      (required)
+    featured: boolean       (required)
 }
 ```
 
@@ -63,17 +63,17 @@ $ cat example.jsonl | ./support/bootstrap-fixture-data.ts --apiKey <APIKEY> --or
 
 ```
 {
-    "id": string;             (optional UUIDV4, auto-generate)
-    "name": string;           (required)
-    "slug": string;           (optional, auto-generate from name)
-    "description": string;    (optional)
-    "primary": boolean;       (optional, defaults to false)
-    "published": boolean;     (optional, defaults to false)
-    "type": string;           (required, choices: raster|vector|geojson|group|video)
-    "provider": string;       (required, choices: cartodb|gee|mapbox|leaflet)
-    "category": string[];     (required, choices: Biodiversity|Climate & Carbon|Ecosystem Services|Human Impact|Land Cover|Marine|Natural Hazards|Protected Areas|Restoration|Socio-Economic)
-    "config": object;         (required)
-    "references": string[]    (optional)
+    id: string              (optional UUIDV4, auto-generated)
+    name: string            (required)
+    slug: string            (optional, auto-generated from name)
+    description: string     (optional)
+    primary: boolean        (optional, defaults to false)
+    published: boolean      (optional, defaults to false)
+    type: string            (required, choices: raster|vector|geojson|group|video)
+    provider: string        (required, choices: cartodb|gee|mapbox|leaflet)
+    category: string[]      (required, choices: Biodiversity|Climate & Carbon|Ecosystem Services|Human Impact|Land Cover|Marine|Natural Hazards|Protected Areas|Restoration|Socio-Economic)
+    config: object          (required)
+    references: string[]    (optional, child layer references)
 }
 ```
 
