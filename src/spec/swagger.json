@@ -4141,6 +4141,9 @@
     "Location": {
       "type": "object",
       "properties": {
+        "id": {
+          "type": "string"
+        },
         "slug": {
           "type": "string"
         },
@@ -4202,6 +4205,9 @@
     "Widget": {
       "type": "object",
       "properties": {
+        "id": {
+          "type": "string"
+        },
         "slug": {
           "type": "string"
         },
@@ -4250,6 +4256,9 @@
     "Layer": {
       "type": "object",
       "properties": {
+        "id": {
+          "type": "string"
+        },
         "slug": {
           "type": "string"
         },
@@ -4300,6 +4309,9 @@
     "Dashboard": {
       "type": "object",
       "properties": {
+        "id": {
+          "type": "string"
+        },
         "slug": {
           "type": "string"
         },
