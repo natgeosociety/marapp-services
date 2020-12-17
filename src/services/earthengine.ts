@@ -49,9 +49,13 @@ export const exportImageToDownloadURL = async (assetId: string, geojson: any): P
 
   logger.debug('[exportImageToDownloadURL] exporting assetId: %s', assetId);
 
+  const opts = {
+    region: geometry,
+    dimensions: 1280,
+  };
   // Export URL to download the specified image.
   return new Promise((resolve, reject) =>
-    eeImage.getDownloadURL({ region: geometry }, (downloadId, err) => {
+    eeImage.getDownloadURL(opts, (downloadId, err) => {
       if (downloadId) {
         resolve(downloadId);
       }
@@ -93,9 +97,15 @@ export const exportImageToThumbnailURL = async (
 
   logger.debug('[exportImageToThumbnailURL] exporting assetId: %s', assetId);
 
+  const opts = {
+    image: eeImage,
+    format: format,
+    region: geometry,
+    dimensions: 1280,
+  };
   // Export URL to download the specified image.
   return new Promise((resolve, reject) =>
-    eeImage.getThumbURL({ image: eeImage, region: geometry, format: format }, (thumbId, err) => {
+    eeImage.getThumbURL(opts, (thumbId, err) => {
       if (thumbId) {
         resolve(thumbId);
       }
