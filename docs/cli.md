@@ -57,12 +57,18 @@ Please use the following JSON config:
 ```
 NOTE: Please replace every `<VARIABLE>` (e.g. `<API_URL>`, `<AUTH0_AUDIENCE>`) with the actual value.
 
-\
 Save it to `config.json`, then:
 ```
 $ cp config.json ~/.restish/apis.json
+```
+
+## Spec file
+Download the spec file and place it in `~/.restish/spec.yaml`.
+```
 $ curl https://github.com/natgeosociety/marapp-services/blob/master/src/spec/swagger.yaml > ~/.restish/spec.yaml
 ```
+
+NOTE: Please make sure to run this command every time when a new marapp version is available.
 
 ## Usage Example
 Get the available commands using:
@@ -81,5 +87,6 @@ Auth command to get `profile`.
 \
 NOTE: You'll be prompted to enter login credentials on the login page.
 ```
-restish marapp getuserprofile
+restish marapp getuserprofile -p token
 ```
+
