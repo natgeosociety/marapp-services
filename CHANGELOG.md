@@ -1,3 +1,39 @@
+# [1.12.0](https://github.com/natgeosociety/marapp-services/compare/v1.11.0...v1.12.0) (2020-12-17)
+
+
+### Bug Fixes
+
+* Change export response to download URL ([4e92f92](https://github.com/natgeosociety/marapp-services/commit/4e92f92d53850420fb7faf484a068c69fd88bb9b))
+* filtering on metrics endpoint ([28ab6af](https://github.com/natgeosociety/marapp-services/commit/28ab6af9264f56f359cda1988935d6aec8fc4a05))
+* invalidate primary group cache ([7e228c7](https://github.com/natgeosociety/marapp-services/commit/7e228c7a1eeed8d397d3065c51f5c0f88d8e7489))
+* leave organization endpoint ([b668b25](https://github.com/natgeosociety/marapp-services/commit/b668b2582fc2949e4aa878c328d9e3c87f753b75))
+* metric slugs check for primary group ([6948c25](https://github.com/natgeosociety/marapp-services/commit/6948c25d0a601f692ca45f815a4fb20ba8989841))
+* mongoose query wrapper [EP-3452] ([#98](https://github.com/natgeosociety/marapp-services/issues/98)) ([c806bf8](https://github.com/natgeosociety/marapp-services/commit/c806bf8cee73e737c1e2ed805725548d203cee3a))
+* redis cache TTL ([b569623](https://github.com/natgeosociety/marapp-services/commit/b56962380706f28dbe8db82f3af26e2b41c567d2))
+* set doc._id if specified ([7211782](https://github.com/natgeosociety/marapp-services/commit/7211782f1d542cd4783da8a4d90007872568e99b))
+* set ee export resolution ([61cca11](https://github.com/natgeosociety/marapp-services/commit/61cca11751a4db58fe40c69fb666347518637264))
+* Sort aggregation filter options [EP-3267] ([928f4e1](https://github.com/natgeosociety/marapp-services/commit/928f4e1f6db10c2c919f2fdf52125054173ef6a2))
+* support boolean conditionals ([d95d1bf](https://github.com/natgeosociety/marapp-services/commit/d95d1bfb7e95985444201882ab9ca0cc68de0fb2))
+* update package-lock.json ([599288e](https://github.com/natgeosociety/marapp-services/commit/599288eb4f5e42aeb2e60a3955aae2552552e33b))
+* validation for version field, support optimistic version control on all models ([688c3ea](https://github.com/natgeosociety/marapp-services/commit/688c3ea7f0fa05fa172a30b7461aa18dfa5c0d6f))
+
+
+### Features
+
+* allow owner to leave when others are available [EP-3255] ([#90](https://github.com/natgeosociety/marapp-services/issues/90)) ([3bc21ae](https://github.com/natgeosociety/marapp-services/commit/3bc21ae909a6063a29f0690b124ea26c8ee45df8))
+* APIs for downloading collections [EP-3002] ([ac3890d](https://github.com/natgeosociety/marapp-services/commit/ac3890d7125beabdc6189aa70cf6c2abe39bdc9d))
+* Cache Auth0 Authorization service ([e85a6dd](https://github.com/natgeosociety/marapp-services/commit/e85a6ddda7bd37557817cc8166c749f82a9e3bbd))
+* enforce UUIDv4 for client generated IDs ([a8d44ae](https://github.com/natgeosociety/marapp-services/commit/a8d44ae4bf308f57a1d06f6bacea26036ef77e6f))
+* handle optimistic concurrency control on update [EP-3175] ([6f534b8](https://github.com/natgeosociety/marapp-services/commit/6f534b85ee729d0d46e73d26dd560efad2a0ae45))
+* Raster clipping service [EP-3541] ([80462bc](https://github.com/natgeosociety/marapp-services/commit/80462bc744cc1cc506646b1b8a4cbd95ed07934c))
+* support client generated IDs ([af8315c](https://github.com/natgeosociety/marapp-services/commit/af8315c8e503edcfd121bed657cd6d0323fe556b))
+* support OAuth2 on Swagger [EP-3615] ([997a889](https://github.com/natgeosociety/marapp-services/commit/997a8895143d2153852c7a5af1f2b1d2917a9e20))
+
+
+### Reverts
+
+* Revert "fix: mongoose query wrapper [EP-3452] (#98)" (#99) ([cb55d1b](https://github.com/natgeosociety/marapp-services/commit/cb55d1bdd270c843f45e7c7acaecfbc23abcd595)), closes [#98](https://github.com/natgeosociety/marapp-services/issues/98) [#99](https://github.com/natgeosociety/marapp-services/issues/99)
+
 # [1.11.0](https://github.com/natgeosociety/marapp-services/compare/v1.10.2...v1.11.0) (2020-11-25)
 
 
