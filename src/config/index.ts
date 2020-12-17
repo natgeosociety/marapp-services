@@ -23,6 +23,7 @@ export const NODE_ENV = requireEnv('NODE_ENV', 'development');
 export const LOG_LEVEL = requireEnv('LOG_LEVEL', 'debug');
 export const DEBUG = requireEnv('DEBUG', String(false));
 
+export const API_URL = requireEnv('API_URL', 'http://localhost:4000');
 export const API_BASE = requireEnv('API_BASE', '/services/api/v1');
 export const DEFAULT_CONTENT_TYPE = requireEnv('DEFAULT_CONTENT_TYPE', 'application/vnd.api+json');
 export const MAX_RESULT_WINDOW = requireEnv('MAX_RESULT_WINDOW', String(100));
