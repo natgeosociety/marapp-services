@@ -20,12 +20,15 @@
 import { Router } from 'express';
 import swaggerUi from 'swagger-ui-express';
 import urljoin from 'url-join';
-const swaggerDocument = require('../spec/swagger.json');
+import swaggerDocument from '../spec/swagger.yaml';
 
-import { API_BASE } from '../config';
+import { API_BASE, API_URL } from '../config';
+import { AUTH0_DOMAIN, AUTH0_AUDIENCE, AUTH0_APPLICATION_CLIENT_ID } from '../config/auth0';
 import { getLogger } from '../logging';
 
 const logger = getLogger();
+
+swaggerDocument.components.securitySchemes.OAuth2.flows.implicit.authorizationUrl = `https://${AUTH0_DOMAIN}/authorize?audience=${AUTH0_AUDIENCE}`;
 
 const getRouter = (basePath: string = API_BASE, routePath: string = '/docs') => {
   const router: Router = Router();
@@ -36,7 +39,10 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/docs') => 
 
   // Make a mock request to the swagger ui middleware to initialize it.
   // Workaround issue: https://github.com/scottie1984/swagger-ui-express/issues/178
-  const swaggerUiMiddleware = swaggerUi.setup(swaggerDocument);
+  const swaggerUiMiddleware = swaggerUi.setup(swaggerDocument, null, {
+    oauth: { clientId: AUTH0_APPLICATION_CLIENT_ID },
+    oauth2RedirectUrl: `${API_URL}${path}/oauth2-redirect.html`,
+  });
   swaggerUiMiddleware(req, res, () => {});
 
   router.use(path, swaggerUi.serveWithOptions({ redirect: false }), swaggerUiMiddleware);
