@@ -70,12 +70,16 @@ Get the available commands using:
 restish marapp --help
 ```
 
+![](resources/restish-commands.png)
+
 Non auth to retrieve `locations`:
 ```
 restish marapp getpubliclocations
 ```
 
-Auth command to get  `profile`
+Auth command to get `profile`.
+\
+NOTE: You'll be prompted to enter login credentials on the login page.
 ```
 restish marapp getuserprofile
 ```
