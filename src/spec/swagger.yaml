@@ -3309,6 +3309,8 @@ components:
     Location:
       type: object
       properties:
+        id:
+          type: string
         slug:
           type: string
         name:
@@ -3352,6 +3354,8 @@ components:
     Widget:
       type: object
       properties:
+        id:
+          type: string
         slug:
           type: string
         name:
@@ -3385,6 +3389,8 @@ components:
     Layer:
       type: object
       properties:
+        id:
+          type: string
         slug:
           type: string
         name:
@@ -3428,6 +3434,8 @@ components:
     Dashboard:
       type: object
       properties:
+        id:
+          type: string
         slug:
           type: string
         name:

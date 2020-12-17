@@ -47,11 +47,14 @@ export const save = async <T extends Document, L extends keyof T>(
   data: T,
   mongooseOptions: QueryOptions = {},
   uniqueIndexFields: L[] = [],
-  omitPaths: string[] = ['id', 'createdAt', 'updatedAt'],
+  omitPaths: string[] = ['createdAt', 'updatedAt'],
   raiseError: boolean = true
 ): Promise<T> => {
   const obj = omit(data, omitPaths);
   const doc = new model(obj);
+  if (obj.id) {
+    doc._id = obj.id;
+  }
   try {
     await doc.save();
     return getById(model, doc.id, mongooseOptions, uniqueIndexFields);
