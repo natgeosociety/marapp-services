@@ -1,7 +1,7 @@
 # CLI
 
 There are tools that help you use a CLI based on the OpenAPI Specification.\
-The API defines the spec file [here](src/spec/swagger.yaml).
+The API defines the spec file [here](../src/spec/swagger.yaml).
 
 We'll use [Restish](https://rest.sh/#/) in this example, but please feel free to choose your preferred one.
 
