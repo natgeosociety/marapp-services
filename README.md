@@ -113,3 +113,4 @@ OpenAPI Specification for all available endpoints can be found at: `/services/ap
 ## Docs
 - [Bootstrapping groups, roles & permissions.](docs/bootstrap-groups-roles-permissions.md)
 - [Load fixture data.](docs/bootstrap-fixture-data.md)
+- [CLI](docs/cli.md)
