@@ -61,14 +61,23 @@ module.exports = {
           ],
         ],
       },
+      {
+        test: /\.ya?ml$/,
+        use: 'yaml-loader',
+        type: 'json',
+        exclude: [
+          [
+            path.resolve(__dirname, 'node_modules'),
+            path.resolve(__dirname, '.serverless'),
+            path.resolve(__dirname, '.webpack'),
+          ],
+        ],
+      }
     ],
     // suppress "Critical dependency: the request of a dependency is an expression"
     exprContextCritical: false,
   },
   plugins: [
-    new ForkTsCheckerWebpackPlugin(),
-    new CopyWebpackPlugin({
-      patterns: [{ from: 'src/*/**.json' }],
-    }),
+    new ForkTsCheckerWebpackPlugin()
   ],
 };

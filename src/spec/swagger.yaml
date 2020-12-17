@@ -1,0 +1,3543 @@
+openapi: 3.0.1
+info:
+  title: API Services
+  description: API Services
+  version: 1.0.0
+servers:
+- url: /services/api/v1
+tags:
+- name: locations
+  description: Location public
+- name: locations-management
+  description: Location management
+- name: metrics
+  description: Metric public
+- name: metrics-management
+  description: Metric management
+- name: layers
+  description: Layer public
+- name: layers-management
+  description: Layer management
+- name: widgets
+  description: Widget public
+- name: widgets-management
+  description: Widget management
+- name: dashboards
+  description: Dashboard public
+- name: dashboards-management
+  description: Dashboard management
+- name: users-management
+  description: User management
+- name: organizations
+  description: Organization public
+- name: organizations-management
+  description: Organization management
+- name: tile-map
+  description: Tile map service
+- name: export
+  description: Export layers
+- name: profile
+  description: User profile
+paths:
+  /management/locations:
+    get:
+      tags:
+      - locations-management
+      summary: Retrieve all locations
+      operationId: getLocations
+      parameters:
+      - name: search
+        in: query
+        description: Search query
+        schema:
+          type: string
+      - name: filter
+        in: query
+        description: 'Comma separated field, operator, value pairs. Supported operators
+          are: "==", "!=", ">=", "<=", ">", "<".'
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: Comma separated field names. The sort order of each path is ascending
+          unless the path name is prefixed with "-".
+        schema:
+          type: string
+      - name: page[number]
+        in: query
+        description: Page number.
+        schema:
+          type: number
+          default: 1.0
+      - name: page[size]
+        in: query
+        description: Results per page.
+        schema:
+          type: number
+          default: 10.0
+      - name: page[cursor]
+        in: query
+        description: Page cursor. To retrieve cursored results, you initially pass
+          a cursor with a value of -1.
+        schema:
+          type: string
+          default: null
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      - name: public
+        in: query
+        description: Include global public assets in query results.
+        schema:
+          type: boolean
+          default: false
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+    post:
+      tags:
+      - locations-management
+      summary: Add a new location
+      operationId: addLocation
+      parameters:
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Location'
+        required: true
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+      x-codegen-request-body-name: body
+  /management/locations/slug:
+    get:
+      tags:
+      - locations-management
+      summary: Generate a unique slug.
+      operationId: getLocationSlug
+      parameters:
+      - name: keyword
+        in: query
+        description: Text string.
+        required: true
+        schema:
+          type: string
+      - name: type
+        in: query
+        description: 'Increment type. Supported options are: "counter", "shortid"'
+        required: true
+        schema:
+          type: string
+          enum:
+          - counter
+          - shortid
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /management/locations/{id}:
+    get:
+      tags:
+      - locations-management
+      summary: Find a location by ID
+      operationId: managementGetLocationById
+      parameters:
+      - name: id
+        in: path
+        description: Location ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: Comma separated field names. The sort order of each path is ascending
+          unless the path name is prefixed with "-".
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Location'
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+    put:
+      tags:
+      - locations-management
+      summary: Update a location by ID
+      operationId: updateLocationById
+      parameters:
+      - name: id
+        in: path
+        description: Location ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Location'
+        required: true
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+      x-codegen-request-body-name: body
+    delete:
+      tags:
+      - locations-management
+      summary: Delete a location by ID
+      operationId: deleteLocation
+      parameters:
+      - name: id
+        in: path
+        description: Location ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /locations:
+    get:
+      tags:
+      - locations
+      summary: Retrieve all public locations
+      operationId: getPublicLocations
+      parameters:
+      - name: search
+        in: query
+        description: Search query
+        schema:
+          type: string
+      - name: filter
+        in: query
+        description: 'Comma separated field, operator, value pairs. Supported operators
+          are: "==", "!=", ">=", "<=", ">", "<".'
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: Comma separated field names. The sort order of each path is ascending
+          unless the path name is prefixed with "-".
+        schema:
+          type: string
+      - name: page[number]
+        in: query
+        description: Page number.
+        schema:
+          type: number
+          default: 1.0
+      - name: page[size]
+        in: query
+        description: Results per page.
+        schema:
+          type: number
+          default: 10.0
+      - name: page[cursor]
+        in: query
+        description: Page cursor. To retrieve cursored results, you initially pass
+          a cursor with a value of -1.
+        schema:
+          type: string
+          default: null
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      - name: public
+        in: query
+        description: Include global public assets in query results.
+        schema:
+          type: boolean
+          default: false
+      responses:
+        200:
+          description: OK
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+    post:
+      tags:
+      - locations
+      summary: Add a new public location
+      operationId: addPublicLocation
+      parameters:
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Location'
+        required: true
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+      x-codegen-request-body-name: body
+  /locations/{id}:
+    get:
+      tags:
+      - locations
+      summary: Find a location by ID
+      operationId: getLocationById
+      parameters:
+      - name: id
+        in: path
+        description: Location ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: Comma separated field names. The sort order of each path is ascending
+          unless the path name is prefixed with "-".
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Location'
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+    put:
+      tags:
+      - locations
+      summary: Update a public location by ID
+      operationId: updatePublicLocationById
+      parameters:
+      - name: id
+        in: path
+        description: Location ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Location'
+        required: true
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+      x-codegen-request-body-name: body
+    delete:
+      tags:
+      - locations
+      summary: Delete a public location by ID
+      operationId: deletePublicLocation
+      parameters:
+      - name: id
+        in: path
+        description: Location ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /metrics/slugs:
+    get:
+      tags:
+      - metrics
+      summary: Get all available metric slugs
+      operationId: getMetricSlugs
+      responses:
+        200:
+          description: OK
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Metric'
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /metrics/{location}:
+    get:
+      tags:
+      - metrics
+      summary: Get all metrics by location ID
+      operationId: getMetricsByLocationId
+      parameters:
+      - name: location
+        in: path
+        description: Location ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: filter
+        in: query
+        description: 'Comma separated field, operator, value pairs. Supported operators
+          are: "==", "!=", ">=", "<=", ">", "<".'
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: Comma separated field names. The sort order of each path is ascending
+          unless the path name is prefixed with "-".
+        schema:
+          type: string
+      - name: page[number]
+        in: query
+        description: Page number.
+        schema:
+          type: number
+          default: 1.0
+      - name: page[size]
+        in: query
+        description: Results per page.
+        schema:
+          type: number
+          default: 10.0
+      - name: page[cursor]
+        in: query
+        description: Page cursor. To retrieve cursored results, you initially pass
+          a cursor with a value of -1.
+        schema:
+          type: string
+          default: null
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Metric'
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /metrics/{location}/{metric}:
+    get:
+      tags:
+      - metrics
+      summary: Get metric by location and ID
+      operationId: getMetricsById
+      parameters:
+      - name: location
+        in: path
+        description: Location ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: metric
+        in: path
+        description: Metric ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: Comma separated field names. The sort order of each path is ascending
+          unless the path name is prefixed with "-".
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Metric'
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /management/metrics/{location}:
+    get:
+      tags:
+      - metrics-management
+      summary: Get all metrics by location ID
+      operationId: managementGetMetricsByLocationId
+      parameters:
+      - name: location
+        in: path
+        description: Location ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: filter
+        in: query
+        description: 'Comma separated field, operator, value pairs. Supported operators
+          are: "==", "!=", ">=", "<=", ">", "<".'
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: Comma separated field names. The sort order of each path is ascending
+          unless the path name is prefixed with "-".
+        schema:
+          type: string
+      - name: page[number]
+        in: query
+        description: Page number.
+        schema:
+          type: number
+          default: 1.0
+      - name: page[size]
+        in: query
+        description: Results per page.
+        schema:
+          type: number
+          default: 10.0
+      - name: page[cursor]
+        in: query
+        description: Page cursor. To retrieve cursored results, you initially pass
+          a cursor with a value of -1.
+        schema:
+          type: string
+          default: null
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Metric'
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+    delete:
+      tags:
+      - metrics-management
+      summary: Delete all metrics by location ID
+      operationId: deleteMetricsByLocationId
+      parameters:
+      - name: location
+        in: path
+        description: Location ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /management/metrics/{location}/action:
+    post:
+      tags:
+      - metrics-management
+      summary: Trigger action by location ID
+      operationId: metricActionByLocationId
+      parameters:
+      - name: location
+        in: path
+        description: Location ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: operationType
+        in: query
+        description: Operation type.
+        required: true
+        schema:
+          type: string
+          enum:
+          - calculate
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /management/metrics/{location}/{metric}:
+    get:
+      tags:
+      - metrics-management
+      summary: Get metric by location and ID
+      operationId: managementGetMetricsById
+      parameters:
+      - name: location
+        in: path
+        description: Location ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: metric
+        in: path
+        description: Metric ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: Comma separated field names. The sort order of each path is ascending
+          unless the path name is prefixed with "-".
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Metric'
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+    delete:
+      tags:
+      - metrics-management
+      summary: Delete metric by location and ID
+      operationId: deleteMetricByLocationId
+      parameters:
+      - name: location
+        in: path
+        description: Location ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: metric
+        in: path
+        description: Metric ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /management/metrics/{location}/{metric}/action:
+    post:
+      tags:
+      - metrics-management
+      summary: Trigger action by location and ID
+      operationId: metricActionById
+      parameters:
+      - name: location
+        in: path
+        description: Location ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: metric
+        in: path
+        description: Metric ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: operationType
+        in: query
+        description: Operation type.
+        required: true
+        schema:
+          type: string
+          enum:
+          - calculate
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /widgets:
+    get:
+      tags:
+      - widgets
+      summary: Retrieve all widgets
+      operationId: getWidgets
+      parameters:
+      - name: search
+        in: query
+        description: Search query
+        schema:
+          type: string
+      - name: filter
+        in: query
+        description: 'Comma separated field, operator, value pairs. Supported operators
+          are: "==", "!=", ">=", "<=", ">", "<".'
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: Comma separated field names. The sort order of each path is ascending
+          unless the path name is prefixed with "-".
+        schema:
+          type: string
+      - name: page[number]
+        in: query
+        description: Page number.
+        schema:
+          type: number
+          default: 1.0
+      - name: page[size]
+        in: query
+        description: Results per page.
+        schema:
+          type: number
+          default: 10.0
+      - name: page[cursor]
+        in: query
+        description: Page cursor. To retrieve cursored results, you initially pass
+          a cursor with a value of -1.
+        schema:
+          type: string
+          default: null
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /widgets/{id}:
+    get:
+      tags:
+      - widgets
+      summary: Find a widget by ID
+      operationId: getWidgetById
+      parameters:
+      - name: id
+        in: path
+        description: Widget ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: Comma separated field names. The sort order of each path is ascending
+          unless the path name is prefixed with "-".
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Widget'
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /management/widgets:
+    get:
+      tags:
+      - widgets-management
+      summary: Retrieve all widgets
+      operationId: managementGetWidgets
+      parameters:
+      - name: search
+        in: query
+        description: Search query
+        schema:
+          type: string
+      - name: filter
+        in: query
+        description: 'Comma separated field, operator, value pairs. Supported operators
+          are: "==", "!=", ">=", "<=", ">", "<".'
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: Comma separated field names. The sort order of each path is ascending
+          unless the path name is prefixed with "-".
+        schema:
+          type: string
+      - name: page[number]
+        in: query
+        description: Page number.
+        schema:
+          type: number
+          default: 1.0
+      - name: page[size]
+        in: query
+        description: Results per page.
+        schema:
+          type: number
+          default: 10.0
+      - name: page[cursor]
+        in: query
+        description: Page cursor. To retrieve cursored results, you initially pass
+          a cursor with a value of -1.
+        schema:
+          type: string
+          default: null
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+    post:
+      tags:
+      - widgets-management
+      summary: Add a new widget
+      operationId: addWidget
+      parameters:
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Widget'
+        required: true
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+      x-codegen-request-body-name: body
+  /management/widgets/slug:
+    get:
+      tags:
+      - widgets-management
+      summary: Generate a unique slug.
+      operationId: getWidgetSlug
+      parameters:
+      - name: keyword
+        in: query
+        description: Text string.
+        required: true
+        schema:
+          type: string
+      - name: type
+        in: query
+        description: 'Increment type. Supported options are: "counter", "shortid"'
+        required: true
+        schema:
+          type: string
+          enum:
+          - counter
+          - shortid
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /management/widgets/{id}:
+    get:
+      tags:
+      - widgets-management
+      summary: Find a widget by ID
+      operationId: managementGetWidgetById
+      parameters:
+      - name: id
+        in: path
+        description: Widget ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: Comma separated field names. The sort order of each path is ascending
+          unless the path name is prefixed with "-".
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Widget'
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+    put:
+      tags:
+      - widgets-management
+      summary: Update a widget by ID
+      operationId: updateWidgetById
+      parameters:
+      - name: id
+        in: path
+        description: Widget ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Widget'
+        required: true
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+      x-codegen-request-body-name: body
+    delete:
+      tags:
+      - widgets-management
+      summary: Delete a widget by ID
+      operationId: deleteWidget
+      parameters:
+      - name: id
+        in: path
+        description: Widget ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /layers:
+    get:
+      tags:
+      - layers
+      summary: Retrieve all layers
+      operationId: getLayers
+      parameters:
+      - name: search
+        in: query
+        description: Search query
+        schema:
+          type: string
+      - name: filter
+        in: query
+        description: 'Comma separated field, operator, value pairs. Supported operators
+          are: "==", "!=", ">=", "<=", ">", "<".'
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: Comma separated field names. The sort order of each path is ascending
+          unless the path name is prefixed with "-".
+        schema:
+          type: string
+      - name: page[number]
+        in: query
+        description: Page number.
+        schema:
+          type: number
+          default: 1.0
+      - name: page[size]
+        in: query
+        description: Results per page.
+        schema:
+          type: number
+          default: 10.0
+      - name: page[cursor]
+        in: query
+        description: Page cursor. To retrieve cursored results, you initially pass
+          a cursor with a value of -1.
+        schema:
+          type: string
+          default: null
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /layers/{id}:
+    get:
+      tags:
+      - layers
+      summary: Find a layer by ID
+      operationId: getLayerById
+      parameters:
+      - name: id
+        in: path
+        description: Layer ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: Comma separated field names. The sort order of each path is ascending
+          unless the path name is prefixed with "-".
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Layer'
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /management/layers:
+    get:
+      tags:
+      - layers-management
+      summary: Retrieve all layers
+      operationId: managementGetLayers
+      parameters:
+      - name: search
+        in: query
+        description: Search query
+        schema:
+          type: string
+      - name: filter
+        in: query
+        description: 'Comma separated field, operator, value pairs. Supported operators
+          are: "==", "!=", ">=", "<=", ">", "<".'
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: Comma separated field names. The sort order of each path is ascending
+          unless the path name is prefixed with "-".
+        schema:
+          type: string
+      - name: page[number]
+        in: query
+        description: Page number.
+        schema:
+          type: number
+          default: 1.0
+      - name: page[size]
+        in: query
+        description: Results per page.
+        schema:
+          type: number
+          default: 10.0
+      - name: page[cursor]
+        in: query
+        description: Page cursor. To retrieve cursored results, you initially pass
+          a cursor with a value of -1.
+        schema:
+          type: string
+          default: null
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+    post:
+      tags:
+      - layers-management
+      summary: Add a new layer
+      operationId: addLayer
+      parameters:
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Layer'
+        required: true
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+      x-codegen-request-body-name: body
+  /management/layers/slug:
+    get:
+      tags:
+      - layers-management
+      summary: Generate a unique slug.
+      operationId: getLayerSlug
+      parameters:
+      - name: keyword
+        in: query
+        description: Text string.
+        required: true
+        schema:
+          type: string
+      - name: type
+        in: query
+        description: 'Increment type. Supported options are: "counter", "shortid"'
+        required: true
+        schema:
+          type: string
+          enum:
+          - counter
+          - shortid
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /management/layers/{id}:
+    get:
+      tags:
+      - layers-management
+      summary: Find a layer by ID
+      operationId: managementGetLayerById
+      parameters:
+      - name: id
+        in: path
+        description: Layer ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: Comma separated field names. The sort order of each path is ascending
+          unless the path name is prefixed with "-".
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Layer'
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+    put:
+      tags:
+      - layers-management
+      summary: Update a layer by ID
+      operationId: updateLayerById
+      parameters:
+      - name: id
+        in: path
+        description: Layer ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Layer'
+        required: true
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+      x-codegen-request-body-name: body
+    delete:
+      tags:
+      - layers-management
+      summary: Delete a layer by ID
+      operationId: deleteLayer
+      parameters:
+      - name: id
+        in: path
+        description: Layer ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /dashboards:
+    get:
+      tags:
+      - dashboards
+      summary: Retrieve all dashboards
+      operationId: getDashboards
+      parameters:
+      - name: search
+        in: query
+        description: Search query
+        schema:
+          type: string
+      - name: filter
+        in: query
+        description: 'Comma separated field, operator, value pairs. Supported operators
+          are: "==", "!=", ">=", "<=", ">", "<".'
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: Comma separated field names. The sort order of each path is ascending
+          unless the path name is prefixed with "-".
+        schema:
+          type: string
+      - name: page[number]
+        in: query
+        description: Page number.
+        schema:
+          type: number
+          default: 1.0
+      - name: page[size]
+        in: query
+        description: Results per page.
+        schema:
+          type: number
+          default: 10.0
+      - name: page[cursor]
+        in: query
+        description: Page cursor. To retrieve cursored results, you initially pass
+          a cursor with a value of -1.
+        schema:
+          type: string
+          default: null
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /dashboards/{id}:
+    get:
+      tags:
+      - dashboards
+      summary: Find a dashboard by ID
+      operationId: getDashboardById
+      parameters:
+      - name: id
+        in: path
+        description: Dashboard ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: Comma separated field names. The sort order of each path is ascending
+          unless the path name is prefixed with "-".
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Dashboard'
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /management/dashboards:
+    get:
+      tags:
+      - dashboards-management
+      summary: Retrieve all dashboards
+      operationId: managementGetDashboards
+      parameters:
+      - name: search
+        in: query
+        description: Search query
+        schema:
+          type: string
+      - name: filter
+        in: query
+        description: 'Comma separated field, operator, value pairs. Supported operators
+          are: "==", "!=", ">=", "<=", ">", "<".'
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: Comma separated field names. The sort order of each path is ascending
+          unless the path name is prefixed with "-".
+        schema:
+          type: string
+      - name: page[number]
+        in: query
+        description: Page number.
+        schema:
+          type: number
+          default: 1.0
+      - name: page[size]
+        in: query
+        description: Results per page.
+        schema:
+          type: number
+          default: 10.0
+      - name: page[cursor]
+        in: query
+        description: Page cursor. To retrieve cursored results, you initially pass
+          a cursor with a value of -1.
+        schema:
+          type: string
+          default: null
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+    post:
+      tags:
+      - dashboards-management
+      summary: Add a new dashboard
+      operationId: addDashboard
+      parameters:
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Dashboard'
+        required: true
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+      x-codegen-request-body-name: body
+  /management/dashboards/slug:
+    get:
+      tags:
+      - dashboards-management
+      summary: Generate a unique slug.
+      operationId: getDashboardSlug
+      parameters:
+      - name: keyword
+        in: query
+        description: Text string.
+        required: true
+        schema:
+          type: string
+      - name: type
+        in: query
+        description: 'Increment type. Supported options are: "counter", "shortid"'
+        required: true
+        schema:
+          type: string
+          enum:
+          - counter
+          - shortid
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /management/dashboards/{id}:
+    get:
+      tags:
+      - dashboards-management
+      summary: Find a dashboard by ID
+      operationId: managementGetDashboardById
+      parameters:
+      - name: id
+        in: path
+        description: Dashboard ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: Comma separated field names. The sort order of each path is ascending
+          unless the path name is prefixed with "-".
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Dashboard'
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+    put:
+      tags:
+      - dashboards-management
+      summary: Update a dashboard by ID
+      operationId: updateDashboardById
+      parameters:
+      - name: id
+        in: path
+        description: Dashboard ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: select
+        in: query
+        description: Comma separated field names.
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Dashboard'
+        required: true
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+      x-codegen-request-body-name: body
+    delete:
+      tags:
+      - dashboards-management
+      summary: Delete a dashboard by ID
+      operationId: deleteDashboard
+      parameters:
+      - name: id
+        in: path
+        description: Dashboard ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /users/profile:
+    get:
+      tags:
+      - profile
+      summary: Get current user's profile
+      operationId: getUserProfile
+      parameters:
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        Bearer: []
+    put:
+      tags:
+      - profile
+      summary: Update current user's profile
+      operationId: updateUserProfile
+      parameters:
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfile'
+        required: true
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        Bearer: []
+      x-codegen-request-body-name: body
+    delete:
+      tags:
+      - profile
+      summary: Delete current user's profile
+      operationId: deleteUserProfile
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        418:
+          description: I'm a teapot
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        Bearer: []
+  /users/profile/change-email:
+    get:
+      tags:
+      - profile
+      summary: Change current user's email confirmation hook
+      operationId: changeUserEmailCallback
+      parameters:
+      - name: accessToken
+        in: query
+        description: Change request access token.
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        Bearer: []
+    post:
+      tags:
+      - profile
+      summary: Change current user's email
+      operationId: changeUserEmail
+      parameters:
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserEmail'
+        required: true
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        Bearer: []
+      x-codegen-request-body-name: body
+    delete:
+      tags:
+      - profile
+      summary: Cancel current user's email change request
+      operationId: cancelUserEmailChange
+      parameters:
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        Bearer: []
+  /users/profile/change-password:
+    post:
+      tags:
+      - profile
+      summary: Change current user's password
+      operationId: changeUserPassword
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        Bearer: []
+  /users/profile/verify-email:
+    post:
+      tags:
+      - profile
+      summary: Resend email verification for current user
+      operationId: verifyUserEmail
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        Bearer: []
+  /users/profile/organizations:
+    post:
+      tags:
+      - profile
+      summary: Remove current user's organizations
+      operationId: removeUserOrganizations
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        Bearer: []
+  /management/users:
+    get:
+      tags:
+      - users-management
+      summary: Retrieve all users
+      operationId: getUsers
+      parameters:
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: page[number]
+        in: query
+        description: Page number.
+        schema:
+          type: number
+          default: 1.0
+      - name: page[size]
+        in: query
+        description: Results per page.
+        schema:
+          type: number
+          default: 10.0
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+    put:
+      tags:
+      - users-management
+      summary: Update users by email
+      operationId: updateUsers
+      parameters:
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                emails:
+                  type: array
+                  items:
+                    type: string
+                groups:
+                  type: array
+                  items:
+                    type: string
+        required: true
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+      x-codegen-request-body-name: body
+    post:
+      tags:
+      - users-management
+      summary: Add a new user
+      operationId: addUser
+      parameters:
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+      x-codegen-request-body-name: body
+  /management/users/{email}:
+    get:
+      tags:
+      - users-management
+      summary: Find a user by email
+      operationId: getUserByEmail
+      parameters:
+      - name: email
+        in: path
+        description: User email.
+        required: true
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+    put:
+      tags:
+      - users-management
+      summary: Update a user by email
+      operationId: updateUserByEmail
+      parameters:
+      - name: email
+        in: path
+        description: User email.
+        required: true
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+      x-codegen-request-body-name: body
+    delete:
+      tags:
+      - users-management
+      summary: Delete a user by email
+      operationId: deleteUserByEmail
+      parameters:
+      - name: email
+        in: path
+        description: User email.
+        required: true
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /management/users/groups:
+    get:
+      tags:
+      - users-management
+      summary: Find all groups
+      operationId: getGroups
+      parameters:
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /organizations/stats:
+    get:
+      tags:
+      - organizations
+      summary: Get organization public stats
+      operationId: getOrganizationPublicStats
+      parameters:
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /management/organizations:
+    get:
+      tags:
+      - organizations-management
+      summary: Find all organizations
+      operationId: getOrganizations
+      parameters:
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: page[number]
+        in: query
+        description: Page number.
+        schema:
+          type: number
+          default: 1.0
+      - name: page[size]
+        in: query
+        description: Results per page.
+        schema:
+          type: number
+          default: 10.0
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+    post:
+      tags:
+      - organizations-management
+      summary: Add a new organization
+      operationId: addOrganization
+      parameters:
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Organization'
+        required: true
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+      x-codegen-request-body-name: body
+  /management/organizations/{id}:
+    get:
+      tags:
+      - organizations-management
+      summary: Find an organization by ID
+      operationId: getOrganizationById
+      parameters:
+      - name: id
+        in: path
+        description: Organization ID.
+        required: true
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+    put:
+      tags:
+      - organizations-management
+      summary: Update an organization by ID
+      operationId: updateOrganizationById
+      parameters:
+      - name: id
+        in: path
+        description: Organization ID
+        required: true
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Organization'
+        required: true
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+      x-codegen-request-body-name: body
+    delete:
+      tags:
+      - organizations-management
+      summary: Delete an organization by ID
+      operationId: deleteOrganization
+      parameters:
+      - name: id
+        in: path
+        description: Organization ID.
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /management/organizations/stats:
+    get:
+      tags:
+      - organizations-management
+      summary: Get organization stats
+      operationId: getOrganizationStats
+      parameters:
+      - name: include
+        in: query
+        description: Comma separated relationship paths.
+        schema:
+          type: string
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /tiles/{layer}/{z}/{x}/{y}:
+    get:
+      tags:
+      - tile-map
+      summary: Serve maps using predefined image tiles
+      operationId: getTile
+      parameters:
+      - name: layer
+        in: path
+        description: Layer ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: z
+        in: path
+        description: Map Z coordinate (zoom).
+        required: true
+        schema:
+          type: number
+      - name: x
+        in: path
+        description: Map X coordinate.
+        required: true
+        schema:
+          type: number
+      - name: 'y'
+        in: path
+        description: Map Y coordinate.
+        required: true
+        schema:
+          type: number
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+  /export/raster/{layerId}/{locationId}:
+    get:
+      tags:
+      - export
+      summary: Export a raster layer
+      operationId: exportRasterLayer
+      parameters:
+      - name: layerId
+        in: path
+        description: Layer ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: locationId
+        in: path
+        description: Location ID or slug.
+        required: true
+        schema:
+          type: string
+      - name: exportType
+        in: query
+        description: Export type.
+        required: true
+        schema:
+          type: string
+          enum:
+          - geotiff
+          - thumbnail
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included
+          in the token.
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content: {}
+        400:
+          description: Bad Request
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        default:
+          description: Internal Server Error
+          content: {}
+      security:
+      - OAuth2: []
+        ApiKey: []
+        Bearer: []
+components:
+  schemas:
+    Location:
+      type: object
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+        geojson:
+          type: object
+          properties: {}
+        locations:
+          type: array
+          items:
+            type: string
+        published:
+          type: boolean
+          default: false
+        organization:
+          type: string
+        publicResource:
+          type: boolean
+          default: false
+        featured:
+          type: boolean
+          default: false
+        version:
+          type: number
+      xml:
+        name: Location
+    Metric:
+      type: object
+      properties:
+        slug:
+          type: string
+        metric:
+          type: object
+          properties: {}
+      xml:
+        name: Metric
+    Widget:
+      type: object
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: array
+          items:
+            type: string
+        config:
+          type: object
+          properties: {}
+        published:
+          type: boolean
+          default: false
+        organization:
+          type: string
+        metrics:
+          type: array
+          items:
+            type: string
+        layers:
+          type: array
+          items:
+            type: string
+        version:
+          type: number
+      xml:
+        name: Widget
+    Layer:
+      type: object
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum:
+          - raster
+          - vector
+          - geojson
+          - group
+          - video
+        provider:
+          type: string
+          enum:
+          - cartodb
+          - gee
+          - mapbox
+        category:
+          type: array
+          items:
+            type: string
+        config:
+          type: object
+          properties: {}
+        published:
+          type: boolean
+          default: false
+        organization:
+          type: string
+        references:
+          type: array
+          items:
+            type: string
+        version:
+          type: number
+      xml:
+        name: Layer
+    Dashboard:
+      type: object
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        published:
+          type: boolean
+          default: false
+        organization:
+          type: string
+        layers:
+          type: array
+          items:
+            type: string
+        widgets:
+          type: array
+          items:
+            type: string
+        version:
+          type: number
+      xml:
+        name: Dashboard
+    User:
+      type: object
+      properties:
+        email:
+          type: string
+        groups:
+          type: array
+          items:
+            type: string
+      xml:
+        name: User
+    UserProfile:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+      xml:
+        name: UserProfile
+    UserEmail:
+      type: object
+      properties:
+        email:
+          type: string
+      xml:
+        name: UserEmail
+    Organization:
+      type: object
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        owners:
+          type: array
+          items:
+            type: string
+      xml:
+        name: Organization
+    Operation:
+      type: object
+      properties:
+        operationId:
+          type: string
+      xml:
+        name: Operation
+    GETall200meta:
+      type: object
+      properties:
+        results:
+          type: number
+        pagination:
+          type: object
+          properties:
+            total:
+              type: number
+            size:
+              type: number
+            page:
+              type: number
+        filters:
+          type: array
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              value:
+                type: string
+              count:
+                type: number
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: <injected>
+          scopes:
+            email: email
+            profile: profile
+            openid: openid
+    ApiKey:
+      type: apiKey
+      name: ApiKey
+      in: header
+    Bearer:
+      type: apiKey
+      name: Authorization
+      in: header
