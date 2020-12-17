@@ -57,6 +57,8 @@ The following environment variables are required by the application. For more de
 | AUTH0_DOMAIN                  | Auth0 Domain URL.                                                                |
 | AUTH0_EXTENSION_URL           | Auth0 API access URL                                                             |
 | AUTH0_APPLICATION_CLIENT_ID   | Auth0 Application Client ID                                                      |
+| AUTH0_AUDIENCE                | Auth0 Audience                                                                   |
+| API_URL                       | Application hostname as URL                                                      |
 | PUBLIC_ORG                    | The name of the public organzation (Auth0)                                       |
 
 The required environment variables are also described in [.env.sample](.env.sample).
@@ -79,7 +81,7 @@ For more details, see: https://www.serverless.com/framework/docs/providers/aws/g
 Start required services. 
 
 ```bash
-$ docker-compose -f docker-compose.yml up
+$ ./support/start-docker-services.sh
 ```
 
 Start the lambda functions locally.
@@ -110,4 +112,5 @@ OpenAPI Specification for all available endpoints can be found at: `/services/ap
 
 ## Docs
 - [Bootstrapping groups, roles & permissions.](docs/bootstrap-groups-roles-permissions.md)
-- [Load fixture data.](docs/bootstrap-fixture-data.md)
+- [Data management.](docs/bootstrap-data.md)
+- [CLI](docs/cli.md)

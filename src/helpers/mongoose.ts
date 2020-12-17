@@ -34,7 +34,7 @@ export const MongoError = makeError('ConnectionError');
 
 export type QueryFilterOperators = '==' | '!=' | '>' | '<' | '>=' | '<=' | 'in' | 'nin' | '?';
 
-type BaseMongooseQueryFilter = { key: string; op: QueryFilterOperators; value: string | string[] };
+type BaseMongooseQueryFilter = { key: string; op: QueryFilterOperators; value: string | string[] | boolean };
 
 export type MongooseQueryFilter = BaseMongooseQueryFilter | BaseMongooseQueryFilter[];
 
@@ -252,9 +252,14 @@ export class MongooseQueryParser {
       return acc;
     }, {});
 
-    logger.debug(`resolved query: ${JSON.stringify(queryCond)}`);
+    const queryWrapper =
+      '$or' in queryCond
+        ? { $and: Object.keys(queryCond).reduce((a, c) => a.concat({ [c]: queryCond[c] }), []) }
+        : queryCond;
 
-    return queryCond;
+    logger.debug(`resolved query: ${JSON.stringify(queryWrapper)}`);
+
+    return queryWrapper;
   }
 
   /**
@@ -410,14 +415,14 @@ export class MongooseQueryParser {
 
   private parseFilterQueryOperators = (
     op: string,
-    value: string | string[],
+    value: string | string[] | boolean | boolean[],
     sep: string = ';'
-  ): [string, string | string[] | boolean] => {
+  ): [string, string | string[] | boolean | boolean[]] => {
     if (op === '==') {
       // special case for multiple equalities;
       if (Array.isArray(value)) {
         return ['$in', value];
-      } else if (value.split(sep).length > 1) {
+      } else if (isString(value) && value.split(sep).length > 1) {
         return ['$in', value.split(sep)];
       }
       return ['$eq', value];
@@ -425,7 +430,7 @@ export class MongooseQueryParser {
       // special case for multiple inequalities;
       if (Array.isArray(value)) {
         return ['$nin', value];
-      } else if (value.split(sep).length > 1) {
+      } else if (isString(value) && value.split(sep).length > 1) {
         return ['$nin', value.split(sep)];
       }
       return ['$ne', value];
@@ -439,12 +444,12 @@ export class MongooseQueryParser {
       return ['$lte', value];
     } else if (op === 'in') {
       if (!Array.isArray(value)) {
-        return ['$in', value.split(sep)];
+        return ['$in', isString(value) ? value.split(sep) : [value]];
       }
       return ['$in', value];
     } else if (op === 'nin') {
       if (!Array.isArray(value)) {
-        return ['$nin', value.split(sep)];
+        return ['$nin', isString(value) ? value.split(sep) : [value]];
       }
       return ['$nin', value];
     } else if (op === '?') {

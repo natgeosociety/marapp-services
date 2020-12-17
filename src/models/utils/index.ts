@@ -18,7 +18,7 @@
 */
 
 import { eachDeep } from 'deepdash/standalone';
-import { get, isEmpty, isFunction, isNil, omit, set } from 'lodash';
+import { get, isEmpty, isFunction, isNil, omit, orderBy, set } from 'lodash';
 import { Document, Model, Query } from 'mongoose';
 import { Readable } from 'stream';
 
@@ -47,11 +47,14 @@ export const save = async <T extends Document, L extends keyof T>(
   data: T,
   mongooseOptions: QueryOptions = {},
   uniqueIndexFields: L[] = [],
-  omitPaths: string[] = ['id', 'createdAt', 'updatedAt'],
+  omitPaths: string[] = ['createdAt', 'updatedAt'],
   raiseError: boolean = true
 ): Promise<T> => {
   const obj = omit(data, omitPaths);
   const doc = new model(obj);
+  if (obj.id) {
+    doc._id = obj.id;
+  }
   try {
     await doc.save();
     return getById(model, doc.id, mongooseOptions, uniqueIndexFields);
@@ -310,7 +313,7 @@ export const aggregateCount = async <T extends Document, L extends keyof T>(
   query: object,
   field: string
 ): Promise<AggCount[]> => {
-  const result = await model
+  const response = await model
     .aggregate([
       // filter docs to match the specified condition(s);
       { $match: omit(query, [field]) },
@@ -338,12 +341,13 @@ export const aggregateCount = async <T extends Document, L extends keyof T>(
   if (options && options.length) {
     // add the missing values with count 0;
     const nulls = options
-      .filter((v: string) => !result.find((item) => item._id === v))
+      .filter((v: string) => !response.find((item) => item._id === v))
       .map((v: string) => ({ _id: v, count: 0 }));
-    result.push(...nulls);
+    response.push(...nulls);
   }
 
-  return result.map((item) => ({ key: field, value: item._id, count: item.count })); // "ES like"
+  const countAgg: AggCount[] = response.map((e) => ({ key: field, value: e._id, count: e.count })); // "ES like"
+  return orderBy(countAgg, ['value'], ['asc']);
 };
 
 /**

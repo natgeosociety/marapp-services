@@ -190,7 +190,7 @@ export class MembershipService implements MembershipServiceSpec {
 
       logger.debug('[createWorkspace] adding initial group owners');
       const ownerGroupId = groupsMap[WorkspaceRoleEnum.OWNER];
-      await this.authzService.addGroupMembers(ownerGroupId, ownerIds);
+      await this.authzService.addGroupMembers(main._id, ownerGroupId, ownerIds);
     } catch (err) {
       logger.error(err);
     }

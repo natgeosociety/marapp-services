@@ -163,7 +163,6 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
       }
 
       let success, code;
-
       try {
         // remove from all groups;
         await forEachAsync(availableGroups, async (group) => {
@@ -175,7 +174,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
           );
 
           return Promise.all(
-            availableNestedGroups.map((group: any) => authzService.deleteGroupMembers(group._id, [userId]))
+            availableNestedGroups.map((group: any) => authzService.deleteGroupMembers(groupId, group._id, [userId]))
           );
         });
 
@@ -322,11 +321,11 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
       const userId = req.identity.sub;
       const groupMembership = await authzService.calculateGroupMemberships(userId);
 
-      const errors = [];
-      const groupsToLeave = [];
+      const errors: { code: number; detail: string }[] = [];
+      const groupsToLeave: { [key: string]: any } = {};
 
-      await forEachAsync(organizations, async (organization) => {
-        const groupId = authzService.findPrimaryGroupId(groupMembership, organization);
+      await forEachAsync(organizations, async (org) => {
+        const groupId = authzService.findPrimaryGroupId(groupMembership, org);
 
         const nestedGroups = await authzService.getNestedGroups(groupId);
         const availableNestedGroups = nestedGroups.filter((group: any) =>
@@ -336,10 +335,10 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
         if (availableNestedGroups.find((group: any) => group.name.endsWith('OWNER') && group.members.length === 1)) {
           errors.push({
             code: 400,
-            detail: `You can't leave ${organization} because you're the only owner of it.`,
+            detail: `You can't leave ${org} because you're the only owner of it.`,
           });
         } else {
-          groupsToLeave.push(...availableNestedGroups);
+          groupsToLeave[groupId] = availableNestedGroups;
         }
       });
 
@@ -351,9 +350,14 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
         return res.status(code).send(response);
       }
 
-      await Promise.all(groupsToLeave.map((group: any) => authzService.deleteGroupMembers(group._id, [userId])));
-
-      const success = true;
+      let success = true;
+      try {
+        await forEachAsync(Object.entries(groupsToLeave), async ([groupId, nested]) =>
+          forEachAsync(nested, async (group: any) => authzService.deleteGroupMembers(groupId, group._id, [userId]))
+        );
+      } catch (err) {
+        success = false;
+      }
 
       const code = 200;
       const response = createStatusSerializer().serialize({ success });
@@ -378,7 +382,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       query('page[size]').optional().isInt({ min: 0 }),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.readUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
@@ -441,7 +445,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
   router.get(
     `${path}/groups`,
     validate([query('include').optional().isString().trim(), query('group').optional().isString().trim()]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.readUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
@@ -475,7 +479,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       query('include').optional().isString().trim(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.readUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
@@ -513,7 +517,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       query('include').optional().isString().trim(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.writeUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
@@ -544,11 +548,11 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       const newUserId = get(newUser, 'user_id');
 
       await forEachAsync(nestedGroups, async (group: any) => {
-        const groupId = get(group, '_id');
+        const nestedId = get(group, '_id');
         const members = get(group, 'members', []);
 
-        if (!members.includes(newUserId) && groups.includes(groupId)) {
-          return authzService.addGroupMembers(groupId, [newUserId]); // add to group;
+        if (!members.includes(newUserId) && groups.includes(nestedId)) {
+          return authzService.addGroupMembers(groupId, nestedId, [newUserId]); // add to group;
         }
       });
 
@@ -583,7 +587,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       body('groups.*').isString().trim().notEmpty(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.writeUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
@@ -650,18 +654,18 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       }
 
       await forEachAsync(nestedGroups, async (group: any) => {
-        const groupId = get(group, '_id');
+        const nestedId = get(group, '_id');
         const members = get(group, 'members', []);
 
-        const toAdd = userIds.filter((userId) => !members.includes(userId) && groups.includes(groupId));
-        const toRemove = userIds.filter((userId) => members.includes(userId) && !groups.includes(groupId));
+        const toAdd = userIds.filter((userId) => !members.includes(userId) && groups.includes(nestedId));
+        const toRemove = userIds.filter((userId) => members.includes(userId) && !groups.includes(nestedId));
 
         const tasks = [];
         if (toAdd.length) {
-          tasks.push(authzService.addGroupMembers(groupId, toAdd)); // add to group;
+          tasks.push(authzService.addGroupMembers(groupId, nestedId, toAdd)); // add to group;
         }
         if (toRemove.length) {
-          tasks.push(authzService.deleteGroupMembers(groupId, toRemove)); // remove from group;
+          tasks.push(authzService.deleteGroupMembers(groupId, nestedId, toRemove)); // remove from group;
         }
         return Promise.all(tasks);
       });
@@ -682,7 +686,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       body('groups.*').isString().trim().notEmpty(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.writeUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
@@ -721,14 +725,14 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       }
 
       const responses = await forEachAsync(nestedGroups, async (group: any) => {
-        const groupId = get(group, '_id');
+        const nestedId = get(group, '_id');
         const members = get(group, 'members', []);
 
-        if (!members.includes(userId) && groups.includes(groupId)) {
-          return authzService.addGroupMembers(groupId, [userId]); // add to group;
+        if (!members.includes(userId) && groups.includes(nestedId)) {
+          return authzService.addGroupMembers(groupId, nestedId, [userId]); // add to group;
         }
-        if (members.includes(userId) && !groups.includes(groupId)) {
-          return authzService.deleteGroupMembers(groupId, [userId]); // remove from group;
+        if (members.includes(userId) && !groups.includes(nestedId)) {
+          return authzService.deleteGroupMembers(groupId, nestedId, [userId]); // remove from group;
         }
       });
       const success = !!responses;
@@ -744,7 +748,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
   router.delete(
     `${path}/:email`,
     validate([param('email').trim().isEmail(), query('group').optional().isString().trim()]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.writeUsersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
@@ -780,8 +784,8 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         const members = get(group, 'members', []);
 
         if (members.includes(userId)) {
-          const groupId = get(group, '_id');
-          return authzService.deleteGroupMembers(groupId, [userId]);
+          const nestedId = get(group, '_id');
+          return authzService.deleteGroupMembers(groupId, nestedId, [userId]);
         }
       });
       const success = !!responses;

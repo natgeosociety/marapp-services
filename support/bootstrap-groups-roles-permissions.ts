@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node --files
+#!/usr/bin/env ./node_modules/.bin/ts-node --files
 
 /*
   Copyright 2018-2020 National Geographic Society

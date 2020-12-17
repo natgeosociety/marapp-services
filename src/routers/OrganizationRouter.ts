@@ -52,14 +52,14 @@ const getRouter = (basePath: string = '/', routePath: string = '/organizations')
 
   const parser = new MongooseQueryParser();
   const queryFilters: MongooseQueryFilter[] = [
-    { key: 'published', op: '==', value: String(true) },
-    { key: '*.published', op: '==', value: String(true) },
+    { key: 'published', op: '==', value: true },
+    { key: '*.published', op: '==', value: true },
   ];
 
   router.get(
     `${path}/stats`,
     validate([query('group').isString().trim()]),
-    guard.enforcePrimaryGroup(false, true),
+    guard.enforcePrimaryGroup({ multiple: true }),
     AuthzGuards.readLocationsGuard,
     AuthzGuards.readLayersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -67,7 +67,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/organizations')
         { model: LocationModel, query: queryFilters },
         {
           model: LayerModel,
-          query: queryFilters.concat([{ key: 'primary', op: '==', value: String(true) }]),
+          query: queryFilters.concat([{ key: 'primary', op: '==', value: true }]),
         },
       ];
 
@@ -104,7 +104,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
   router.get(
     `${path}/stats`,
     validate([query('include').optional().isString().trim(), query('group').isString().trim()]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.readStatsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const authzService: AuthzServiceSpec = req.app.locals.authzService;
@@ -305,22 +305,22 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
           return;
         }
 
-        const nestedGroups = await authzService.getNestedGroups(id, ['OWNER']);
+        const nestedGroups = await authzService.getNestedGroups(group._id, ['OWNER']);
         const memberIds = get(nestedGroups[0], 'members', []);
-        const groupId = nestedGroups[0]._id;
+        const nestedId = nestedGroups[0]._id;
 
         const addUserIds = ownerIds.filter((userId) => !memberIds.includes(userId));
         const removeUserIds = memberIds.filter((userId) => !ownerIds.includes(userId));
 
         if (addUserIds.length) {
-          await authzService.addGroupMembers(groupId, addUserIds);
+          await authzService.addGroupMembers(group._id, nestedId, addUserIds);
         }
         if (removeUserIds.length) {
-          await authzService.deleteGroupMembers(groupId, removeUserIds);
+          await authzService.deleteGroupMembers(group._id, nestedId, removeUserIds);
         }
       }
       const description = name && name.trim() ? name.trim() : group?.description;
-      const updated = await authzService.updateGroup(id, group.name, description);
+      const updated = await authzService.updateGroup(group._id, group.name, description);
 
       const data = {
         id: updated?._id,

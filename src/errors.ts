@@ -33,6 +33,7 @@ export class ExposedError extends Error {
 }
 
 export const DocumentError = makeError('DocumentError', ExposedError);
+export const DocumentVersionError = makeError('DocumentVersionError', ExposedError);
 export const RecordNotFound = makeError('RecordNotFound', ExposedError);
 export const AlreadyExistsError = makeError('AlreadyExistsError', ExposedError);
 export const ParameterRequiredError = makeError('ParameterRequiredError', ExposedError);
@@ -41,7 +42,6 @@ export const TaskError = makeError('TaskError', ExposedError);
 export const UnauthorizedError = makeError('UnauthorizedError', ExposedError);
 export const InvalidParameterError = makeError('InvalidParameterError', ExposedError);
 export const UserNotFoundError = makeError('UserNotFoundError', ExposedError);
-export const NotImplementedError = makeError('NotImplementedError', ExposedError);
 export const TileGenerationError = makeError('TileGenerationError', ExposedError);
 export const PasswordStrengthError = makeError('PasswordStrengthError', ExposedError);
 

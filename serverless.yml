@@ -36,6 +36,8 @@ provider:
     AUTH0_CLIENT_SECRET: ${env:AUTH0_CLIENT_SECRET}
     AUTH0_DOMAIN: ${env:AUTH0_DOMAIN}
     AUTH0_EXTENSION_URL: ${env:AUTH0_EXTENSION_URL}
+    AUTH0_AUDIENCE: ${env:AUTH0_AUDIENCE}
+    API_URL: ${env:API_URL}
     S3_ASSETS_BUCKET: ${self:custom.stageEnvironment.assetsBucket}
     S3_ASSETS_PATH_PREFIX: ${self:custom.s3AssetsPathPrefix}
     SNS_TOPIC_MANAGER_ARN: ${env:SNS_TOPIC_MANAGER_ARN}
@@ -271,6 +273,17 @@ functions:
           cors: true
       - http:
           path: services/api/v1/tiles/{any+}
+          method: any
+          cors: true
+  export:
+    handler: src/handlers/ExportHandler.managementHandler
+    events:
+      - http:
+          path: services/api/v1/export
+          method: any
+          cors: true
+      - http:
+          path: services/api/v1/export/{any+}
           method: any
           cors: true
   swagger:

@@ -17,12 +17,15 @@
   specific language governing permissions and limitations under the License.
 */
 
-import { requireEnv } from '../helpers/util';
+import { Handler } from 'aws-lambda';
 
-export const AUTH0_CLIENT_ID = requireEnv('AUTH0_CLIENT_ID');
-export const AUTH0_CLIENT_SECRET = requireEnv('AUTH0_CLIENT_SECRET');
-export const AUTH0_DOMAIN = requireEnv('AUTH0_DOMAIN');
-export const AUTH0_EXTENSION_URL = requireEnv('AUTH0_EXTENSION_URL');
-export const AUTH0_APPLICATION_CLIENT_ID = requireEnv('AUTH0_APPLICATION_CLIENT_ID');
-export const AUTH0_AUDIENCE = requireEnv('AUTH0_AUDIENCE');
-export const AUTH0_REALM = requireEnv('AUTH0_REALM', 'Username-Password-Authentication');
+import { API_BASE } from '../config';
+import { getLogger } from '../logging';
+import { eeContextHttp } from '../middlewares/context';
+import ExportRouter from '../routers/ExportRouter';
+
+import { authHttpHandler } from '.';
+
+const logger = getLogger();
+
+export const managementHandler: Handler = authHttpHandler(eeContextHttp, ExportRouter.getRouter(API_BASE));

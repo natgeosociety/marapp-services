@@ -23,7 +23,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getLogger } from '../logging';
 
-import { generateSlugMw, schemaOptions, versionIncOnUpdateMw } from './middlewares';
+import { generateSlugMw, optimisticVersionControlOnUpdateMw, schemaOptions, versionIncOnUpdateMw } from './middlewares';
 import { checkRefLinksOnUpdateMw, removeRefLinksOnDeleteMw } from './middlewares/layers';
 import esPlugin, { IESPlugin } from './plugins/elasticsearch';
 import slugifyPlugin, { ISlugifyPlugin } from './plugins/slugify';
@@ -162,8 +162,9 @@ LayerSchema.plugin(slugifyPlugin, { uniqueField: 'slug', separator: '-' });
 
 // Middlewares;
 LayerSchema.pre('validate', generateSlugMw('Layer'));
+LayerSchema.pre('save', optimisticVersionControlOnUpdateMw('Layer'));
 LayerSchema.pre('save', checkRefLinksOnUpdateMw());
-LayerSchema.pre('save', versionIncOnUpdateMw());
+LayerSchema.pre('save', versionIncOnUpdateMw('Layer'));
 LayerSchema.post('remove', removeRefLinksOnDeleteMw());
 
 interface ILayerModel extends Model<LayerDocument>, IESPlugin, ISlugifyPlugin {}

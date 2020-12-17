@@ -23,6 +23,7 @@ export const NODE_ENV = requireEnv('NODE_ENV', 'development');
 export const LOG_LEVEL = requireEnv('LOG_LEVEL', 'debug');
 export const DEBUG = requireEnv('DEBUG', String(false));
 
+export const API_URL = requireEnv('API_URL', 'http://localhost:4000');
 export const API_BASE = requireEnv('API_BASE', '/services/api/v1');
 export const DEFAULT_CONTENT_TYPE = requireEnv('DEFAULT_CONTENT_TYPE', 'application/vnd.api+json');
 export const MAX_RESULT_WINDOW = requireEnv('MAX_RESULT_WINDOW', String(100));
@@ -30,7 +31,8 @@ export const MAX_PAYLOAD_SIZE = requireEnv('MAX_PAYLOAD_SIZE', '15mb'); // Mongo
 export const KEEP_METRIC_VERSIONS = requireEnv('KEEP_METRIC_VERSIONS', String(false));
 export const API_MAP_TILES_TTL = requireEnv('API_MAP_TILES_TTL', String(31536000)); // (one year);
 export const AWS_REGION = requireEnv('AWS_REGION', 'us-east-1');
-export const REDIS_LOCK_TTL = requireEnv('REDIS_LOCK_TTL', String(30 * 1000));
+export const REDIS_CACHE_TTL = requireEnv('REDIS_CACHE_TTL', String(60 * 10)); // (10 minutes);
+export const REDIS_LOCK_TTL = requireEnv('REDIS_LOCK_TTL', String(30 * 1000)); // (30 seconds);
 export const JWT_GROUP_KEY = requireEnv('JWT_GROUP_KEY', 'https://marapp.org/groups');
 export const JWT_PERMISSION_KEY = requireEnv('JWT_PERMISSION_KEY', 'https://marapp.org/permissions');
 export const S3_ENDPOINT_URL = requireEnv('S3_ENDPOINT_URL', 'https://s3.us-east-1.amazonaws.com');

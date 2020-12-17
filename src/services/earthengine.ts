@@ -21,11 +21,108 @@ import ee from '@google/earthengine';
 import makeError from 'make-error';
 
 import { GOOGLE_SERVICE_ACCOUNT } from '../config';
+import { ExposedError } from '../errors';
 import { getLogger } from '../logging';
 
+import { geojsonToGeometryCollection } from './geospatial';
+
 export const EarthEngineError = makeError('EarthEngineError');
+export const ExportError = makeError('ExportError', ExposedError);
 
 const logger = getLogger();
+
+export enum ExportType {
+  GEOTIFF = 'geotiff',
+  THUMBNAIL = 'thumbnail',
+}
+
+/**
+ * Get a Download URL for the image, which always downloads a zipped GeoTIFF.
+ * @param assetId
+ * @param geojson
+ */
+export const exportImageToDownloadURL = async (assetId: string, geojson: any): Promise<string> => {
+  const eeImage = ee.Image(assetId);
+
+  const geometryCollection = geojsonToGeometryCollection(geojson);
+  const geometry = ee.Geometry(geometryCollection);
+
+  logger.debug('[exportImageToDownloadURL] exporting assetId: %s', assetId);
+
+  const opts = {
+    region: geometry,
+    dimensions: 1280,
+  };
+  // Export URL to download the specified image.
+  return new Promise((resolve, reject) =>
+    eeImage.getDownloadURL(opts, (downloadId, err) => {
+      if (downloadId) {
+        resolve(downloadId);
+      }
+      if (err) {
+        reject(err);
+      }
+    })
+  )
+    .then((downloadURL: string) => {
+      logger.debug('[exportImageToDownloadURL] exported URL for %s: %s', assetId, downloadURL);
+      return downloadURL;
+    })
+    .catch((err) => {
+      logger.error(err);
+      throw new ExportError('Could not export region for image', 413);
+    });
+};
+
+/**
+ * Get a thumbnail URL for this image.
+ * @param assetId
+ * @param geojson
+ * @param sldStyle
+ * @param format
+ * @return
+ */
+export const exportImageToThumbnailURL = async (
+  assetId: string,
+  geojson: any,
+  sldStyle: string = null,
+  format: 'png' | 'jpg' = 'jpg'
+): Promise<string> => {
+  let eeImage = ee.Image(assetId);
+  if (sldStyle) {
+    eeImage = eeImage.sldStyle(sldStyle); // apply styled layer descriptor (SLD);
+  }
+  const geometryCollection = geojsonToGeometryCollection(geojson);
+  const geometry = ee.Geometry(geometryCollection);
+
+  logger.debug('[exportImageToThumbnailURL] exporting assetId: %s', assetId);
+
+  const opts = {
+    image: eeImage,
+    format: format,
+    region: geometry,
+    dimensions: 1280,
+  };
+  // Export URL to download the specified image.
+  return new Promise((resolve, reject) =>
+    eeImage.getThumbURL(opts, (thumbId, err) => {
+      if (thumbId) {
+        resolve(thumbId);
+      }
+      if (err) {
+        reject(err);
+      }
+    })
+  )
+    .then((thumbUrl: string) => {
+      logger.debug('[exportImageToThumbnailURL] exported URL for %s: %s', assetId, thumbUrl);
+      return thumbUrl;
+    })
+    .catch((err) => {
+      logger.error(err);
+      throw new ExportError('Could not generate thumbnail for image', 413);
+    });
+};
 
 /**
  * Initialize the EE library.

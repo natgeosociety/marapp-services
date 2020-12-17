@@ -46,8 +46,8 @@ const getRouter = (basePath: string = '/', routePath: string = '/layers') => {
   const path = urljoin(basePath, routePath);
 
   const queryFilters: MongooseQueryFilter[] = [
-    { key: 'published', op: '==', value: String(true) },
-    { key: '*.published', op: '==', value: String(true) },
+    { key: 'published', op: '==', value: true },
+    { key: '*.published', op: '==', value: true },
   ];
   const parser = new MongooseQueryParser();
 
@@ -64,7 +64,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/layers') => {
       query('page[cursor]').optional().isString().trim(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(false, true),
+    guard.enforcePrimaryGroup({ multiple: true }),
     AuthzGuards.readLayersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const search = <string>req.query.search;
@@ -124,7 +124,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/layers') => {
       query('sort').optional().isString().trim(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(false, true),
+    guard.enforcePrimaryGroup({ multiple: true }),
     AuthzGuards.readLayersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const id = req.params.id;
@@ -231,7 +231,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       query('type').trim().isIn(['counter', 'shortid']),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.readLocationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const keyword = <string>req.query.keyword;
@@ -286,6 +286,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
   router.post(
     path,
     validate([
+      body('id').optional().isUUID(4).trim().notEmpty(),
       body('slug').optional().isString().trim().notEmpty(),
       body('name').isString().trim().notEmpty(),
       body('description').optional().isString().trim(),
@@ -302,7 +303,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       query('select').optional().isString().trim(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.writeLayersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const include = queryParamGroup(<string>req.query.include);
@@ -337,11 +338,12 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       body('organization').optional().isString().trim(),
       body('references').optional({ nullable: true }).isArray(),
       body('references.*').optional().isString().trim().notEmpty(),
+      body('version').optional().isNumeric(),
       query('include').optional().isString().trim(),
       query('select').optional().isString().trim(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.writeLayersGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const id = req.params.id;

@@ -46,7 +46,7 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
   const path = urljoin(basePath, routePath);
 
   const parser = new MongooseQueryParser();
-  const queryFilters: MongooseQueryFilter[] = [{ key: 'published', op: '==', value: String(true) }];
+  const queryFilters: MongooseQueryFilter[] = [{ key: 'published', op: '==', value: true }];
 
   router.get(
     path,
@@ -62,7 +62,7 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
       query('group').optional().isString().trim(),
       query('public').optional().isBoolean(),
     ]),
-    guard.enforcePrimaryGroup(false, true),
+    guard.enforcePrimaryGroup({ multiple: true }),
     AuthzGuards.readLocationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const search = <string>req.query.search;
@@ -70,7 +70,7 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
 
       let query: MongooseQueryFilter[] = [{ key: 'organization', op: 'in', value: req.groups }];
       if (boolean(req.query.public)) {
-        query = [query.concat([{ key: 'publicResource', op: '==', value: String(true) }])] as MongooseQueryFilter[];
+        query = [query.concat([{ key: 'publicResource', op: '==', value: true }])] as MongooseQueryFilter[];
       }
       const predefined = queryFilters.concat(query);
       const queryOptions = parser.parse(req.query, { predefined }, ['search']);
@@ -126,7 +126,7 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
       query('sort').optional().isString().trim(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(false, true),
+    guard.enforcePrimaryGroup({ multiple: true }),
     AuthzGuards.readLocationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const id = req.params.id;
@@ -165,6 +165,7 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
   router.post(
     path,
     validate([
+      body('id').optional().isUUID(4).trim().notEmpty(),
       body('slug').optional({ nullable: true }).isString().trim().notEmpty(),
       body('name').isString().trim().notEmpty(),
       body('description').optional().isString().trim(),
@@ -179,7 +180,7 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
       query('select').optional().isString().trim(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.writeCollectionsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const include = queryParamGroup(<string>req.query.include);
@@ -216,11 +217,12 @@ const getRouter = (basePath: string = API_BASE, routePath: string = '/locations'
       body('locations').optional().isArray(),
       body('locations.*').optional().isString().trim().notEmpty(),
       body('organization').optional().isString().trim(),
+      body('version').optional().isNumeric(),
       query('include').optional().isString().trim(),
       query('select').optional().isString().trim(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.writeCollectionsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const id = req.params.id;
@@ -305,7 +307,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
 
       let query: MongooseQueryFilter[] = [{ key: 'organization', op: 'in', value: req.groups }];
       if (boolean(req.query.public)) {
-        query = [query.concat([{ key: 'publicResource', op: '==', value: String(true) }])] as MongooseQueryFilter[];
+        query = [query.concat([{ key: 'publicResource', op: '==', value: true }])] as MongooseQueryFilter[];
       }
       const predefined = queryFilters.concat(query);
       const queryOptions = parser.parse(req.query, { predefined }, ['search']);
@@ -359,7 +361,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       query('type').trim().isIn(['counter', 'shortid']),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.readLocationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const keyword = <string>req.query.keyword;
@@ -428,6 +430,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
   router.post(
     path,
     validate([
+      body('id').optional().isUUID(4).trim().notEmpty(),
       body('slug').optional().isString().trim().notEmpty(),
       body('name').isString().trim().notEmpty(),
       body('description').optional().isString().trim(),
@@ -441,7 +444,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       query('select').optional().isString().trim(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.writeLocationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const include = queryParamGroup(<string>req.query.include);
@@ -473,11 +476,12 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       body('organization').optional().isString().trim(),
       body('publicResource').optional().isBoolean(),
       body('featured').optional().isBoolean(),
+      body('version').optional().isNumeric(),
       query('include').optional().isString().trim(),
       query('select').optional().isString().trim(),
       query('group').optional().isString().trim(),
     ]),
-    guard.enforcePrimaryGroup(true),
+    guard.enforcePrimaryGroup({ serviceAccounts: true }),
     AuthzGuards.writeLocationsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const id = req.params.id;
