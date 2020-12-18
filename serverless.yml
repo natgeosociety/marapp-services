@@ -95,6 +95,8 @@ custom:
 
 package:
   individually: true
+  include:
+    - src/**/*.json
 
 functions:
   locations:

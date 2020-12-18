@@ -19,7 +19,7 @@
 
 const path = require('path');
 const serverlessWebpack = require('serverless-webpack');
-const TerserPlugin = require('terser-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 module.exports = {
@@ -76,18 +76,6 @@ module.exports = {
     ],
     // suppress "Critical dependency: the request of a dependency is an expression"
     exprContextCritical: false,
-  },
-  optimization: {
-    minimize: true,
-    minimizer: [new TerserPlugin({
-      terserOptions: {
-        format: {
-          comments: false,
-        },
-      },
-      extractComments: false,
-      parallel: true,
-    })],
   },
   plugins: [
     new ForkTsCheckerWebpackPlugin()

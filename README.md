@@ -108,8 +108,6 @@ Create a local `.env` file based on [.env.sample](.env.sample), add the required
 ```shell script
 npm run deploy:serverless -- --stage <env>
 ```
-Note: You might need to increase the Node.js memory allocation for the execution. `export NODE_OPTIONS="--max_old_space_size=8192"`
-
 OpenAPI Specification for all available endpoints can be found at: `/services/api/v1/docs/`
 
 ## Docs
