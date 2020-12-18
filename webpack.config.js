@@ -39,7 +39,8 @@ module.exports = {
   target: 'node',
   externals: [
     {
-      formidable: 'commonjs formidable'
+      formidable: 'commonjs formidable',
+      'swagger-ui-express': 'commonjs swagger-ui-express',
     },
   ],
   module: {
