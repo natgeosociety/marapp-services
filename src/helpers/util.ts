@@ -18,7 +18,6 @@
 */
 
 import { get } from 'lodash';
-import trim from 'trim';
 
 import { ParameterRequiredError } from '../errors';
 
@@ -90,7 +89,7 @@ export const convertHrtime = (hrtime) => {
 // Email Regex (RFC 5322 Official Standard). See: https://emailregex.com/
 const emailRegExp = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
-export const isEmail = (str): boolean => {
-  const result = emailRegExp.exec(trim(str.toLowerCase()));
+export const isEmail = (str: string): boolean => {
+  const result = emailRegExp.exec(str.toLowerCase().trim());
   return !!result && result[0] !== null;
 };
