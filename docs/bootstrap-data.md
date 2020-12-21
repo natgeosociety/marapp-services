@@ -21,13 +21,15 @@ Management endpoints are available for all data model types.
 ```
 {
     id: string              (optional UUIDV4, auto-generated)
-    slug: string            (required, unique)
     name: string            (required)
+    slug: string            (optional, auto-generated from name)
     description: string     (optional)
-    type: string            (required, choices: Continent|Country|Jurisdiction|Biome|Protected Area|Species Area)
+    type: string            (required, choices: Continent|Country|Jurisdiction|Biome|Protected Area|Species Area|Collection)
     geojson: object         (required, see: https://tools.ietf.org/html/rfc7946)
-    published: boolean      (required)
-    featured: boolean       (required)
+    published: boolean      (optional, defaults to false)
+    featured: boolean       (optional, defaults to false)
+    publicResource: boolean (optional, defaults to false)
+    locations: string[]     (optional, collection member references)
 }
 ```
 
