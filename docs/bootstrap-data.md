@@ -44,6 +44,7 @@ curl -X POST '<HOSTNAME>/services/api/v1/management/locations?group=<GROUP>' \
 - HOSTNAME: API hostname.
 - TOKEN: Bearer token
 - GROUP: Workspace to assign the content.
+- TYPE: Asset type (location, layer). If not provided, defaults to location.
 
 Note: `ApiKey` authorization can be used instead of the Bearer token via `-H 'apiKey: <APIKEY>`
 
@@ -52,7 +53,7 @@ Note: `ApiKey` authorization can be used instead of the Bearer token via `-H 'ap
 Required format
 - same as above, but in JSONL format (see: http://jsonlines.org)
 ```
-$ cat example.jsonl | ./support/bootstrap-fixture-data.ts --apiKey <APIKEY> --organization <GROUP>
+$ cat example.jsonl | ./support/bootstrap-fixture-data.ts --apiKey <APIKEY> --organization <GROUP> --type <TYPE>
 ```
 
 # Adding Layer data
