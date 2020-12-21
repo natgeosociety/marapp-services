@@ -1,3 +1,145 @@
+# [1.12.0](https://github.com/natgeosociety/marapp-services/compare/v1.11.0...v1.12.0) (2020-12-17)
+
+
+### Bug Fixes
+
+* Change export response to download URL ([4e92f92](https://github.com/natgeosociety/marapp-services/commit/4e92f92d53850420fb7faf484a068c69fd88bb9b))
+* filtering on metrics endpoint ([28ab6af](https://github.com/natgeosociety/marapp-services/commit/28ab6af9264f56f359cda1988935d6aec8fc4a05))
+* invalidate primary group cache ([7e228c7](https://github.com/natgeosociety/marapp-services/commit/7e228c7a1eeed8d397d3065c51f5c0f88d8e7489))
+* leave organization endpoint ([b668b25](https://github.com/natgeosociety/marapp-services/commit/b668b2582fc2949e4aa878c328d9e3c87f753b75))
+* metric slugs check for primary group ([6948c25](https://github.com/natgeosociety/marapp-services/commit/6948c25d0a601f692ca45f815a4fb20ba8989841))
+* mongoose query wrapper [EP-3452] ([#98](https://github.com/natgeosociety/marapp-services/issues/98)) ([c806bf8](https://github.com/natgeosociety/marapp-services/commit/c806bf8cee73e737c1e2ed805725548d203cee3a))
+* redis cache TTL ([b569623](https://github.com/natgeosociety/marapp-services/commit/b56962380706f28dbe8db82f3af26e2b41c567d2))
+* set doc._id if specified ([7211782](https://github.com/natgeosociety/marapp-services/commit/7211782f1d542cd4783da8a4d90007872568e99b))
+* set ee export resolution ([61cca11](https://github.com/natgeosociety/marapp-services/commit/61cca11751a4db58fe40c69fb666347518637264))
+* Sort aggregation filter options [EP-3267] ([928f4e1](https://github.com/natgeosociety/marapp-services/commit/928f4e1f6db10c2c919f2fdf52125054173ef6a2))
+* support boolean conditionals ([d95d1bf](https://github.com/natgeosociety/marapp-services/commit/d95d1bfb7e95985444201882ab9ca0cc68de0fb2))
+* update package-lock.json ([599288e](https://github.com/natgeosociety/marapp-services/commit/599288eb4f5e42aeb2e60a3955aae2552552e33b))
+* validation for version field, support optimistic version control on all models ([688c3ea](https://github.com/natgeosociety/marapp-services/commit/688c3ea7f0fa05fa172a30b7461aa18dfa5c0d6f))
+
+
+### Features
+
+* allow owner to leave when others are available [EP-3255] ([#90](https://github.com/natgeosociety/marapp-services/issues/90)) ([3bc21ae](https://github.com/natgeosociety/marapp-services/commit/3bc21ae909a6063a29f0690b124ea26c8ee45df8))
+* APIs for downloading collections [EP-3002] ([ac3890d](https://github.com/natgeosociety/marapp-services/commit/ac3890d7125beabdc6189aa70cf6c2abe39bdc9d))
+* Cache Auth0 Authorization service ([e85a6dd](https://github.com/natgeosociety/marapp-services/commit/e85a6ddda7bd37557817cc8166c749f82a9e3bbd))
+* enforce UUIDv4 for client generated IDs ([a8d44ae](https://github.com/natgeosociety/marapp-services/commit/a8d44ae4bf308f57a1d06f6bacea26036ef77e6f))
+* handle optimistic concurrency control on update [EP-3175] ([6f534b8](https://github.com/natgeosociety/marapp-services/commit/6f534b85ee729d0d46e73d26dd560efad2a0ae45))
+* Raster clipping service [EP-3541] ([80462bc](https://github.com/natgeosociety/marapp-services/commit/80462bc744cc1cc506646b1b8a4cbd95ed07934c))
+* support client generated IDs ([af8315c](https://github.com/natgeosociety/marapp-services/commit/af8315c8e503edcfd121bed657cd6d0323fe556b))
+* support OAuth2 on Swagger [EP-3615] ([997a889](https://github.com/natgeosociety/marapp-services/commit/997a8895143d2153852c7a5af1f2b1d2917a9e20))
+
+
+### Reverts
+
+* Revert "fix: mongoose query wrapper [EP-3452] (#98)" (#99) ([cb55d1b](https://github.com/natgeosociety/marapp-services/commit/cb55d1bdd270c843f45e7c7acaecfbc23abcd595)), closes [#98](https://github.com/natgeosociety/marapp-services/issues/98) [#99](https://github.com/natgeosociety/marapp-services/issues/99)
+
+# [1.11.0](https://github.com/natgeosociety/marapp-services/compare/v1.10.2...v1.11.0) (2020-11-25)
+
+
+### Bug Fixes
+
+* allow storing "empty" data for public resource field ([ccfd1ee](https://github.com/natgeosociety/marapp-services/commit/ccfd1ee901d66aa16a68b12cb1801594e2464ceb))
+* filter global public resources for locations [EP-3452] ([e984905](https://github.com/natgeosociety/marapp-services/commit/e98490561e689ab46c9b5371f71fcee5c6041504))
+* re-generate slugname on null values ([41367e0](https://github.com/natgeosociety/marapp-services/commit/41367e07879abfb4d75eca9e105fda90087c0697))
+* update query condition ([b6b0e71](https://github.com/natgeosociety/marapp-services/commit/b6b0e71fb27f3a5eb8f456aecfe5489edf81b10b))
+* update user's name [EP-3434] ([#84](https://github.com/natgeosociety/marapp-services/issues/84)) ([74d19b5](https://github.com/natgeosociety/marapp-services/commit/74d19b56a1cda56d7d3ccf97eba129a7a816899a))
+
+
+### Features
+
+* allow owner to leave when others are available [EP-3255] ([#90](https://github.com/natgeosociety/marapp-services/issues/90)) ([#93](https://github.com/natgeosociety/marapp-services/issues/93)) ([1c021a7](https://github.com/natgeosociety/marapp-services/commit/1c021a7bc725e3dfda84033e3dfa763b2db8abdd))
+* consolidate collection & location types [EP-3400] ([e7ee570](https://github.com/natgeosociety/marapp-services/commit/e7ee570c6c4d435327534a51da2772d74198c365))
+* enforce optional fields based on condition ([#83](https://github.com/natgeosociety/marapp-services/issues/83)) ([433aa30](https://github.com/natgeosociety/marapp-services/commit/433aa30f0e9078ddf5b78f3677a90e6324c9bad8))
+* support exists operator in query, remove collection types ([4ddb1da](https://github.com/natgeosociety/marapp-services/commit/4ddb1da24f6976c39f5c825d69be7cf1f4f0e3f7))
+
+## [1.10.2](https://github.com/natgeosociety/marapp-services/compare/v1.10.1...v1.10.2) (2020-11-04)
+
+
+### Bug Fixes
+
+* exclude computed fields on empty collections [EP-3305] ([3afcd63](https://github.com/natgeosociety/marapp-services/commit/3afcd63c096aac7505b7074c6d41f67177420621))
+* include public group on workspace delete [EP-3300] ([5441537](https://github.com/natgeosociety/marapp-services/commit/5441537bd1db1ddf4ec8e0a12c88412ad5294b88))
+
+## [1.10.1](https://github.com/natgeosociety/marapp-services/compare/v1.10.0...v1.10.1) (2020-11-03)
+
+
+### Bug Fixes
+
+* force email verified to false on email change request ([c76b8e8](https://github.com/natgeosociety/marapp-services/commit/c76b8e87ba3062171d2a880d2f163648440b7d2d))
+* typo ([99c2cab](https://github.com/natgeosociety/marapp-services/commit/99c2cab08381c2e700635da86457dd2160f4616b))
+
+# [1.10.0](https://github.com/natgeosociety/marapp-services/compare/v1.9.0...v1.10.0) (2020-11-03)
+
+
+### Bug Fixes
+
+* exclude public role from available groups ([5b92a2e](https://github.com/natgeosociety/marapp-services/commit/5b92a2efe419121b233641817415becec6303607))
+* query filters collection & organization ([9085477](https://github.com/natgeosociety/marapp-services/commit/9085477e7d37e0618139acd5d2aaaeeb8e798cb2))
+* remove publicResource filter condition ([30239a5](https://github.com/natgeosociety/marapp-services/commit/30239a5034ca4bdb6d6e23f3d6bbaa408f2d118e))
+
+
+### Features
+
+* add support for public role, refactor membership-service ([be73b23](https://github.com/natgeosociety/marapp-services/commit/be73b23cad9531ad1029d9f7ef447d356c0aa910))
+* auto-generate slug if missing [EP-3263] ([7616564](https://github.com/natgeosociety/marapp-services/commit/7616564d8cb4d444db8e7335cdcb48f0070a23cb))
+* org create/edit owner emails feedback [EP-3125] ([#74](https://github.com/natgeosociety/marapp-services/issues/74)) ([d2f815b](https://github.com/natgeosociety/marapp-services/commit/d2f815b2efc5f14ef4aed93e063e191e92fa059d))
+* public locations on collection [EP-3172] ([a1054d6](https://github.com/natgeosociety/marapp-services/commit/a1054d654a6e28cdda0497270ce655cf8065776d))
+* support include and select query options on PUT/POST ([dccefd4](https://github.com/natgeosociety/marapp-services/commit/dccefd4099e0302e8d8d65fde3b81bb32affb72e))
+* validate document references [EP-3250] ([993ee1c](https://github.com/natgeosociety/marapp-services/commit/993ee1cf679602efa7f31ab8e42a8fe74d220876))
+
+# [1.9.0](https://github.com/natgeosociety/marapp-services/compare/v1.8.0...v1.9.0) (2020-10-27)
+
+
+### Bug Fixes
+
+* change S3 put lifecycle configuration endpoint ([546acd7](https://github.com/natgeosociety/marapp-services/commit/546acd75dc3cb617d4f84fd4b1fd6d604212b32e))
+
+
+### Features
+
+* **profile:** resend email validation [EP-3231] ([5177b9d](https://github.com/natgeosociety/marapp-services/commit/5177b9d605abfd22e766ae3903c612c0aef2ff03))
+
+# [1.8.0](https://github.com/natgeosociety/marapp-services/compare/v1.7.0...v1.8.0) (2020-10-22)
+
+
+### Bug Fixes
+
+* add bucket PutBucketPolicy IAM role ([f5df154](https://github.com/natgeosociety/marapp-services/commit/f5df154f02485fc77924e760da5365d86e53f7a6))
+* request with async handler and promise ([c0a63f6](https://github.com/natgeosociety/marapp-services/commit/c0a63f6f433682d469517182a2a82f5383cca62a))
+* return callback parameter ([d3ad40d](https://github.com/natgeosociety/marapp-services/commit/d3ad40d054edb05b045afdd2d3e8a8563b42eeee))
+* serverless IAM roles ([02a6d5e](https://github.com/natgeosociety/marapp-services/commit/02a6d5e459cfa390ef25b0b6e7f2a16b8f92f8b4))
+* service name typo ([92cd962](https://github.com/natgeosociety/marapp-services/commit/92cd962cfeff0b5316d996875472f2231e28b05f))
+* set IAM publish action for wipe-data topic ([32c4adb](https://github.com/natgeosociety/marapp-services/commit/32c4adb8e7ee4e612a85fd5f4b59c113aa7efc26))
+* typo ([5bef8bb](https://github.com/natgeosociety/marapp-services/commit/5bef8bb47d9a853d97f346d5fb254ba4a5ac6bea))
+* update loglevel ([4280f4d](https://github.com/natgeosociety/marapp-services/commit/4280f4d63245e561bbd2129923335b5a8625333d))
+* workspace delete group ID ([0a2983b](https://github.com/natgeosociety/marapp-services/commit/0a2983b37de97ea7e43e5a35a60c31f7bdeecbc1))
+* **profile:** handle super-admin checks [EP-3155] ([12a31c1](https://github.com/natgeosociety/marapp-services/commit/12a31c1d66a11c99c9fa32ed3960e2ec89747b8b))
+
+
+### Features
+
+* handle complete workspace deletion ([bde3321](https://github.com/natgeosociety/marapp-services/commit/bde33215e15042715e9b603ac89d9d0734c60fab))
+* storage map-tiles deletion on layer delete ([45a81cd](https://github.com/natgeosociety/marapp-services/commit/45a81cd7d938910fdf0e4bc2b72d66e99915f399))
+
+# [1.7.0](https://github.com/natgeosociety/marapp-services/compare/v1.6.0...v1.7.0) (2020-10-19)
+
+
+### Bug Fixes
+
+* delete account special cases ([#64](https://github.com/natgeosociety/marapp-services/issues/64)) ([9f1df32](https://github.com/natgeosociety/marapp-services/commit/9f1df32379eaaf6e191252463cd536de71b15565))
+* force email verified to true ([47df21f](https://github.com/natgeosociety/marapp-services/commit/47df21fd826c49014f3ad2ff7db1b96eb4f238fb))
+* primary groups based on membership ([0f7d3b7](https://github.com/natgeosociety/marapp-services/commit/0f7d3b7560c0f017b01569d61c95323a44f2903e))
+* user profile orgs remove only from available nested groups ([20f93a7](https://github.com/natgeosociety/marapp-services/commit/20f93a7d80abaf81d4d516baea5f4ce073c4b736))
+
+
+### Features
+
+* delete user profile [EP-2924] ([#63](https://github.com/natgeosociety/marapp-services/issues/63)) ([43286e5](https://github.com/natgeosociety/marapp-services/commit/43286e573f29f8617f21b0f9a52ca77ecf447c65))
+* enforce lowercase for slug when creating org [EP-2755] ([fe95f1b](https://github.com/natgeosociety/marapp-services/commit/fe95f1b30e7afc110f20af048280ed1bbbb6b4ad))
+* remove continent option from location types [EP-2767] ([9dba09a](https://github.com/natgeosociety/marapp-services/commit/9dba09adf1918d08fbadaf82e92c8d1e6329911b))
+* user profile remove orgs [EP-2620] ([#61](https://github.com/natgeosociety/marapp-services/issues/61)) ([5553707](https://github.com/natgeosociety/marapp-services/commit/555370767a048e004fee5456860d90d8dfdbb2cd))
+
 # [1.6.0](https://github.com/natgeosociety/marapp-services/compare/v1.5.0...v1.6.0) (2020-10-08)
 
 

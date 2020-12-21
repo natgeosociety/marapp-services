@@ -57,6 +57,8 @@ export enum LayerCategoryEnum {
   PROTECTED_AREAS = 'Protected Areas',
   RESTORATION = 'Restoration',
   SOCIO_ECONOMIC = 'Socio-Economic',
+  HABITATS_AND_BIOMES = 'Habitats and Biomes',
+  PROTECTED_AND_CONSERVED_AREAS = 'Protected and Conserved Areas',
 }
 
 export interface Layer {
