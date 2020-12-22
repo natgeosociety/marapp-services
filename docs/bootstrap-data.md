@@ -53,7 +53,7 @@ Note: `ApiKey` authorization can be used instead of the Bearer token via `-H 'ap
 Required format
 - same as above, but in JSONL format (see: http://jsonlines.org)
 ```
-$ cat example.jsonl | ./support/bootstrap-fixture-data.ts --apiKey <APIKEY> --organization <GROUP> --type <TYPE>
+$ cat example-locations.jsonl | ./support/bootstrap-fixture-data.ts --type location --apiKey <APIKEY> --organization <GROUP>
 ```
 
 # Adding Layer data
@@ -99,5 +99,5 @@ Note: `ApiKey` authorization can be used instead of the Bearer token via `-H 'ap
 Required format
 - same as above, but in JSONL format (see: http://jsonlines.org)
 ```
-TODO:
+$ cat example-layers.jsonl | ./support/bootstrap-fixture-data.ts --type layer --apiKey <APIKEY> --organization <GROUP>
 ```
