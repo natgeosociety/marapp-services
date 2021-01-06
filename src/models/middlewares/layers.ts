@@ -1,5 +1,5 @@
 import { get, isArray, isEmpty, set } from 'lodash';
-import shortid from 'shortid';
+import { nanoid } from 'nanoid';
 import { URL } from 'url';
 
 import { API_URL } from '../../config';
@@ -95,7 +95,7 @@ export const cacheBustingOnUpdateMw = function (cacheParamKey: string = 'v') {
             const params = url.searchParams;
 
             // set a cache-busting query string param;
-            params.set(cacheParamKey, shortid.generate());
+            params.set(cacheParamKey, nanoid(6));
 
             // change the search property of the main URL;
             url.search = params.toString();
