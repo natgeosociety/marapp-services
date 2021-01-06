@@ -367,13 +367,9 @@ resources:
                 HTTPSPort: 443
                 OriginProtocolPolicy: https-only
           Enabled: true
-          ## Uncomment the following section in case you are using a custom domain
-          # Aliases:
-          # - site.example.com
           DefaultCacheBehavior:
             TargetOriginId: ApiGw
             ViewerProtocolPolicy: redirect-to-https
-            DefaultTTL: 30
             ForwardedValues:
               QueryString: true
               Headers:
