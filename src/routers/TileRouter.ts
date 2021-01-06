@@ -56,7 +56,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/tiles') => {
         .trim()
         .isInt({ min: 0, max: Math.pow(2, MAX_ZOOM_LEVEL) })
         .toInt(),
-      query('v').isString().trim(),
+      query('v').optional().isString().trim(),
     ]),
     cacheControl({ maxAge: Number(API_MAP_TILES_TTL) }),
     asyncHandler(async (req: Request, res: Response) => {
