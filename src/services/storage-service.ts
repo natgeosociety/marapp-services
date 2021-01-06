@@ -128,7 +128,10 @@ const encodeTileKey = (
  * @param layerIds
  * @param pathPrefix
  */
-export const removeMapTiles = async (layerIds: string[], pathPrefix: string = MAP_TILES_PREFIX): Promise<boolean> => {
+export const removeLayerMapTiles = async (
+  layerIds: string[],
+  pathPrefix: string = MAP_TILES_PREFIX
+): Promise<boolean> => {
   if (!layerIds.length) {
     return false;
   }
@@ -151,14 +154,14 @@ export const removeMapTiles = async (layerIds: string[], pathPrefix: string = MA
  * Gather layers and remove existing map tiles from storage;
  * @param stream
  */
-export const removeLayerMapTiles = async (stream: Readable): Promise<boolean> => {
+export const removeLayerMapTilesFromStream = async (stream: Readable): Promise<boolean> => {
   const layerIds: string[] = [];
   for await (const chunk of stream) {
     layerIds.push(chunk.id);
   }
-  logger.debug('[removeLayerMapTiles] %s layers', layerIds.length);
+  logger.debug('[removeLayerMapTilesFromStream] %s layers', layerIds.length);
 
-  return removeMapTiles(layerIds);
+  return removeLayerMapTiles(layerIds);
 };
 
 /**
