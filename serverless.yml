@@ -51,7 +51,7 @@ provider:
       Resource: "arn:aws:s3:::${self:custom.stageEnvironment.assetsBucket}/*"
     - Effect: Allow
       Action:
-        - s3:PutBucketLifecycleConfiguration
+        - s3:*
       Resource: "arn:aws:s3:::${self:custom.stageEnvironment.assetsBucket}"
     - Effect: Allow
       Action:
