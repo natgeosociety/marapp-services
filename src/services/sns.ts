@@ -33,6 +33,11 @@ export enum OperationTypeEnum {
   CALCULATE = 'calculate',
 }
 
+export enum WipeDataEnum {
+  ORGANIZATION = 'ORGANIZATION',
+  LAYER = 'LAYER',
+}
+
 export interface SNSComputeMetricEvent {
   id: string;
   operationType: OperationTypeEnum;
@@ -41,8 +46,18 @@ export interface SNSComputeMetricEvent {
 }
 
 export interface SNSWipeDataEvent {
+  type: WipeDataEnum; // type-guard;
+}
+
+export interface SNSWipeOrgDataEvent extends SNSWipeDataEvent {
+  type: WipeDataEnum.ORGANIZATION;
   organizationId: string;
   organizationName: string;
+}
+
+export interface SNSWipeLayerDataEvent extends SNSWipeDataEvent {
+  type: WipeDataEnum.LAYER;
+  layerId: string;
 }
 
 /**
@@ -83,6 +98,9 @@ export const triggerComputeMetricEvent = async (
   return publishSNSMessage(message, SNS_TOPIC_MANAGER_ARN, raiseError);
 };
 
-export const triggerWipeDataEvent = async (message: SNSWipeDataEvent, raiseError: boolean = true): Promise<string> => {
+export const triggerWipeDataEvent = async (
+  message: SNSWipeOrgDataEvent | SNSWipeLayerDataEvent,
+  raiseError: boolean = true
+): Promise<string> => {
   return publishSNSMessage(message, SNS_TOPIC_WIPE_DATA_ARN, raiseError);
 };
