@@ -1,3 +1,31 @@
+# [1.13.0](https://github.com/natgeosociety/marapp-services/compare/v1.12.0...v1.13.0) (2021-01-07)
+
+
+### Bug Fixes
+
+* Fix undefined name on legacy users [EP-3466] ([3b7bcf4](https://github.com/natgeosociety/marapp-services/commit/3b7bcf47fc98677c421e420080f4f1d7856d2636))
+* grant S3 bucket access ([6ed4934](https://github.com/natgeosociety/marapp-services/commit/6ed49347359187b90c1f2cd514b3f79931e78f0d))
+* increase max token size to 100 [EP-2973] ([7b03a68](https://github.com/natgeosociety/marapp-services/commit/7b03a68528c0faa41d24d667427e7ef132456812))
+* revert cache policy changes ([8db4ea5](https://github.com/natgeosociety/marapp-services/commit/8db4ea5cce604f9a3794f58c155fa1e608350615))
+* set cache-busting version param as optional ([e1b8cab](https://github.com/natgeosociety/marapp-services/commit/e1b8cabd7ef04fe7f197d8bb54a8017c3532955e))
+* supress saslprep warning from mongo ([717c51a](https://github.com/natgeosociety/marapp-services/commit/717c51ac2f180ce713f49a8681db7d84a9fb2e00))
+* update cache policy config ([6906412](https://github.com/natgeosociety/marapp-services/commit/69064127012927f9b7a97e3d46dcf70df8c5f8d6))
+* update cloudfront cache config with cache policy & request policy ([ecd9d20](https://github.com/natgeosociety/marapp-services/commit/ecd9d20ced6249c81180ab562078cb1468cb3fb1))
+* update ref property ([8aadcc5](https://github.com/natgeosociety/marapp-services/commit/8aadcc51d24c861a3ee24d07ce0fb4058fe3c838))
+* use origin cache headers for cache behaviour ([d44da10](https://github.com/natgeosociety/marapp-services/commit/d44da10e20c3062752675c1c48eb2240277c86fd))
+* use ref short form ([122680b](https://github.com/natgeosociety/marapp-services/commit/122680b2b0c813f74d5a5bab8fac3d92f0019758))
+* webpack externals ([a80e055](https://github.com/natgeosociety/marapp-services/commit/a80e055b1ecedec707e47cded1fe96fc98834b93))
+
+
+### Features
+
+* support cache-busting on layer config changes ([1b6bbde](https://github.com/natgeosociety/marapp-services/commit/1b6bbde94c7762b4f292734a265023f259f4310b))
+
+
+### Performance Improvements
+
+* webpack bundle optimization ([1228119](https://github.com/natgeosociety/marapp-services/commit/1228119c56309a7a032c3520b5e9ec7158115716))
+
 # [1.12.0](https://github.com/natgeosociety/marapp-services/compare/v1.11.0...v1.12.0) (2020-12-17)
 
 
