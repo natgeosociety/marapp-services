@@ -2660,6 +2660,18 @@ paths:
       - profile
       summary: Remove current user's organizations
       operationId: removeUserOrganizations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+                description: organization name
+                example: organization-name-1
+              example:
+                - organization-name-1
+                - organization-name-2
       responses:
         200:
           description: OK
