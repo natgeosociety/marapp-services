@@ -73,9 +73,9 @@ custom:
   stageEnvironment:
     assetsBucket: ${self:service.name}-assets-${self:custom.stageEnv}
     snsWorkerResultTopic: ${self:service.name}-${self:custom.stageEnv}-sns-result
-    snsWorkerResultTopicArn: { "Fn::Join": [":", ["arn:aws:sns:${self:provider.region}", { "Ref": "AWS::AccountId" }, "${self:custom.stageEnvironment.snsWorkerResultTopic}" ] ]  }
+    snsWorkerResultTopicArn: { "Fn::Join": [ ":", [ "arn:aws:sns:${self:provider.region}", { "Ref": "AWS::AccountId" }, "${self:custom.stageEnvironment.snsWorkerResultTopic}" ] ] }
     snsWipeDataTopic: ${self:service.name}-${self:custom.stageEnv}-sns-wipe-data
-    snsWipeDataTopicArn: { "Fn::Join": [":", ["arn:aws:sns:${self:provider.region}", { "Ref": "AWS::AccountId" }, "${self:custom.stageEnvironment.snsWipeDataTopic}" ] ]  }
+    snsWipeDataTopicArn: { "Fn::Join": [ ":", [ "arn:aws:sns:${self:provider.region}", { "Ref": "AWS::AccountId" }, "${self:custom.stageEnvironment.snsWipeDataTopic}" ] ] }
     cachePolicyId: ${self:service.name}-cache-policy-${self:custom.stageEnv}
     requestPolicyId: ${self:service.name}-request-policy-${self:custom.stageEnv}
 
@@ -355,7 +355,7 @@ resources:
       Properties:
         DistributionConfig:
           Origins:
-            - DomainName: { "Fn::Join": [".", [{ "Ref": "ApiGatewayRestApi" }, "execute-api.${self:provider.region}.amazonaws.com" ] ]  }
+            - DomainName: { "Fn::Join": [ ".", [ { "Ref": "ApiGatewayRestApi" }, "execute-api.${self:provider.region}.amazonaws.com" ] ] }
               Id: ApiGw
               OriginPath: /${self:custom.stageEnv}
               CustomOriginConfig:
@@ -372,8 +372,8 @@ resources:
           DefaultCacheBehavior:
             TargetOriginId: ApiGw
             ViewerProtocolPolicy: redirect-to-https
-            CachePolicyId: ${self:custom.stageEnvironment.cachePolicyId}
-            OriginRequestPolicyId: ${self:custom.stageEnvironment.requestPolicyId}
+            CachePolicyId: { "Ref": CloudFrontCachePolicy }
+            OriginRequestPolicyId: { "Ref": CloudFrontOriginRequestPolicy }
             AllowedMethods:
               - GET
               - HEAD
@@ -403,7 +403,7 @@ resources:
         TopicName: ${self:custom.stageEnvironment.snsWorkerResultTopic}
         Subscription:
           - Protocol: HTTPS
-            Endpoint: { "Fn::Join": ["", [ "https://", { "Ref": "ApiGatewayRestApi" }, ".execute-api.${self:provider.region}.amazonaws.com/${self:custom.stageEnv}/${self:custom.snsHTTPSSubscriptionPath}" ] ]  }
+            Endpoint: { "Fn::Join": [ "", [ "https://", { "Ref": "ApiGatewayRestApi" }, ".execute-api.${self:provider.region}.amazonaws.com/${self:custom.stageEnv}/${self:custom.snsHTTPSSubscriptionPath}" ] ] }
     SNSWipeDataTopic:
       Type: AWS::SNS::Topic
       Properties:
@@ -415,7 +415,7 @@ resources:
           Name: ${self:custom.stageEnvironment.cachePolicyId}
           DefaultTTL: 86400 # (one day)
           MaxTTL: 31536000  # (one year)
-          MinTTL: 3600      # (one hour)
+          MinTTL: 1
           ParametersInCacheKeyAndForwardedToOrigin:
             CookiesConfig:
               CookieBehavior: none
