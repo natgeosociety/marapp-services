@@ -105,8 +105,10 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
       const update = {
         given_name: firstName,
         family_name: lastName,
-        name: `${firstName} ${lastName}`,
       };
+      if (firstName && lastName) {
+        set(update, 'name', [firstName, lastName].join(' '));
+      }
 
       const userUpdated = await authMgmtService.updateUser(userId, update);
 

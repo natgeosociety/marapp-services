@@ -19,7 +19,7 @@
 
 import { padStart } from 'lodash';
 import { Model, Schema } from 'mongoose';
-import shortid from 'shortid';
+import { nanoid } from 'nanoid';
 import slugify from 'slugify';
 
 import { InvalidParameterError } from '../../errors';
@@ -51,7 +51,7 @@ export default (schema: Schema, options: { uniqueField: string; separator: strin
 
     let slug = original;
     while (!(await isUnique(model, slug, query)) && count <= maxAttempts) {
-      const short = shortid.generate();
+      const short = nanoid(6);
       slug = slugify(original + options.separator + short, slugifyOpts);
       count++;
     }

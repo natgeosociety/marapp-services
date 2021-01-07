@@ -20,111 +20,171 @@
 */
 
 import axios from 'axios';
-import * as chalk from 'chalk';
+import { has, isString, merge, set } from 'lodash';
 import * as readline from 'readline';
-import slug from 'slug';
-import { v4 as uuidv4 } from 'uuid';
 import * as yargs from 'yargs';
 
 import { API_BASE } from '../src/config';
-import { Location, LocationTypeEnum } from '../src/models';
+import { Layer, LayerCategoryEnum, LayerProviderEnum, LayerTypeEnum, Location, LocationTypeEnum } from '../src/models';
 
 const argv = yargs.options({
   apiHost: { type: 'string', demandOption: true },
   organization: { type: 'string', demandOption: true },
   dryRun: { type: 'boolean', default: false },
   apiKey: { type: 'string', demandOption: true },
+  type: { type: 'string', choices: ['location', 'layer'], default: 'location' },
 }).argv;
 
-const processLine = async (line: string): Promise<void> => {
-  const data = JSON.parse(line);
+interface IResourceCreator {
+  processLine?(line: string): Promise<void>;
+  processData?(data: any, parent: IResourceCreator): Promise<void>;
+  writeHeaders?(line: string): void;
+  toStdout(record: any, error?: boolean, sep?: string);
+  createResource(body: any, endpoint?: string): Promise<void>;
+}
 
-  const location: Location = {
-    id: data['id'] || uuidv4(),
-    slug: slugifyName(data['name']),
-    name: cleanStr(data['name']),
-    type: <LocationTypeEnum>splitPascalCase(data['type']),
-    description: cleanStr(data['description']),
-    published: data['published'],
-    featured: data['featured'],
-    geojson: data['geojson'],
-    organization: argv.organization,
-  };
-
-  try {
-    if (argv.dryRun) {
-    } else if (argv.apiKey) {
-      await createResource(location);
-    }
-    toStdout(location);
-  } catch (err) {
-    toStdout(location, true);
-  }
-};
-
-const cleanStr = (str: string) => {
-  return str ? str.trim() : null;
-};
-
-const slugifyName = (str: string) => {
-  const sanitized = cleanStr(str);
-  return slug(sanitized).toLowerCase();
-};
-
-const splitPascalCase = (str: string) => {
-  return cleanStr(str)
-    .replace(/([A-Z][a-z])/g, ' $1')
-    .replace(/(\d)/g, ' $1')
-    .trim();
-};
-
-const writeHeaders = () => {
-  console.log(['<ID>', '<SLUG>', '<NAME>', '<TYPE>', '<FEATURED>', '<PUBLISHED>'].join('\t'));
-};
-
-const toStdout = (record: Location, error: boolean = false) => {
-  const message = [record.id, record.slug, record.name, record.type, record.featured, record.published].join('\t');
-  const print = error ? console.error.bind(console) : console.debug.bind(console);
-  print(message);
-};
-
-/**
- * Creates a resource using API endpoints.
- * @param body
- */
-const createResource = async (body: Location): Promise<void> => {
-  const headers = {
-    ApiKey: argv.apiKey,
-    'Content-Type': 'application/json',
-  };
-
-  const endpoint = `${argv.apiHost}/${API_BASE}/management/locations?group=${argv.organization}`;
-  try {
-    const response = await axios.post(endpoint, body, { headers });
-    if (response.status === 200) {
-      return response.data;
-    }
-  } catch (err) {
-    console.error(chalk.bgRed(err.message));
-    if (err.response && err.response.data) {
-      console.error(JSON.stringify(err.response.data, null, 2));
+abstract class ResourceCreator implements IResourceCreator {
+  async processData(data: any, parent: IResourceCreator): Promise<void> {
+    try {
+      if (argv.dryRun) {
+      } else if (argv.apiKey) {
+        await parent.createResource(data);
+      }
+      parent.toStdout(data);
+    } catch (err) {
+      parent.toStdout(data, true);
     }
   }
-};
+
+  writeHeaders(line: string, sep: string = '\t'): void {
+    const data = JSON.parse(line);
+    console.log(Object.keys(data).sort().join(sep));
+  }
+
+  toStdout(record: any, error: boolean = false, sep: string = '\t') {
+    const keys = Object.keys(record).sort();
+    const message = keys.reduce((acc, key) => {
+      acc.push(record[key]);
+      return acc;
+    }, []);
+
+    const print = error ? console.error.bind(console) : console.debug.bind(console);
+    print(message.join(sep));
+  }
+
+  async createResource(body: any, endpoint: string): Promise<void> {
+    const headers = {
+      ApiKey: argv.apiKey,
+      'Content-Type': 'application/json',
+    };
+    try {
+      const response = await axios.post(endpoint, body, { headers });
+      if (response.status === 200) {
+        return response.data;
+      }
+    } catch (err) {
+      console.error(err.message);
+      if (err.response && err.response.data) {
+        console.error(JSON.stringify(err.response.data, null, 2));
+      }
+    }
+  }
+
+  /**
+   * Validate optional fields if present in the input.
+   * @param data
+   * @param optionals
+   */
+  parseOptionals = <T, L extends keyof T>(data: T, optionals: L[] = []): any => {
+    const output = {};
+    optionals.forEach((key) => {
+      if (has(data, key)) {
+        const value = data[key];
+        set(output, key, isString(value) ? this.cleanStr(<any>value) : value);
+      }
+    });
+    return output;
+  };
+
+  cleanStr = (str: string) => {
+    return str ? str.trim() : null;
+  };
+}
+
+class LocationResourceCreator extends ResourceCreator {
+  async processLine(line: string): Promise<void> {
+    const data: Partial<Location> = JSON.parse(line);
+
+    const mandatory: Partial<Location> = {
+      name: this.cleanStr(data.name),
+      type: <LocationTypeEnum>this.cleanStr(data.type),
+      geojson: data.geojson,
+    };
+    const optional = this.parseOptionals(data, [
+      'id',
+      'slug',
+      'description',
+      'published',
+      'featured',
+      'publicResource',
+    ]);
+    const location = merge(mandatory, optional);
+
+    await super.processData(location, this);
+  }
+
+  async createResource(body: Location): Promise<void> {
+    await super.createResource(body, `${argv.apiHost}${API_BASE}/management/locations?group=${argv.organization}`);
+  }
+}
+
+class LayerResourceCreator extends ResourceCreator {
+  async processLine(line: string): Promise<void> {
+    const data: Partial<Layer> = JSON.parse(line);
+
+    const mandatory: Partial<Layer> = {
+      name: this.cleanStr(data.name),
+      type: <LayerTypeEnum>this.cleanStr(data.type),
+      category: [<LayerCategoryEnum>this.cleanStr(<any>data.category)],
+      provider: <LayerProviderEnum>this.cleanStr(data.provider),
+      config: isString(data.config) ? JSON.parse(data.config) : data.config,
+    };
+    const optional = this.parseOptionals(data, ['id', 'slug', 'description', 'published', 'primary', 'references']);
+    const layer = merge(mandatory, optional);
+
+    await super.processData(layer, this);
+  }
+
+  async createResource(body: Layer): Promise<void> {
+    await super.createResource(body, `${argv.apiHost}${API_BASE}/management/layers?group=${argv.organization}`);
+  }
+}
 
 const main = async (): Promise<void> => {
+  let resourceCreator: IResourceCreator;
+
+  switch (argv.type) {
+    case 'location':
+      resourceCreator = new LocationResourceCreator();
+      break;
+    case 'layer':
+      resourceCreator = new LayerResourceCreator();
+      break;
+  }
+
   const reader = readline.createInterface({
     input: process.stdin,
   });
 
   let counter: number = 0;
+
   for await (const line of reader) {
     if (counter === 0) {
-      writeHeaders();
+      resourceCreator.writeHeaders(line);
     }
     counter++;
 
-    await processLine(line);
+    await resourceCreator.processLine(line);
   }
 };
 

@@ -39,7 +39,7 @@ import { createBulkSerializer as createUserBulkSerializer } from '../serializers
 import { AuthzServiceSpec } from '../services/auth0-authz';
 import { AuthManagementService } from '../services/auth0-management';
 import { MembershipService } from '../services/membership-service';
-import { SNSWipeDataEvent, triggerWipeDataEvent } from '../services/sns';
+import { SNSWipeOrgDataEvent, triggerWipeDataEvent, WipeDataEnum } from '../services/sns';
 import { ResponseMeta } from '../types/response';
 
 import { queryParamGroup, validate } from '.';
@@ -437,7 +437,8 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
       try {
         success = await membershipService.deleteWorkspace(groupId);
         if (success) {
-          const message: SNSWipeDataEvent = {
+          const message: SNSWipeOrgDataEvent = {
+            type: WipeDataEnum.ORGANIZATION,
             organizationId: groupId,
             organizationName: group.name,
           };

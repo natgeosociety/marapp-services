@@ -24,7 +24,12 @@ import { v4 as uuidv4 } from 'uuid';
 import { getLogger } from '../logging';
 
 import { generateSlugMw, optimisticVersionControlOnUpdateMw, schemaOptions, versionIncOnUpdateMw } from './middlewares';
-import { checkRefLinksOnUpdateMw, removeRefLinksOnDeleteMw } from './middlewares/layers';
+import {
+  cacheBustingOnUpdateMw,
+  checkRefLinksOnUpdateMw,
+  removeLayerResourcesOnDeleteMw,
+  removeRefLinksOnDeleteMw,
+} from './middlewares/layers';
 import esPlugin, { IESPlugin } from './plugins/elasticsearch';
 import slugifyPlugin, { ISlugifyPlugin } from './plugins/slugify';
 import { isArrayEmptyValidator, isEmptyValidator, slugValidator } from './validators';
@@ -138,7 +143,7 @@ LayerSchema.plugin(esPlugin, {
         autocomplete_tokenizer: {
           type: 'edge_ngram',
           min_gram: 1,
-          max_gram: 25,
+          max_gram: 100,
           token_chars: ['letter', 'digit'],
         },
       },
@@ -167,7 +172,9 @@ LayerSchema.pre('validate', generateSlugMw('Layer'));
 LayerSchema.pre('save', optimisticVersionControlOnUpdateMw('Layer'));
 LayerSchema.pre('save', checkRefLinksOnUpdateMw());
 LayerSchema.pre('save', versionIncOnUpdateMw('Layer'));
+LayerSchema.pre('save', cacheBustingOnUpdateMw());
 LayerSchema.post('remove', removeRefLinksOnDeleteMw());
+LayerSchema.post('remove', removeLayerResourcesOnDeleteMw());
 
 interface ILayerModel extends Model<LayerDocument>, IESPlugin, ISlugifyPlugin {}
 

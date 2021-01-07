@@ -51,7 +51,7 @@ provider:
       Resource: "arn:aws:s3:::${self:custom.stageEnvironment.assetsBucket}/*"
     - Effect: Allow
       Action:
-        - s3:PutBucketLifecycleConfiguration
+        - s3:*
       Resource: "arn:aws:s3:::${self:custom.stageEnvironment.assetsBucket}"
     - Effect: Allow
       Action:
@@ -73,9 +73,11 @@ custom:
   stageEnvironment:
     assetsBucket: ${self:service.name}-assets-${self:custom.stageEnv}
     snsWorkerResultTopic: ${self:service.name}-${self:custom.stageEnv}-sns-result
-    snsWorkerResultTopicArn: { "Fn::Join": [":", ["arn:aws:sns:${self:provider.region}", { "Ref": "AWS::AccountId" }, "${self:custom.stageEnvironment.snsWorkerResultTopic}" ] ]  }
+    snsWorkerResultTopicArn: { "Fn::Join": [ ":", [ "arn:aws:sns:${self:provider.region}", { "Ref": "AWS::AccountId" }, "${self:custom.stageEnvironment.snsWorkerResultTopic}" ] ] }
     snsWipeDataTopic: ${self:service.name}-${self:custom.stageEnv}-sns-wipe-data
-    snsWipeDataTopicArn: { "Fn::Join": [":", ["arn:aws:sns:${self:provider.region}", { "Ref": "AWS::AccountId" }, "${self:custom.stageEnvironment.snsWipeDataTopic}" ] ]  }
+    snsWipeDataTopicArn: { "Fn::Join": [ ":", [ "arn:aws:sns:${self:provider.region}", { "Ref": "AWS::AccountId" }, "${self:custom.stageEnvironment.snsWipeDataTopic}" ] ] }
+    cachePolicyId: ${self:service.name}-cache-policy-${self:custom.stageEnv}
+    requestPolicyId: ${self:service.name}-request-policy-${self:custom.stageEnv}
 
   # Plugins configuration
   webpack:
@@ -353,7 +355,7 @@ resources:
       Properties:
         DistributionConfig:
           Origins:
-            - DomainName: { "Fn::Join": [".", [{ "Ref": "ApiGatewayRestApi" }, "execute-api.${self:provider.region}.amazonaws.com" ] ]  }
+            - DomainName: { "Fn::Join": [ ".", [ { "Ref": "ApiGatewayRestApi" }, "execute-api.${self:provider.region}.amazonaws.com" ] ] }
               Id: ApiGw
               OriginPath: /${self:custom.stageEnv}
               CustomOriginConfig:
@@ -367,13 +369,11 @@ resources:
                 HTTPSPort: 443
                 OriginProtocolPolicy: https-only
           Enabled: true
-          ## Uncomment the following section in case you are using a custom domain
-          # Aliases:
-          # - site.example.com
           DefaultCacheBehavior:
             TargetOriginId: ApiGw
             ViewerProtocolPolicy: redirect-to-https
-            DefaultTTL: 30
+#            CachePolicyId: !Ref CloudFrontCachePolicy
+#            OriginRequestPolicyId: !Ref CloudFrontOriginRequestPolicy
             ForwardedValues:
               QueryString: true
               Headers:
@@ -408,8 +408,35 @@ resources:
         TopicName: ${self:custom.stageEnvironment.snsWorkerResultTopic}
         Subscription:
           - Protocol: HTTPS
-            Endpoint: { "Fn::Join": ["", [ "https://", { "Ref": "ApiGatewayRestApi" }, ".execute-api.${self:provider.region}.amazonaws.com/${self:custom.stageEnv}/${self:custom.snsHTTPSSubscriptionPath}" ] ]  }
+            Endpoint: { "Fn::Join": [ "", [ "https://", { "Ref": "ApiGatewayRestApi" }, ".execute-api.${self:provider.region}.amazonaws.com/${self:custom.stageEnv}/${self:custom.snsHTTPSSubscriptionPath}" ] ] }
     SNSWipeDataTopic:
       Type: AWS::SNS::Topic
       Properties:
         TopicName: ${self:custom.stageEnvironment.snsWipeDataTopic}
+#    CloudFrontCachePolicy:
+#      Type: AWS::CloudFront::CachePolicy
+#      Properties:
+#        CachePolicyConfig:
+#          Name: ${self:custom.stageEnvironment.cachePolicyId}
+#          DefaultTTL: 86400 # (one day)
+#          MaxTTL: 31536000  # (one year)
+#          MinTTL: 1
+#          ParametersInCacheKeyAndForwardedToOrigin:
+#            CookiesConfig:
+#              CookieBehavior: none
+#            HeadersConfig:
+#              HeaderBehavior: none
+#            QueryStringsConfig:
+#              QueryStringBehavior: all
+#            EnableAcceptEncodingGzip: true
+#    CloudFrontOriginRequestPolicy:
+#      Type: AWS::CloudFront::OriginRequestPolicy
+#      Properties:
+#        OriginRequestPolicyConfig:
+#          Name: ${self:custom.stageEnvironment.requestPolicyId}
+#          CookiesConfig:
+#            CookieBehavior: all
+#          HeadersConfig:
+#            HeaderBehavior: allViewer
+#          QueryStringsConfig:
+#            QueryStringBehavior: all
