@@ -20,11 +20,11 @@
 import { Router } from 'express';
 import swaggerUi from 'swagger-ui-express';
 import urljoin from 'url-join';
-import swaggerDocument from '../spec/swagger.yaml';
 
 import { API_BASE, API_URL } from '../config';
-import { AUTH0_DOMAIN, AUTH0_AUDIENCE, AUTH0_APPLICATION_CLIENT_ID } from '../config/auth0';
+import { AUTH0_APPLICATION_CLIENT_ID, AUTH0_AUDIENCE, AUTH0_DOMAIN } from '../config/auth0';
 import { getLogger } from '../logging';
+import swaggerDocument from '../spec/swagger.yaml';
 
 const logger = getLogger();
 

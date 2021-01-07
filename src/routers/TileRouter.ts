@@ -56,6 +56,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/tiles') => {
         .trim()
         .isInt({ min: 0, max: Math.pow(2, MAX_ZOOM_LEVEL) })
         .toInt(),
+      query('v').optional().isString().trim(),
     ]),
     cacheControl({ maxAge: Number(API_MAP_TILES_TTL) }),
     asyncHandler(async (req: Request, res: Response) => {
@@ -64,6 +65,8 @@ const getRouter = (basePath: string = '/', routePath: string = '/tiles') => {
       const z = Number(req.params.z); // Z goes from 0 to MAX_ZOOM_LEVEL
       const x = Number(req.params.x); // X goes from 0 to 2^zoom − 1
       const y = Number(req.params.y); // Y goes from 0 to 2^zoom − 1
+
+      const v = req.query.v; // cache-busting;
 
       const layer = await getById(LayerModel, layerId, {}, ['slug']);
       if (!layer) {
@@ -97,13 +100,12 @@ const getRouter = (basePath: string = '/', routePath: string = '/tiles') => {
           throw new TileGenerationError(`Could not generate map tile for asset.`, 400);
         }
         const tileUrl = ee.data.getTileUrl(rawMap, x, y, z);
-        let storageUrl = await existsMapTile(layer.id, rawMap.mapid, z, x, y);
 
-        if (!storageUrl) {
-          storageUrl = await uploadMapTile(tileUrl, layer.id, rawMap.mapid, z, x, y);
-        } else {
-          logger.debug(`tile key exists ${layer.id}/${z}/${x}/${y}/: ${storageUrl}`);
+        let storageUrl = await existsMapTile(layer.id, rawMap.mapid, z, x, y);
+        if (storageUrl) {
+          logger.debug(`tile key exists, overriding ${layer.id}/${z}/${x}/${y}/: ${storageUrl}`);
         }
+        storageUrl = await uploadMapTile(tileUrl, layer.id, rawMap.mapid, z, x, y);
 
         res.redirect(301, storageUrl);
       } catch (err) {

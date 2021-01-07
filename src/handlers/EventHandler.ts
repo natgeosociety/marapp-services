@@ -8,8 +8,8 @@ import { getLogger } from '../logging';
 import { DashboardModel, LayerModel, LocationModel, WidgetModel } from '../models';
 import { IESPlugin } from '../models/plugins/elasticsearch';
 import { getAllStream, removeByQuery } from '../models/utils';
-import { SNSWipeDataEvent } from '../services/sns';
-import { removeLayerMapTiles } from '../services/storage-service';
+import { SNSWipeLayerDataEvent, SNSWipeOrgDataEvent, WipeDataEnum } from '../services/sns';
+import { removeLayerMapTiles, removeLayerMapTilesFromStream } from '../services/storage-service';
 
 import { contextEventHandler } from '.';
 
@@ -19,37 +19,66 @@ export const wipeDataTaskHandler: Handler = contextEventHandler(async (event: SN
   const messageId = event?.Records?.[0]?.Sns?.MessageId;
   const message = event?.Records?.[0]?.Sns?.Message;
 
-  logger.debug(`received SNS event: ${messageId}`);
+  logger.debug('[wipeDataTaskHandler] received SNS event: %s', messageId);
 
-  const decoded = JSON.parse(message);
-  const { organizationId, organizationName } = <SNSWipeDataEvent>decoded;
+  const decoded: SNSWipeOrgDataEvent | SNSWipeLayerDataEvent = JSON.parse(message);
 
-  logger.debug('removing records for organization %s with slug: %s', organizationId, organizationName);
+  switch (decoded.type) {
+    case WipeDataEnum.ORGANIZATION: {
+      const { organizationId, organizationName } = decoded;
+      try {
+        logger.debug('[wipeDataTaskHandler] removing records for organization: %s', organizationName);
 
-  try {
-    const parser = new MongooseQueryParser();
-    const models: Model<any>[] = [LocationModel, LayerModel, WidgetModel, DashboardModel];
+        const parser = new MongooseQueryParser();
+        const models: Model<any>[] = [LocationModel, LayerModel, WidgetModel, DashboardModel];
 
-    const predefined: MongooseQueryFilter[] = [{ key: 'organization', op: 'in', value: organizationName }];
-    const queryOptions = parser.parse(null, { predefined });
+        const predefined: MongooseQueryFilter[] = [{ key: 'organization', op: 'in', value: organizationName }];
+        const queryOptions = parser.parse(null, { predefined });
 
-    const t0 = performance.now();
-    const layerStream = await getAllStream(LayerModel, queryOptions);
-    await removeLayerMapTiles(layerStream);
+        const t0 = performance.now();
+        const layerStream = await getAllStream(LayerModel, queryOptions);
+        await removeLayerMapTilesFromStream(layerStream);
 
-    logger.debug('[removeMapTiles] duration: %s (ms)', performance.now() - t0);
+        logger.debug('[wipeDataTaskHandler][removeLayerMapTiles] duration: %s (ms)', performance.now() - t0);
 
-    const t1 = performance.now();
-    await forEachAsync(models, async (model: Model<any>) => removeByQuery(model, { organization: organizationName }));
+        const t1 = performance.now();
+        await forEachAsync(models, async (model: Model<any>) =>
+          removeByQuery(model, { organization: organizationName })
+        );
 
-    logger.debug('[removeByQuery] duration: %s (ms)', performance.now() - t1);
+        logger.debug('[wipeDataTaskHandler][removeByQuery] duration: %s (ms)', performance.now() - t1);
 
-    const t2 = performance.now();
-    await forEachAsync(models, async (model: IESPlugin) => model.esDeleteByQuery({ organization: organizationName }));
+        const t2 = performance.now();
+        await forEachAsync(models, async (model: IESPlugin) =>
+          model.esDeleteByQuery({ organization: organizationName })
+        );
 
-    logger.debug('[esDeleteByQuery] duration: %s (ms)', performance.now() - t2);
-  } catch (err) {
-    logger.warn('failed to wipe environment for organization %s with slug: %s', organizationId, organizationName);
-    logger.error(err);
+        logger.debug('[wipeDataTaskHandler][esDeleteByQuery] duration: %s (ms)', performance.now() - t2);
+      } catch (err) {
+        logger.error('[wipeDataTaskHandler] failed to remove assets for organization: %s', organizationName);
+        logger.error(err);
+      }
+      break;
+    }
+
+    case WipeDataEnum.LAYER: {
+      const { layerId } = decoded;
+      try {
+        logger.debug('[wipeDataTaskHandler] removing records for layer: %s', layerId);
+
+        const t0 = performance.now();
+        await removeLayerMapTiles([layerId]);
+
+        logger.debug('[wipeDataTaskHandler][removeLayerMapTiles] duration: %s (ms)', performance.now() - t0);
+      } catch (err) {
+        logger.error('[wipeDataTaskHandler] failed to remove assets for layer: %s', layerId);
+        logger.error(err);
+      }
+      break;
+    }
+
+    default: {
+      logger.error('Unsupported operation type.');
+    }
   }
 });
