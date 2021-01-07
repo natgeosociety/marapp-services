@@ -423,6 +423,7 @@ resources:
               HeaderBehavior: none
             QueryStringsConfig:
               QueryStringBehavior: all
+            EnableAcceptEncodingGzip: true
     CloudFrontOriginRequestPolicy:
       Type: AWS::CloudFront::OriginRequestPolicy
       Properties:
