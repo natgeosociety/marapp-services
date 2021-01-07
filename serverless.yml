@@ -76,6 +76,8 @@ custom:
     snsWorkerResultTopicArn: { "Fn::Join": [":", ["arn:aws:sns:${self:provider.region}", { "Ref": "AWS::AccountId" }, "${self:custom.stageEnvironment.snsWorkerResultTopic}" ] ]  }
     snsWipeDataTopic: ${self:service.name}-${self:custom.stageEnv}-sns-wipe-data
     snsWipeDataTopicArn: { "Fn::Join": [":", ["arn:aws:sns:${self:provider.region}", { "Ref": "AWS::AccountId" }, "${self:custom.stageEnvironment.snsWipeDataTopic}" ] ]  }
+    cachePolicyId: ${self:service.name}-cache-policy-${self:custom.stageEnv}
+    requestPolicyId: ${self:service.name}-request-policy-${self:custom.stageEnv}
 
   # Plugins configuration
   webpack:
@@ -370,11 +372,8 @@ resources:
           DefaultCacheBehavior:
             TargetOriginId: ApiGw
             ViewerProtocolPolicy: redirect-to-https
-            ForwardedValues:
-              QueryString: true
-              Headers:
-                - Authorization
-                - ApiKey
+            CachePolicyId: ${self:custom.stageEnvironment.cachePolicyId}
+            OriginRequestPolicyId: ${self:custom.stageEnvironment.requestPolicyId}
             AllowedMethods:
               - GET
               - HEAD
@@ -409,3 +408,29 @@ resources:
       Type: AWS::SNS::Topic
       Properties:
         TopicName: ${self:custom.stageEnvironment.snsWipeDataTopic}
+    CloudFrontCachePolicy:
+      Type: AWS::CloudFront::CachePolicy
+      Properties:
+        CachePolicyConfig:
+          Name: ${self:custom.stageEnvironment.cachePolicyId}
+          DefaultTTL: 86400 # (one day)
+          MaxTTL: 31536000  # (one year)
+          MinTTL: 3600      # (one hour)
+          ParametersInCacheKeyAndForwardedToOrigin:
+            CookiesConfig:
+              CookieBehavior: none
+            HeadersConfig:
+              HeaderBehavior: none
+            QueryStringsConfig:
+              QueryStringBehavior: all
+    CloudFrontOriginRequestPolicy:
+      Type: AWS::CloudFront::OriginRequestPolicy
+      Properties:
+        OriginRequestPolicyConfig:
+          Name: ${self:custom.stageEnvironment.requestPolicyId}
+          CookiesConfig:
+            CookieBehavior: all
+          HeadersConfig:
+            HeaderBehavior: allViewer
+          QueryStringsConfig:
+            QueryStringBehavior: all
