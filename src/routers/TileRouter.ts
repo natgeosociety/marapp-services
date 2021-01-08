@@ -30,7 +30,6 @@ import { ParameterRequiredError, RecordNotFound, TileGenerationError } from '../
 import { getLogger } from '../logging';
 import { LayerModel } from '../models';
 import { getById } from '../models/utils';
-import { hash } from '../services/signature';
 import { existsMapTile, uploadMapTile } from '../services/storage-service';
 
 import { validate } from '.';
@@ -39,9 +38,6 @@ const logger = getLogger();
 
 // The zoom parameter is an integer between 0 (zoomed out) and 12 (zoomed in).
 const MAX_ZOOM_LEVEL = 12; // 4096 x 4096 tiles
-
-// Metadata key for tile signature match;
-const METADATA_SIGNATURE_KEY = 'x-amz-meta-signature';
 
 const getRouter = (basePath: string = '/', routePath: string = '/tiles') => {
   const router: Router = Router();
@@ -105,20 +101,14 @@ const getRouter = (basePath: string = '/', routePath: string = '/tiles') => {
         }
         const tileUrl = ee.data.getTileUrl(rawMap, x, y, z);
 
-        const signature = hash(layer.config);
-        const metadata = { [METADATA_SIGNATURE_KEY]: signature };
-
         let resourceURL: string;
         const exists = await existsMapTile(layer.id, rawMap.mapid, z, x, y);
 
         if (!exists) {
-          const newTile = await uploadMapTile(tileUrl, layer.id, rawMap.mapid, z, x, y, metadata);
+          const newTile = await uploadMapTile(tileUrl, layer.id, rawMap.mapid, z, x, y);
           resourceURL = newTile.resourceURL;
-        } else if (exists.metadata?.[METADATA_SIGNATURE_KEY] === signature) {
-          resourceURL = exists.resourceURL;
         } else {
-          const updatedTile = await uploadMapTile(tileUrl, layer.id, rawMap.mapid, z, x, y, metadata);
-          resourceURL = updatedTile.resourceURL;
+          resourceURL = exists.resourceURL;
         }
 
         logger.debug(`fetching tile key ${layer.id}/${z}/${x}/${y}/: ${resourceURL}`);
