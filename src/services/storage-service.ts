@@ -46,19 +46,20 @@ export const uploadMapTile = async (
   mapId: string,
   zoom: number,
   x: number,
-  y: number
-): Promise<string> => {
+  y: number,
+  metadata: { [key: string]: string } = {}
+): Promise<{ resourceURL: string }> => {
   try {
     const keyPath = encodeTileKey(layerId, mapId, zoom, x, y);
 
     const { stream, contentType } = await fetchURLToStream(tileUrl);
-    const meta = await s3StreamUpload(stream, keyPath, contentType);
+    const meta = await s3StreamUpload(stream, keyPath, contentType, metadata);
 
     if (meta) {
       if (NODE_ENV === 'production') {
-        return getCacheUrl(meta.key);
+        return { resourceURL: getCacheUrl(meta.key) };
       }
-      return meta.storageUrl;
+      return { resourceURL: meta.storageUrl };
     }
   } catch (err) {
     logger.error(err);
@@ -79,16 +80,16 @@ export const existsMapTile = async (
   zoom: number,
   x: number,
   y: number
-): Promise<string> => {
+): Promise<{ resourceURL: string; metadata: { [key: string]: string } }> => {
   try {
     const keyPath = encodeTileKey(layerId, mapId, zoom, x, y);
     const meta = await s3KeyExists(keyPath);
 
     if (meta) {
       if (NODE_ENV === 'production') {
-        return getCacheUrl(meta.key);
+        return { resourceURL: getCacheUrl(meta.key), metadata: meta.metadata };
       }
-      return meta.storageUrl;
+      return { resourceURL: meta.storageUrl, metadata: meta.metadata };
     }
   } catch (err) {
     logger.error(err);
