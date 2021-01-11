@@ -413,30 +413,30 @@ resources:
       Type: AWS::SNS::Topic
       Properties:
         TopicName: ${self:custom.stageEnvironment.snsWipeDataTopic}
-#    CloudFrontCachePolicy:
-#      Type: AWS::CloudFront::CachePolicy
-#      Properties:
-#        CachePolicyConfig:
-#          Name: ${self:custom.stageEnvironment.cachePolicyId}
-#          DefaultTTL: 86400 # (one day)
-#          MaxTTL: 31536000  # (one year)
-#          MinTTL: 1
-#          ParametersInCacheKeyAndForwardedToOrigin:
-#            CookiesConfig:
-#              CookieBehavior: none
-#            HeadersConfig:
-#              HeaderBehavior: none
-#            QueryStringsConfig:
-#              QueryStringBehavior: all
-#            EnableAcceptEncodingGzip: true
-#    CloudFrontOriginRequestPolicy:
-#      Type: AWS::CloudFront::OriginRequestPolicy
-#      Properties:
-#        OriginRequestPolicyConfig:
-#          Name: ${self:custom.stageEnvironment.requestPolicyId}
-#          CookiesConfig:
-#            CookieBehavior: all
-#          HeadersConfig:
-#            HeaderBehavior: allViewer
-#          QueryStringsConfig:
-#            QueryStringBehavior: all
+    CloudFrontCachePolicy:
+      Type: AWS::CloudFront::CachePolicy
+      Properties:
+        CachePolicyConfig:
+          Name: ${self:custom.stageEnvironment.cachePolicyId}
+          DefaultTTL: 86400 # (one day)
+          MaxTTL: 31536000  # (one year)
+          MinTTL: 1
+          ParametersInCacheKeyAndForwardedToOrigin:
+            CookiesConfig:
+              CookieBehavior: none
+            HeadersConfig:
+              HeaderBehavior: none
+            QueryStringsConfig:
+              QueryStringBehavior: all
+            EnableAcceptEncodingGzip: true
+    CloudFrontOriginRequestPolicy:
+      Type: AWS::CloudFront::OriginRequestPolicy
+      Properties:
+        OriginRequestPolicyConfig:
+          Name: ${self:custom.stageEnvironment.requestPolicyId}
+          CookiesConfig:
+            CookieBehavior: all
+          HeadersConfig:
+            HeaderBehavior: allViewer
+          QueryStringsConfig:
+            QueryStringBehavior: all
