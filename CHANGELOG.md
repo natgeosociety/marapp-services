@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/natgeosociety/marapp-services/compare/v1.13.0...v1.14.0) (2021-01-12)
+
+
+### Features
+
+* manage tile cache on config change ([1e72350](https://github.com/natgeosociety/marapp-services/commit/1e72350db9d2370f300ebc2372e66cda75baed3c))
+
 # [1.13.0](https://github.com/natgeosociety/marapp-services/compare/v1.12.0...v1.13.0) (2021-01-07)
 
 
