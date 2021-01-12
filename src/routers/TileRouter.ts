@@ -101,13 +101,19 @@ const getRouter = (basePath: string = '/', routePath: string = '/tiles') => {
         }
         const tileUrl = ee.data.getTileUrl(rawMap, x, y, z);
 
-        let storageUrl = await existsMapTile(layer.id, rawMap.mapid, z, x, y);
-        if (storageUrl) {
-          logger.debug(`tile key exists, overriding ${layer.id}/${z}/${x}/${y}/: ${storageUrl}`);
-        }
-        storageUrl = await uploadMapTile(tileUrl, layer.id, rawMap.mapid, z, x, y);
+        let resourceURL: string;
+        const exists = await existsMapTile(layer.id, rawMap.mapid, z, x, y);
 
-        res.redirect(301, storageUrl);
+        if (!exists) {
+          const newTile = await uploadMapTile(tileUrl, layer.id, rawMap.mapid, z, x, y);
+          resourceURL = newTile.resourceURL;
+        } else {
+          resourceURL = exists.resourceURL;
+        }
+
+        logger.debug(`fetching tile key ${layer.id}/${z}/${x}/${y}/: ${resourceURL}`);
+
+        res.redirect(301, resourceURL);
       } catch (err) {
         logger.error(err);
 

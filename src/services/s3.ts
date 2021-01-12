@@ -38,6 +38,8 @@ interface StorageEvent {
   bucket: string;
   key: string;
   storageUrl: string;
+  etag: string;
+  metadata?: { [key: string]: string };
 }
 
 /**
@@ -48,6 +50,7 @@ export const s3StreamUpload = async (
   readable: Readable,
   keyPath: string,
   contentType: string,
+  metadata?: { [key: string]: string },
   bucketName: string = S3_ASSETS_BUCKET
 ): Promise<StorageEvent> => {
   try {
@@ -59,13 +62,17 @@ export const s3StreamUpload = async (
       ACL: 'public-read',
       CacheControl: `max-age=${S3_MAP_TILES_TTL}`,
     };
+    if (metadata) {
+      config.Metadata = metadata;
+    }
     const meta = await s3.upload(config).promise();
 
-    logger.debug(`successfully uploaded: ${meta.Location}`);
+    logger.debug(`[s3StreamUpload] successfully uploaded: ${meta.Location}`);
 
     return {
       key: meta.Key,
       bucket: meta.Bucket,
+      etag: meta.ETag,
       storageUrl: getStorageUrl(meta.Bucket, meta.Key),
     };
   } catch (err) {
@@ -85,11 +92,13 @@ export const s3KeyExists = async (keyPath: string, bucketName: string = S3_ASSET
   try {
     const meta = await s3.headObject(config).promise();
 
-    logger.debug(`found S3 key ${meta.ContentLength} bytes: ${keyPath}`);
+    logger.debug(`[s3KeyExists] found S3 key ${meta.ContentLength} bytes: ${keyPath}`);
 
     return {
       key: config.Key,
       bucket: config.Bucket,
+      etag: meta.ETag,
+      metadata: meta.Metadata,
       storageUrl: getStorageUrl(config.Bucket, config.Key),
     };
   } catch (err) {
