@@ -21,10 +21,21 @@ import { Serializer, SerializerOptions } from 'jsonapi-serializer';
 
 import { PaginationLinks } from '.';
 
-export const USER_ATTRIBUTES: string[] = ['id', 'email', 'name', 'groups', 'firstName', 'lastName', 'pendingEmail'];
+export const USER_ATTRIBUTES: string[] = [
+  'id',
+  'email',
+  'name',
+  'groups',
+  'firstName',
+  'lastName',
+  'pendingEmail',
+  'country',
+  'institution',
+];
 export const GROUP_ATTRIBUTES: string[] = ['id', 'name', 'description', 'roles'];
 export const ROLE_ATTRIBUTES: string[] = ['id', 'name', 'description'];
 export const USER_BULK_ATTRIBUTES: string[] = ['email', 'error', 'status'];
+export const COUNTRY_ATTRIBUTES: string[] = ['label', 'value'];
 
 export const createSerializer = (
   include: string[] = [],
@@ -72,6 +83,24 @@ export const createBulkSerializer = (
 ): Serializer => {
   return new Serializer('bulkUser', {
     attributes: USER_BULK_ATTRIBUTES,
+    keyForAttribute: (attribute: any) => {
+      return attribute;
+    },
+    pluralizeType: false,
+    topLevelLinks: pagination,
+    meta: meta,
+    ...opts,
+  } as any);
+};
+
+export const createCountriesSerializer = (
+  include: string[] = [],
+  pagination: PaginationLinks = {},
+  meta: any = {},
+  opts: SerializerOptions = {}
+): Serializer => {
+  return new Serializer('countries', {
+    attributes: COUNTRY_ATTRIBUTES,
     keyForAttribute: (attribute: any) => {
       return attribute;
     },

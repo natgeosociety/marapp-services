@@ -222,6 +222,13 @@ functions:
           path: services/api/v1/users/profile/{any+}
           method: any
           cors: true
+  profile-globals:
+    handler: src/handlers/UserHandler.openHandler
+    events:
+      - http:
+          path: services/api/v1/profile/{any+}
+          method: any
+          cors: true
   users-management:
     handler: src/handlers/UserHandler.managementHandler
     events:

@@ -24,6 +24,7 @@ import { compact, get, set } from 'lodash';
 import urljoin from 'url-join';
 
 import { DEFAULT_CONTENT_TYPE } from '../config';
+import { COUNTRY_LIST } from '../data/countries';
 import { AlreadyExistsError, RecordNotFound, UnauthorizedError } from '../errors';
 import { PaginationHelper } from '../helpers/paginator';
 import { forEachAsync } from '../helpers/util';
@@ -33,6 +34,7 @@ import { createSerializer as createGroupSerializer } from '../serializers/GroupR
 import { createSerializer as createStatusSerializer } from '../serializers/StatusSerializer';
 import {
   createBulkSerializer as createUserBulkSerializer,
+  createCountriesSerializer,
   createSerializer as createUserSerializer,
 } from '../serializers/UserSerializer';
 import { AuthzServiceSpec } from '../services/auth0-authz';
@@ -67,6 +69,8 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
         firstName: user?.given_name,
         lastName: user?.family_name,
         pendingEmail: user?.user_metadata?.pendingUserEmail,
+        country: user?.user_metadata?.country,
+        institution: user?.user_metadata?.institution,
       };
 
       if (include.includes('groups')) {
@@ -88,6 +92,8 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
       query('include').optional().isString().trim(),
       body('firstName').optional().isString().trim().notEmpty(),
       body('lastName').optional().isString().trim().notEmpty(),
+      body('country').optional().isString().trim().notEmpty(),
+      body('institution').optional().isString().trim(),
     ]),
     guard.includeGroups(),
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -101,10 +107,16 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
       const firstName = get(req.body, 'firstName', user?.given_name);
       const lastName = get(req.body, 'lastName', user?.family_name);
+      const country = get(req.body, 'country', user?.user_metadata?.country);
+      const institution = get(req.body, 'institution', user?.user_metadata?.institution);
 
       const update = {
         given_name: firstName,
         family_name: lastName,
+        user_metadata: {
+          country,
+          institution,
+        },
       };
       if (firstName && lastName) {
         set(update, 'name', [firstName, lastName].join(' '));
@@ -118,6 +130,8 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
         name: userUpdated?.name, // deprecated;
         firstName: userUpdated?.given_name,
         lastName: userUpdated?.family_name,
+        country: userUpdated?.user_metadata?.country,
+        institution: userUpdated?.user_metadata?.institution,
         pendingEmail: user?.user_metadata?.pendingUserEmail,
       };
 
@@ -803,4 +817,23 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
   return router;
 };
 
-export default { getProfileRouter, getAdminRouter };
+const getPublicRouter = (basePath: string = '/', routePath: string = '/profile') => {
+  const router: Router = Router();
+  const path = urljoin(basePath, routePath);
+
+  router.get(
+    `${path}/countries`,
+    validate([]),
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const code = 200;
+      const response = createCountriesSerializer().serialize(COUNTRY_LIST);
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
+
+  return router;
+};
+
+export default { getProfileRouter, getPublicRouter, getAdminRouter };
