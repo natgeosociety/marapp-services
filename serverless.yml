@@ -372,13 +372,8 @@ resources:
           DefaultCacheBehavior:
             TargetOriginId: ApiGw
             ViewerProtocolPolicy: redirect-to-https
-#            CachePolicyId: !Ref CloudFrontCachePolicy
-#            OriginRequestPolicyId: !Ref CloudFrontOriginRequestPolicy
-            ForwardedValues:
-              QueryString: true
-              Headers:
-                - Authorization
-                - ApiKey
+            CachePolicyId: !Ref CloudFrontCachePolicy
+            OriginRequestPolicyId: !Ref CloudFrontOriginRequestPolicy
             AllowedMethods:
               - GET
               - HEAD
@@ -425,7 +420,10 @@ resources:
             CookiesConfig:
               CookieBehavior: none
             HeadersConfig:
-              HeaderBehavior: none
+              HeaderBehavior: whitelist
+              Headers:
+                - Authorization
+                - ApiKey
             QueryStringsConfig:
               QueryStringBehavior: all
             EnableAcceptEncodingGzip: true
