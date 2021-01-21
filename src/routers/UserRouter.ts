@@ -45,6 +45,8 @@ import { queryParamGroup, validate } from '.';
 
 const logger = getLogger();
 
+const COUNTRY_LIST_VALID_VALUES = COUNTRY_LIST.map((country) => country.value);
+
 const getProfileRouter = (basePath: string = '/', routePath: string = '/users/profile') => {
   const router: Router = Router();
   const path = urljoin(basePath, routePath);
@@ -92,7 +94,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
       query('include').optional().isString().trim(),
       body('firstName').optional().isString().trim().notEmpty(),
       body('lastName').optional().isString().trim().notEmpty(),
-      body('country').optional().isString().trim().notEmpty(),
+      body('country').optional().isString().trim().isIn(COUNTRY_LIST_VALID_VALUES),
       body('institution').optional().isString().trim(),
     ]),
     guard.includeGroups(),
@@ -114,6 +116,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
         given_name: firstName,
         family_name: lastName,
         user_metadata: {
+          ...user?.user_metadata,
           country,
           institution,
         },
