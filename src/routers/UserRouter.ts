@@ -20,7 +20,7 @@
 import { Response, Router } from 'express';
 import asyncHandler from 'express-async-handler';
 import { body, param, query } from 'express-validator';
-import { compact, get, set } from 'lodash';
+import { compact, get, orderBy, set } from 'lodash';
 import urljoin from 'url-join';
 
 import { DEFAULT_CONTENT_TYPE } from '../config';
@@ -45,7 +45,8 @@ import { queryParamGroup, validate } from '.';
 
 const logger = getLogger();
 
-const COUNTRY_LIST_VALID_VALUES = COUNTRY_LIST.map((country) => country.value);
+const COUNTRY_LIST_CODES = COUNTRY_LIST.map((country) => country.value);
+const COUNTRY_LIST_SORTED = orderBy(COUNTRY_LIST, ['label'], ['asc']);
 
 const getProfileRouter = (basePath: string = '/', routePath: string = '/users/profile') => {
   const router: Router = Router();
@@ -94,7 +95,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
       query('include').optional().isString().trim(),
       body('firstName').optional().isString().trim().notEmpty(),
       body('lastName').optional().isString().trim().notEmpty(),
-      body('country').optional().isString().trim().isIn(COUNTRY_LIST_VALID_VALUES),
+      body('country').optional().isString().trim().isIn(COUNTRY_LIST_CODES),
       body('institution').optional().isString().trim(),
     ]),
     guard.includeGroups(),
@@ -829,7 +830,7 @@ const getPublicRouter = (basePath: string = '/', routePath: string = '/profile')
     validate([]),
     asyncHandler(async (req: AuthzRequest, res: Response) => {
       const code = 200;
-      const response = createCountriesSerializer().serialize(COUNTRY_LIST);
+      const response = createCountriesSerializer().serialize(COUNTRY_LIST_SORTED);
 
       res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
       res.status(code).send(response);
