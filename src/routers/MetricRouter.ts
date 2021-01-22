@@ -55,7 +55,7 @@ const getRouter = (basePath: string = '/', routePath: string = '/metrics') => {
     validate([]),
     AuthzGuards.readMetricsGuard,
     asyncHandler(async (req: AuthzRequest, res: Response) => {
-      const metrics = await aggregateCount(MetricModel, {}, 'slug');
+      const metrics = await aggregateCount(MetricModel, {}, 'slug'); // TODO: filter metrics from req.groups
 
       const code = 200;
       const response = createSerializer().serialize(metrics.map((metric) => ({ slug: metric.value })));

@@ -633,6 +633,12 @@ paths:
       - metrics
       summary: Get all available metric slugs
       operationId: getMetricSlugs
+      parameters:
+      - name: group
+        in: query
+        description: Primary group name. Required when multiple primary groups included in the token.
+        schema:
+          type: string
       responses:
         200:
           description: OK
