@@ -48,7 +48,7 @@ const logger = getLogger();
 const COUNTRY_LIST_CODES = COUNTRY_LIST.map((country) => country.value);
 const COUNTRY_LIST_SORTED = orderBy(COUNTRY_LIST, ['label'], ['asc']);
 
-const setUserData = (userInfo) => ({
+const getUserData = (userInfo) => ({
   id: userInfo?.email,
   email: userInfo?.email,
   name: userInfo?.name, // deprecated;
@@ -76,7 +76,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
       const user = await authMgmtService.getUser(req.identity.sub);
       const userId = get(user, 'user_id');
 
-      const data = setUserData(user);
+      const data = getUserData(user);
 
       if (include.includes('groups')) {
         const groups = await authzService.getMemberGroups(userId, req.groups);
@@ -130,7 +130,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
       const userUpdated = await authMgmtService.updateUser(userId, update);
 
-      const data = setUserData(userUpdated);
+      const data = getUserData(userUpdated);
 
       if (include.includes('groups')) {
         const groups = await authzService.getMemberGroups(userId, req.groups);
@@ -222,7 +222,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
       const user = await authMgmtService.emailChangeRequest(req.identity.sub, email);
 
-      const data = setUserData(user);
+      const data = getUserData(user);
 
       const code = 200;
       const response = createUserSerializer(include).serialize(data);
@@ -241,7 +241,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
       const include = queryParamGroup(<string>req.query.include);
       const user = await authMgmtService.emailChangeCancelRequest(req.identity.sub);
 
-      const data = setUserData(user);
+      const data = getUserData(user);
 
       const code = 200;
       const response = createUserSerializer(include).serialize(data);
@@ -555,7 +555,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         }
       });
 
-      const data = setUserData(newUser);
+      const data = getUserData(newUser);
 
       if (include.includes('groups')) {
         const groups = await authzService.getMemberGroups(newUserId, req.groups);
