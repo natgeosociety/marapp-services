@@ -48,6 +48,17 @@ const logger = getLogger();
 const COUNTRY_LIST_CODES = COUNTRY_LIST.map((country) => country.value);
 const COUNTRY_LIST_SORTED = orderBy(COUNTRY_LIST, ['label'], ['asc']);
 
+const getUserData = (userInfo) => ({
+  id: userInfo?.email,
+  email: userInfo?.email,
+  name: userInfo?.name, // deprecated;
+  firstName: userInfo?.given_name,
+  lastName: userInfo?.family_name,
+  pendingEmail: userInfo?.user_metadata?.pendingUserEmail,
+  country: userInfo?.user_metadata?.country,
+  institution: userInfo?.user_metadata?.institution,
+});
+
 const getProfileRouter = (basePath: string = '/', routePath: string = '/users/profile') => {
   const router: Router = Router();
   const path = urljoin(basePath, routePath);
@@ -65,16 +76,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
       const user = await authMgmtService.getUser(req.identity.sub);
       const userId = get(user, 'user_id');
 
-      const data = {
-        id: user?.email,
-        email: user?.email,
-        name: user?.name, // deprecated;
-        firstName: user?.given_name,
-        lastName: user?.family_name,
-        pendingEmail: user?.user_metadata?.pendingUserEmail,
-        country: user?.user_metadata?.country,
-        institution: user?.user_metadata?.institution,
-      };
+      const data = getUserData(user);
 
       if (include.includes('groups')) {
         const groups = await authzService.getMemberGroups(userId, req.groups);
@@ -128,16 +130,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
       const userUpdated = await authMgmtService.updateUser(userId, update);
 
-      const data = {
-        id: userUpdated?.email,
-        email: userUpdated?.email,
-        name: userUpdated?.name, // deprecated;
-        firstName: userUpdated?.given_name,
-        lastName: userUpdated?.family_name,
-        country: userUpdated?.user_metadata?.country,
-        institution: userUpdated?.user_metadata?.institution,
-        pendingEmail: user?.user_metadata?.pendingUserEmail,
-      };
+      const data = getUserData(userUpdated);
 
       if (include.includes('groups')) {
         const groups = await authzService.getMemberGroups(userId, req.groups);
@@ -229,14 +222,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
       const user = await authMgmtService.emailChangeRequest(req.identity.sub, email);
 
-      const data = {
-        id: user?.email,
-        email: user?.email,
-        name: user?.name, // deprecated;
-        firstName: user?.given_name,
-        lastName: user?.family_name,
-        pendingEmail: user?.user_metadata?.pendingUserEmail,
-      };
+      const data = getUserData(user);
 
       const code = 200;
       const response = createUserSerializer(include).serialize(data);
@@ -255,14 +241,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
       const include = queryParamGroup(<string>req.query.include);
       const user = await authMgmtService.emailChangeCancelRequest(req.identity.sub);
 
-      const data = {
-        id: user?.email,
-        email: user?.email,
-        name: user?.name, // deprecated;
-        firstName: user?.given_name,
-        lastName: user?.family_name,
-        pendingEmail: user?.user_metadata?.pendingUserEmail,
-      };
+      const data = getUserData(user);
 
       const code = 200;
       const response = createUserSerializer(include).serialize(data);
@@ -576,14 +555,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         }
       });
 
-      const data = {
-        id: newUser?.email,
-        email: newUser?.email,
-        name: newUser?.name, // deprecated;
-        firstName: newUser?.given_name,
-        lastName: newUser?.family_name,
-        pendingEmail: newUser?.user_metadata?.pendingUserEmail,
-      };
+      const data = getUserData(newUser);
 
       if (include.includes('groups')) {
         const groups = await authzService.getMemberGroups(newUserId, req.groups);
