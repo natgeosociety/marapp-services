@@ -35,7 +35,7 @@ const argv = yargs.options({
 }).argv;
 
 /**
- * Migrate layer model based on ID.
+ * Migrate layer model, based on resource ID.
  * @param layerId
  */
 const processLayerById = async (layerId: string) => {
