@@ -222,6 +222,13 @@ functions:
           path: services/api/v1/users/profile/{any+}
           method: any
           cors: true
+  profile-globals:
+    handler: src/handlers/UserHandler.openHandler
+    events:
+      - http:
+          path: services/api/v1/profile/{any+}
+          method: any
+          cors: true
   users-management:
     handler: src/handlers/UserHandler.managementHandler
     events:
@@ -372,13 +379,8 @@ resources:
           DefaultCacheBehavior:
             TargetOriginId: ApiGw
             ViewerProtocolPolicy: redirect-to-https
-#            CachePolicyId: !Ref CloudFrontCachePolicy
-#            OriginRequestPolicyId: !Ref CloudFrontOriginRequestPolicy
-            ForwardedValues:
-              QueryString: true
-              Headers:
-                - Authorization
-                - ApiKey
+            CachePolicyId: !Ref CloudFrontCachePolicy
+            OriginRequestPolicyId: !Ref CloudFrontOriginRequestPolicy
             AllowedMethods:
               - GET
               - HEAD
@@ -425,7 +427,10 @@ resources:
             CookiesConfig:
               CookieBehavior: none
             HeadersConfig:
-              HeaderBehavior: none
+              HeaderBehavior: whitelist
+              Headers:
+                - Authorization
+                - ApiKey
             QueryStringsConfig:
               QueryStringBehavior: all
             EnableAcceptEncodingGzip: true

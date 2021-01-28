@@ -20,10 +20,11 @@
 import { Response, Router } from 'express';
 import asyncHandler from 'express-async-handler';
 import { body, param, query } from 'express-validator';
-import { compact, get, set } from 'lodash';
+import { compact, get, orderBy, set } from 'lodash';
 import urljoin from 'url-join';
 
 import { DEFAULT_CONTENT_TYPE } from '../config';
+import { COUNTRY_LIST } from '../data/countries';
 import { AlreadyExistsError, RecordNotFound, UnauthorizedError } from '../errors';
 import { PaginationHelper } from '../helpers/paginator';
 import { forEachAsync } from '../helpers/util';
@@ -33,6 +34,7 @@ import { createSerializer as createGroupSerializer } from '../serializers/GroupR
 import { createSerializer as createStatusSerializer } from '../serializers/StatusSerializer';
 import {
   createBulkSerializer as createUserBulkSerializer,
+  createCountriesSerializer,
   createSerializer as createUserSerializer,
 } from '../serializers/UserSerializer';
 import { AuthzServiceSpec } from '../services/auth0-authz';
@@ -42,6 +44,20 @@ import { ResponseMeta } from '../types/response';
 import { queryParamGroup, validate } from '.';
 
 const logger = getLogger();
+
+const COUNTRY_LIST_CODES = COUNTRY_LIST.map((country) => country.value);
+const COUNTRY_LIST_SORTED = orderBy(COUNTRY_LIST, ['label'], ['asc']);
+
+const getUserData = (userInfo) => ({
+  id: userInfo?.email,
+  email: userInfo?.email,
+  name: userInfo?.name, // deprecated;
+  firstName: userInfo?.given_name,
+  lastName: userInfo?.family_name,
+  pendingEmail: userInfo?.user_metadata?.pendingUserEmail,
+  country: userInfo?.user_metadata?.country,
+  institution: userInfo?.user_metadata?.institution,
+});
 
 const getProfileRouter = (basePath: string = '/', routePath: string = '/users/profile') => {
   const router: Router = Router();
@@ -60,14 +76,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
       const user = await authMgmtService.getUser(req.identity.sub);
       const userId = get(user, 'user_id');
 
-      const data = {
-        id: user?.email,
-        email: user?.email,
-        name: user?.name, // deprecated;
-        firstName: user?.given_name,
-        lastName: user?.family_name,
-        pendingEmail: user?.user_metadata?.pendingUserEmail,
-      };
+      const data = getUserData(user);
 
       if (include.includes('groups')) {
         const groups = await authzService.getMemberGroups(userId, req.groups);
@@ -88,6 +97,8 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
       query('include').optional().isString().trim(),
       body('firstName').optional().isString().trim().notEmpty(),
       body('lastName').optional().isString().trim().notEmpty(),
+      body('country').optional().isString().trim().isIn(COUNTRY_LIST_CODES),
+      body('institution').optional().isString().trim(),
     ]),
     guard.includeGroups(),
     asyncHandler(async (req: AuthzRequest, res: Response) => {
@@ -101,10 +112,17 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
       const firstName = get(req.body, 'firstName', user?.given_name);
       const lastName = get(req.body, 'lastName', user?.family_name);
+      const country = get(req.body, 'country', user?.user_metadata?.country);
+      const institution = get(req.body, 'institution', user?.user_metadata?.institution);
 
       const update = {
         given_name: firstName,
         family_name: lastName,
+        user_metadata: {
+          ...user?.user_metadata,
+          country,
+          institution,
+        },
       };
       if (firstName && lastName) {
         set(update, 'name', [firstName, lastName].join(' '));
@@ -112,14 +130,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
       const userUpdated = await authMgmtService.updateUser(userId, update);
 
-      const data = {
-        id: userUpdated?.email,
-        email: userUpdated?.email,
-        name: userUpdated?.name, // deprecated;
-        firstName: userUpdated?.given_name,
-        lastName: userUpdated?.family_name,
-        pendingEmail: user?.user_metadata?.pendingUserEmail,
-      };
+      const data = getUserData(userUpdated);
 
       if (include.includes('groups')) {
         const groups = await authzService.getMemberGroups(userId, req.groups);
@@ -211,14 +222,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
 
       const user = await authMgmtService.emailChangeRequest(req.identity.sub, email);
 
-      const data = {
-        id: user?.email,
-        email: user?.email,
-        name: user?.name, // deprecated;
-        firstName: user?.given_name,
-        lastName: user?.family_name,
-        pendingEmail: user?.user_metadata?.pendingUserEmail,
-      };
+      const data = getUserData(user);
 
       const code = 200;
       const response = createUserSerializer(include).serialize(data);
@@ -237,14 +241,7 @@ const getProfileRouter = (basePath: string = '/', routePath: string = '/users/pr
       const include = queryParamGroup(<string>req.query.include);
       const user = await authMgmtService.emailChangeCancelRequest(req.identity.sub);
 
-      const data = {
-        id: user?.email,
-        email: user?.email,
-        name: user?.name, // deprecated;
-        firstName: user?.given_name,
-        lastName: user?.family_name,
-        pendingEmail: user?.user_metadata?.pendingUserEmail,
-      };
+      const data = getUserData(user);
 
       const code = 200;
       const response = createUserSerializer(include).serialize(data);
@@ -558,14 +555,7 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
         }
       });
 
-      const data = {
-        id: newUser?.email,
-        email: newUser?.email,
-        name: newUser?.name, // deprecated;
-        firstName: newUser?.given_name,
-        lastName: newUser?.family_name,
-        pendingEmail: newUser?.user_metadata?.pendingUserEmail,
-      };
+      const data = getUserData(newUser);
 
       if (include.includes('groups')) {
         const groups = await authzService.getMemberGroups(newUserId, req.groups);
@@ -803,4 +793,23 @@ const getAdminRouter = (basePath: string = '/', routePath: string = '/management
   return router;
 };
 
-export default { getProfileRouter, getAdminRouter };
+const getPublicRouter = (basePath: string = '/', routePath: string = '/profile') => {
+  const router: Router = Router();
+  const path = urljoin(basePath, routePath);
+
+  router.get(
+    `${path}/countries`,
+    validate([]),
+    asyncHandler(async (req: AuthzRequest, res: Response) => {
+      const code = 200;
+      const response = createCountriesSerializer().serialize(COUNTRY_LIST_SORTED);
+
+      res.setHeader('Content-Type', DEFAULT_CONTENT_TYPE);
+      res.status(code).send(response);
+    })
+  );
+
+  return router;
+};
+
+export default { getProfileRouter, getPublicRouter, getAdminRouter };

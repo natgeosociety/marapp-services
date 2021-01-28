@@ -23,9 +23,11 @@ import { API_BASE } from '../config';
 import { getLogger } from '../logging';
 import UserRouter from '../routers/UserRouter';
 
-import { authHttpHandler } from '.';
+import { anonymousHttpHandler, authHttpHandler } from '.';
 
 const logger = getLogger();
+
+export const openHandler: Handler = anonymousHttpHandler(UserRouter.getPublicRouter(API_BASE));
 
 export const profileHandler: Handler = authHttpHandler(UserRouter.getProfileRouter(API_BASE));
 
