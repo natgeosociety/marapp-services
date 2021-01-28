@@ -1,6 +1,6 @@
 {
   "name": "marapp-services",
-  "version": "1.12.0",
+  "version": "1.14.1",
   "description": "Marapp API services",
   "main": "dist/index.js",
   "license": "MIT",
