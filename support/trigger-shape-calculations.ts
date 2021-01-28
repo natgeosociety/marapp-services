@@ -25,7 +25,7 @@ import * as yargs from 'yargs';
 
 import { API_BASE } from '../src/config';
 import { forEachAsync } from '../src/helpers/util';
-import { OperationTypeEnum, publishSNSMessage, SNSMessage } from '../src/services/sns';
+import { OperationTypeEnum, SNSComputeMetricEvent, triggerComputeMetricEvent } from '../src/services/sns';
 
 const argv = yargs.options({
   apiHost: { type: 'string', demandOption: true },
@@ -51,13 +51,13 @@ const main = async (): Promise<void> => {
 };
 
 const publishEvent = async (locationId: string, locationVersion: number): Promise<string> => {
-  const message: SNSMessage = {
+  const message: SNSComputeMetricEvent = {
     id: locationId,
     version: locationVersion,
     operationType: OperationTypeEnum.CALCULATE,
     resources: [],
   };
-  return publishSNSMessage(message);
+  return triggerComputeMetricEvent(message);
 };
 
 async function* fetchResources() {
