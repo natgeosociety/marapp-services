@@ -1,3 +1,12 @@
+## [1.14.1](https://github.com/natgeosociety/marapp-services/compare/v1.14.0...v1.14.1) (2021-01-28)
+
+
+### Bug Fixes
+
+* change cloudfront header behavior [EP-3660] ([f569899](https://github.com/natgeosociety/marapp-services/commit/f56989914ceec49b21b175dc88c05ca7cc6f76b5))
+* missing group field for GET /metrics/slugs [EP-3677] ([9c7d3d7](https://github.com/natgeosociety/marapp-services/commit/9c7d3d7813de2ff139faf15197ecccf8a5548f76))
+* update countries, sort by label [EP-3682] ([9789922](https://github.com/natgeosociety/marapp-services/commit/9789922b67579d842c8272b66d23ba0f29ad9b6c))
+
 # [1.14.0](https://github.com/natgeosociety/marapp-services/compare/v1.13.0...v1.14.0) (2021-01-12)
 
 
