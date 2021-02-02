@@ -51,6 +51,9 @@ module.exports = {
         use: [
           {
             loader: 'babel-loader',
+            options: {
+              cacheDirectory: true // default cache directory in node_modules/.cache/babel-loader
+            }
           },
         ],
         exclude: [
